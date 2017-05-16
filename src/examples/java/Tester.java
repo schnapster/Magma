@@ -15,6 +15,7 @@
  */
 
 import net.dv8tion.jda.Core;
+import net.dv8tion.jda.CoreClient;
 import org.json.JSONObject;
 
 public class Tester
@@ -22,7 +23,37 @@ public class Tester
     public static void main(String[] args)
     {
         String userId = "111761808640978944"; //This is Yui's Id, just as an example. Should be id of bot connected to MainWS
-        Core core = new Core(userId);
+        Core core = new Core(userId, new CoreClient() {
+            @Override
+            public void sendWS(String message)
+            {
+
+            }
+
+            @Override
+            public boolean isConnected()
+            {
+                return false;
+            }
+
+            @Override
+            public boolean inGuild(String guildId)
+            {
+                return false;
+            }
+
+            @Override
+            public boolean voiceChannelExists(String channelId)
+            {
+                return false;
+            }
+
+            @Override
+            public boolean hasPermissionInChannel(String channelId, long permission)
+            {
+                return false;
+            }
+        });
 
         //  received indication that channel will be opened
         String guildId = "81384788765712384";       //D-API Guild Id

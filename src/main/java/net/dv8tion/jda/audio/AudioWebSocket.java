@@ -308,7 +308,7 @@ public class AudioWebSocket extends WebSocketAdapter
                     .put("self_mute", false)
                     .put("self_deaf", false)
                 );
-            core.sendWS(obj.toString());
+            core.getClient().sendWS(obj.toString());
         }
         if (keepAliveRunnable != null)
         {
@@ -360,7 +360,7 @@ public class AudioWebSocket extends WebSocketAdapter
                 && closeStatus != ConnectionStatus.AUDIO_REGION_CHANGE) //Already handled.
         {
             manager.setQueuedAudioConnectionId(disconnectedChannelId);
-            api.getClient().queueAudioConnect(disconnectedChannelId);
+            core.getConnectionManager().queueAudioConnect(guildId, disconnectedChannelId);
         }
     }
 

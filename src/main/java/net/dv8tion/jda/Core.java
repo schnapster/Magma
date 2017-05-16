@@ -16,7 +16,6 @@
 
 package net.dv8tion.jda;
 
-import gnu.trove.map.TLongObjectMap;
 import net.dv8tion.jda.audio.AudioWebSocket;
 import net.dv8tion.jda.handle.VoiceServerUpdateHandler;
 import net.dv8tion.jda.manager.AudioManager;
@@ -31,20 +30,24 @@ public class Core
     public static SimpleLog LOG = SimpleLog.getLog("Core");
 
     private final HashMap<String, AudioManager> audioManagers = new HashMap<>();
+    private final ConnectionManager connManager;
     private final ScheduledThreadPoolExecutor audioKeepAlivePool;
-    private final VoiceServerUpdateHandler handler;
+    private final VoiceServerUpdateHandler vsuHandler;
     private final String userId;
-
+    private final CoreClient coreClient;
 
     /**
      * Creates a new Core instance. You should probably have one of these for each shard, but you do you.
      *
      * @param userId The UserId of the bot.
+     * @param coreClient used to insert required functionality to connect Core to the MainWS
      */
-    public Core(String userId)
+    public Core(String userId, CoreClient coreClient)
     {
         this.userId = userId;
-        this.handler = new VoiceServerUpdateHandler(this);
+        this.coreClient = coreClient;
+        this.connManager = new ConnectionManager(this);
+        this.vsuHandler = new VoiceServerUpdateHandler(this);
         this.audioKeepAlivePool = new ScheduledThreadPoolExecutor(1, new AudioWebSocket.KeepAliveThreadFactory());
     }
 
@@ -62,7 +65,7 @@ public class Core
     public void startConnection(String sessionId, JSONObject serverUpdateEvent)
     {
         //More to do here.
-        handler.handle(sessionId, serverUpdateEvent);
+        vsuHandler.handle(sessionId, serverUpdateEvent);
     }
 
     public void closeConnection(String guildId)
@@ -72,10 +75,6 @@ public class Core
             audioManagers.get(guildId).closeAudioConnection();
         }
     }
-
-    // ====================================================================
-    // =                         Helper Methods
-    // ====================================================================
 
     public AudioManager getAudioManager(String guildId)
     {
@@ -96,6 +95,20 @@ public class Core
         return manager;
     }
 
+    // ====================================================================
+    // =                         Helper Methods
+    // ====================================================================
+
+    public ConnectionManager getConnectionManager()
+    {
+        return connManager;
+    }
+
+    public CoreClient getClient()
+    {
+        return coreClient;
+    }
+
     public ScheduledThreadPoolExecutor getAudioKeepAlivePool()
     {
         return audioKeepAlivePool;
@@ -104,15 +117,5 @@ public class Core
     public String getUserId()
     {
         return userId;
-    }
-
-    // ===============================================================
-    // =  Methods that you must filled in that are used internally
-    // ===============================================================
-
-    public void sendWS(String message)
-    {
-        //Needs to send the content of the message through the MainWS
-
     }
 }

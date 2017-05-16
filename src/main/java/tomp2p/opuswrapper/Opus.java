@@ -8,7 +8,7 @@ import com.sun.jna.ptr.FloatByReference;
 import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.PointerByReference;
 import com.sun.jna.ptr.ShortByReference;
-import net.dv8tion.jda.core.managers.impl.AudioManagerImpl;
+import net.dv8tion.jda.manager.AudioManager;
 
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
@@ -26,7 +26,7 @@ import java.nio.ShortBuffer;
  * Github repo.
  */
 public interface Opus extends Library {
-    public static final Opus INSTANCE = (Opus)Native.loadLibrary(AudioManagerImpl.OPUS_LIB_NAME, Opus.class);
+    public static final Opus INSTANCE = (Opus)Native.loadLibrary(AudioManager.OPUS_LIB_NAME, Opus.class);
 
     //  ****** Constants
 

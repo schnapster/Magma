@@ -25,9 +25,9 @@ import net.dv8tion.jda.audio.factory.IAudioSendSystem;
 import net.dv8tion.jda.audio.factory.IPacketProvider;
 import net.dv8tion.jda.audio.hooks.ConnectionStatus;
 import net.dv8tion.jda.utils.SimpleLog;
-import tomp2p.opuswrapper.Opus;
 import org.apache.commons.lang3.tuple.Pair;
 import org.json.JSONObject;
+import tomp2p.opuswrapper.Opus;
 
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;

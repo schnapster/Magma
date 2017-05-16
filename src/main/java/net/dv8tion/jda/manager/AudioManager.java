@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package net.dv8tion.jda.manager;
 
 import com.sun.jna.Platform;
@@ -81,7 +82,7 @@ public class AudioManager
         {
             //Start establishing connection, joining provided channel
             queuedAudioConnectionId = channelId;
-            api.getClient().queueAudioConnect(channelId);
+            core.getConnectionManager().queueAudioConnect(guildId, channelId);
         }
         else
         {
@@ -91,7 +92,7 @@ public class AudioManager
             if (channelId.equals(audioConnection.getChannelId()))
                 return;
 
-            api.getClient().queueAudioConnect(channelId);
+            core.getConnectionManager().queueAudioConnect(guildId, channelId);
             audioConnection.setChannelId(channelId);
         }
     }
@@ -106,7 +107,7 @@ public class AudioManager
     {
         synchronized (CONNECTION_LOCK)
         {
-            api.getClient().getQueuedAudioConnectionMap().remove(guildId);
+            core.getConnectionManager().getQueuedAudioConnectionMap().remove(guildId);
             this.queuedAudioConnectionId = null;
             if (audioConnection == null)
                 return;
@@ -311,7 +312,7 @@ public class AudioManager
                             .put("self_mute", isSelfMuted())
                             .put("self_deaf", isSelfDeafened())
                     );
-            core.sendWS(voiceStateChange.toString());
+            core.getClient().sendWS(voiceStateChange.toString());
         }
     }
 

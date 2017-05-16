@@ -38,7 +38,7 @@ public class VoiceServerUpdateHandler
             throw new IllegalArgumentException("Provided session id was null or empty!");
 
         final String guildId = content.getString("guild_id");
-        api.getClient().getQueuedAudioConnectionMap().remove(guildId);
+        core.getConnectionManager().getQueuedAudioConnectionMap().remove(guildId);
 
         if (content.isNull("endpoint"))
         {
