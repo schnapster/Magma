@@ -58,7 +58,7 @@ public class Tester
         //  received indication that channel will be opened
         String guildId = "81384788765712384";       //D-API Guild Id
         String channelId = "131937933270712320";    //#Music voice channel in D-API
-        core.openConnection(guildId, channelId);
+        core.getAudioManager(guildId).openAudioConnection(channelId);
 
 
 
@@ -66,13 +66,13 @@ public class Tester
         String sessionId = "";                      //This is retrieved from VOICE_STATE_UPDATE from MainWS
         String event = "";                          //This is populated with the VOICE_SERVER_UPDATE from MainWS
         JSONObject jsEvent = new JSONObject(event); //Changes from String to Json Object
-        core.startConnection(sessionId, jsEvent);
+        core.provideVoiceServerUpdate(sessionId, jsEvent);
 
 
 
         // close down connection due to bot wanting to sever audio connection to provided guild.
         String differentGuildId = "125227483518861312"; //JDA Guild.
-        core.closeConnection(differentGuildId);
+        core.getAudioManager(differentGuildId).closeAudioConnection();
 
     }
 }

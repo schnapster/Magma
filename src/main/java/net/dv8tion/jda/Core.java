@@ -55,25 +55,10 @@ public class Core
     // =                     Methods that you can call
     // ==================================================================
 
-    //Also used to move a preexisting connection from one channel to another!
-    public void openConnection(String guildId, String channelId)
-    {
-        AudioManager manager = getAudioManager(guildId);
-        manager.openAudioConnection(channelId);
-    }
-
-    public void startConnection(String sessionId, JSONObject serverUpdateEvent)
+    public void provideVoiceServerUpdate(String sessionId, JSONObject serverUpdateEvent)
     {
         //More to do here.
         vsuHandler.handle(sessionId, serverUpdateEvent);
-    }
-
-    public void closeConnection(String guildId)
-    {
-        if (audioManagers.containsKey(guildId))
-        {
-            audioManagers.get(guildId).closeAudioConnection();
-        }
     }
 
     public AudioManager getAudioManager(String guildId)
