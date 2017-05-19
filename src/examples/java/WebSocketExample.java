@@ -16,6 +16,7 @@
 
 import com.neovisionaries.ws.client.*;
 import net.dv8tion.jda.Core;
+import net.dv8tion.jda.CoreClient;
 import org.json.JSONObject;
 
 import java.io.IOException;
@@ -113,12 +114,57 @@ public class WebSocketExample extends WebSocketAdapter
                 core = cores.get(identifier);
                 if (core == null)
                 {
-                    core = new Core(userId, null);
+                    core = new Core(userId, new MyCoreClient(identifier));
                     cores.put(identifier, core);
                 }
             }
         }
 
         return core;
+    }
+
+    private class MyCoreClient implements CoreClient
+    {
+        private final String identifier;
+
+        public MyCoreClient(String identifier)
+        {
+            this.identifier = identifier;
+        }
+
+        @Override
+        public void sendWS(String message)
+        {
+            JSONObject obj = new JSONObject();
+            obj.put("action", "SEND_WS");
+            obj.put("identifier", identifier);
+            obj.put("message", message);
+
+            socket.sendText(obj.toString());
+        }
+
+        @Override
+        public boolean isConnected()
+        {
+            return true;
+        }
+
+        @Override
+        public boolean inGuild(String guildId)
+        {
+            return true;
+        }
+
+        @Override
+        public boolean voiceChannelExists(String channelId)
+        {
+            return true;
+        }
+
+        @Override
+        public boolean hasPermissionInChannel(String channelId, long permission)
+        {
+            return true;
+        }
     }
 }
