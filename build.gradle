@@ -20,16 +20,16 @@
 import org.apache.tools.ant.filters.ReplaceTokens
 
 plugins {
-    id 'com.jfrog.bintray' version '1.7.2'
+    id 'com.jfrog.bintray' version '1.7.3'
     id 'java'
     id 'maven'
     id 'maven-publish'
     id 'signing'
-    id 'com.github.ben-manes.versions' version '0.13.0'
-    id 'com.github.johnrengelman.shadow' version '1.2.4'
+    id 'com.github.ben-manes.versions' version '0.15.0'
+    id 'com.github.johnrengelman.shadow' version '2.0.1'
 }
 
-def versionObj = new Version(major: 3, minor: 0, revision: "0")
+def versionObj = new Version(major: 1, minor: 0, revision: 0)
 
 group = "net.dv8tion"
 archivesBaseName = "JDA"
@@ -51,7 +51,7 @@ sourceSets {
 
 dependencies {
     //General Utility
-    compile 'org.apache.commons:commons-lang3:3.5'
+    compile 'org.apache.commons:commons-lang3:3.6'
     compile 'org.apache.commons:commons-collections4:4.1'
     compile 'org.json:json:20160810'
     compile 'net.sf.trove4j:trove4j:3.0.3'
@@ -60,11 +60,11 @@ dependencies {
     compile 'net.java.dev.jna:jna:4.4.0'
 
     //Web Connection Support
-    compile 'com.neovisionaries:nv-websocket-client:2.0'
+    compile 'com.neovisionaries:nv-websocket-client:2.3'
     compile ( 'com.mashape.unirest:unirest-java:1.4.9' ) {
         exclude group: 'junit', module: 'junit'
     }
-    compile 'com.sedmelluq:lavaplayer:1.2.36'
+    compile 'com.sedmelluq:lavaplayer:1.2.42'
 
     //Sets the dependencies for the examples
     examplesCompile configurations.compile
@@ -153,12 +153,12 @@ javadoc {
 }
 
 bintray {
-    user = bintrayUsername
-    key = bintrayApiKey
+    user = getProjectProperty('bintrayUsername')
+    key = getProjectProperty('bintrayApiKey')
     publications = ["BintrayRelease"]
     pkg {
         repo = 'maven'
-        name = 'JDA'
+        name = 'JDA-Audio'
         licenses = ['Apache-2.0']
         vcsUrl = 'https://github.com/DV8FromTheWorld/JDA.git'
         publish = true
@@ -193,9 +193,8 @@ String getProjectProperty(String propertyName)
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '3.4.1'
+    gradleVersion = '4.0.1'
 }
-
 
 build {
     dependsOn clean
