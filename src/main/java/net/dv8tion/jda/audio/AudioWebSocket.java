@@ -16,7 +16,12 @@
 
 package net.dv8tion.jda.audio;
 
-import com.neovisionaries.ws.client.*;
+import com.neovisionaries.ws.client.ThreadType;
+import com.neovisionaries.ws.client.WebSocket;
+import com.neovisionaries.ws.client.WebSocketAdapter;
+import com.neovisionaries.ws.client.WebSocketException;
+import com.neovisionaries.ws.client.WebSocketFactory;
+import com.neovisionaries.ws.client.WebSocketFrame;
 import net.dv8tion.jda.Core;
 import net.dv8tion.jda.audio.hooks.ConnectionListener;
 import net.dv8tion.jda.audio.hooks.ConnectionStatus;
@@ -26,11 +31,16 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.IOException;
-import java.net.*;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetSocketAddress;
+import java.net.NoRouteToHostException;
+import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadFactory;
@@ -61,7 +71,7 @@ public class AudioWebSocket extends WebSocketAdapter
     private boolean connected = false;
     private boolean ready = false;
     private boolean shutdown;
-    private Runnable keepAliveRunnable;
+    private Future<?> keepAliveHandle;
     private String wssEndpoint;
     private boolean shouldReconnect;
 
@@ -310,10 +320,10 @@ public class AudioWebSocket extends WebSocketAdapter
                 );
             core.getClient().sendWS(obj.toString());
         }
-        if (keepAliveRunnable != null)
+        if (keepAliveHandle  != null)
         {
-            keepAlivePool.remove(keepAliveRunnable);
-            keepAliveRunnable = null;
+            keepAliveHandle.cancel(false);
+            keepAliveHandle  = null;
         }
 
         if (audioConnection != null)
@@ -459,10 +469,10 @@ public class AudioWebSocket extends WebSocketAdapter
 
     private void setupKeepAlive(final int keepAliveInterval)
     {
-        if (keepAliveRunnable != null)
+        if (keepAliveHandle != null)
             LOG.fatal("Setting up a KeepAlive runnable while the previous one seems to still be active!!");
 
-        keepAliveRunnable = () ->
+        Runnable keepAliveRunnable = () ->
         {
             if (socket.isOpen() && socket.isOpen() && !udpSocket.isClosed())
             {
@@ -497,7 +507,7 @@ public class AudioWebSocket extends WebSocketAdapter
 
         try
         {
-            keepAlivePool.scheduleAtFixedRate(keepAliveRunnable, 0, keepAliveInterval, TimeUnit.MILLISECONDS);
+            keepAliveHandle = keepAlivePool.scheduleAtFixedRate(keepAliveRunnable, 0, keepAliveInterval, TimeUnit.MILLISECONDS);
         }
         catch (RejectedExecutionException ignored) {} //ignored because this is probably caused due to a race condition
                                                       // related to the threadpool shutdown.
