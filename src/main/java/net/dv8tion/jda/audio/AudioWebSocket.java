@@ -336,8 +336,6 @@ public class AudioWebSocket extends WebSocketAdapter
             keepAliveHandle  = null;
         }
 
-        if (audioConnection != null)
-            audioConnection.shutdown();
         if (udpSocket != null)
             udpSocket.close();
         if (socket != null && socket.isOpen())
@@ -346,12 +344,17 @@ public class AudioWebSocket extends WebSocketAdapter
         String disconnectedChannelId;
         AudioManager manager = core.getAudioManager(guildId);
 
-        if (manager.isConnected())
-            disconnectedChannelId = manager.getConnectedChannel();
-        else
-            disconnectedChannelId = manager.getQueuedAudioConnectionId();
+        synchronized (manager.CONNECTION_LOCK)
+        {
+            if (audioConnection != null)
+                audioConnection.shutdown();
+            if (manager.isConnected())
+                disconnectedChannelId = manager.getConnectedChannel();
+            else
+                disconnectedChannelId = manager.getQueuedAudioConnectionId();
 
-        manager.setAudioConnection(null);
+            manager.setAudioConnection(null);
+        }
 
         //Verify that it is actually a lost of connection and not due the connected channel being deleted.
         if (closeStatus == ConnectionStatus.ERROR_LOST_CONNECTION)
