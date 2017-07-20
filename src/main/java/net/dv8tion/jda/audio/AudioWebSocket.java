@@ -112,6 +112,15 @@ public class AudioWebSocket extends WebSocketAdapter
     @Override
     public void onConnected(WebSocket websocket, Map<String, List<String>> headers)
     {
+
+        if (shutdown)
+        {
+            //Somehow this AudioWebSocket was shutdown before we finished connecting....
+            // thus we just disconnect here since we were asked to shutdown
+            socket.sendClose(1000);
+            return;
+        }
+
         JSONObject connectObj = new JSONObject()
                 .put("op", 0)
                 .put("d", new JSONObject()
@@ -141,7 +150,7 @@ public class AudioWebSocket extends WebSocketAdapter
                 int heartbeatInterval = content.getInt("heartbeat_interval");
 
                 //Find our external IP and Port using Discord
-                InetSocketAddress externalIpAndPort = null;
+                InetSocketAddress externalIpAndPort;
 
                 changeStatus(ConnectionStatus.CONNECTING_ATTEMPTING_UDP_DISCOVERY);
                 int tries = 0;
@@ -228,11 +237,12 @@ public class AudioWebSocket extends WebSocketAdapter
         {
             LOG.debug("ClientReason: " + clientCloseFrame.getCloseReason());
             LOG.debug("ClientCode: " + clientCloseFrame.getCloseCode());
-            if (clientCloseFrame.getCloseCode() != 1000)
+            if (clientCloseFrame.getCloseCode() != 1000) {
                 this.close(ConnectionStatus.ERROR_LOST_CONNECTION);
+                return;
+            }
         }
-        else
-            this.close(ConnectionStatus.NOT_CONNECTED);
+        this.close(ConnectionStatus.NOT_CONNECTED);
     }
 
     @Override
@@ -326,8 +336,6 @@ public class AudioWebSocket extends WebSocketAdapter
             keepAliveHandle  = null;
         }
 
-        if (audioConnection != null)
-            audioConnection.shutdown();
         if (udpSocket != null)
             udpSocket.close();
         if (socket != null && socket.isOpen())
@@ -336,12 +344,17 @@ public class AudioWebSocket extends WebSocketAdapter
         String disconnectedChannelId;
         AudioManager manager = core.getAudioManager(guildId);
 
-        if (manager.isConnected())
-            disconnectedChannelId = manager.getConnectedChannel();
-        else
-            disconnectedChannelId = manager.getQueuedAudioConnectionId();
+        synchronized (manager.CONNECTION_LOCK)
+        {
+            if (audioConnection != null)
+                audioConnection.shutdown();
+            if (manager.isConnected())
+                disconnectedChannelId = manager.getConnectedChannel();
+            else
+                disconnectedChannelId = manager.getQueuedAudioConnectionId();
 
-        manager.setAudioConnection(null);
+            manager.setAudioConnection(null);
+        }
 
         //Verify that it is actually a lost of connection and not due the connected channel being deleted.
         if (closeStatus == ConnectionStatus.ERROR_LOST_CONNECTION)
@@ -529,6 +542,16 @@ public class AudioWebSocket extends WebSocketAdapter
         this.shouldReconnect = shouldReconnect;
     }
 
+    @Override
+    protected void finalize() throws Throwable
+    {
+        if (!shutdown)
+        {
+            LOG.fatal("Finalization hook of AudioWebSocket was triggered without properly shutting down");
+            close(ConnectionStatus.ERROR_LOST_CONNECTION);
+        }
+    }
+
     public static class KeepAliveThreadFactory implements ThreadFactory
     {
         final String identifier;
@@ -542,7 +565,7 @@ public class AudioWebSocket extends WebSocketAdapter
         @Override
         public Thread newThread(Runnable r)
         {
-            Thread t = new Thread(r, identifier + " - Thread " + threadCount.getAndIncrement());
+            Thread t = new Thread(AudioManager.AUDIO_THREADS, r, identifier + " - Thread " + threadCount.getAndIncrement());
             t.setDaemon(true);
 
             return t;

@@ -24,6 +24,7 @@ import net.dv8tion.jda.audio.factory.IAudioSendFactory;
 import net.dv8tion.jda.audio.factory.IAudioSendSystem;
 import net.dv8tion.jda.audio.factory.IPacketProvider;
 import net.dv8tion.jda.audio.hooks.ConnectionStatus;
+import net.dv8tion.jda.manager.AudioManager;
 import net.dv8tion.jda.utils.SimpleLog;
 import org.apache.commons.lang3.tuple.Pair;
 import org.json.JSONObject;
@@ -36,7 +37,13 @@ import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -277,7 +284,7 @@ public class AudioConnection
     {
         if (receiveThread == null)
         {
-            receiveThread = new Thread(threadIdentifier + " Receiving Thread")
+            receiveThread = new Thread(AudioManager.AUDIO_THREADS, threadIdentifier + " Receiving Thread")
             {
                 @Override
                 public void run()
@@ -393,7 +400,8 @@ public class AudioConnection
     {
         if (combinedAudioExecutor == null)
         {
-            combinedAudioExecutor = Executors.newSingleThreadScheduledExecutor( r -> new Thread(r, threadIdentifier + " Combined Thread"));
+            combinedAudioExecutor = Executors.newSingleThreadScheduledExecutor( r ->
+                    new Thread(AudioManager.AUDIO_THREADS, r, threadIdentifier + " Combined Thread"));
             combinedAudioExecutor.scheduleAtFixedRate(() ->
             {
                 try
