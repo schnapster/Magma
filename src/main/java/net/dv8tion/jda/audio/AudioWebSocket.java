@@ -22,7 +22,6 @@ import com.neovisionaries.ws.client.WebSocketAdapter;
 import com.neovisionaries.ws.client.WebSocketException;
 import com.neovisionaries.ws.client.WebSocketFactory;
 import com.neovisionaries.ws.client.WebSocketFrame;
-import net.dv8tion.jda.ConnectionManager;
 import net.dv8tion.jda.Core;
 import net.dv8tion.jda.audio.hooks.ConnectionListener;
 import net.dv8tion.jda.audio.hooks.ConnectionStatus;
@@ -563,7 +562,7 @@ public class AudioWebSocket extends WebSocketAdapter
         @Override
         public Thread newThread(Runnable r)
         {
-            Thread t = new Thread(ConnectionManager.AUDIO_THREADS, r, identifier + " - Thread " + threadCount.getAndIncrement());
+            Thread t = new Thread(AudioManager.AUDIO_THREADS, r, identifier + " - Thread " + threadCount.getAndIncrement());
             t.setDaemon(true);
 
             return t;

@@ -19,12 +19,12 @@ package net.dv8tion.jda.audio;
 import com.sun.jna.ptr.PointerByReference;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
-import net.dv8tion.jda.ConnectionManager;
 import net.dv8tion.jda.audio.factory.DefaultSendFactory;
 import net.dv8tion.jda.audio.factory.IAudioSendFactory;
 import net.dv8tion.jda.audio.factory.IAudioSendSystem;
 import net.dv8tion.jda.audio.factory.IPacketProvider;
 import net.dv8tion.jda.audio.hooks.ConnectionStatus;
+import net.dv8tion.jda.manager.AudioManager;
 import net.dv8tion.jda.utils.SimpleLog;
 import org.apache.commons.lang3.tuple.Pair;
 import org.json.JSONObject;
@@ -284,7 +284,7 @@ public class AudioConnection
     {
         if (receiveThread == null)
         {
-            receiveThread = new Thread(ConnectionManager.AUDIO_THREADS, threadIdentifier + " Receiving Thread")
+            receiveThread = new Thread(AudioManager.AUDIO_THREADS, threadIdentifier + " Receiving Thread")
             {
                 @Override
                 public void run()
@@ -401,7 +401,7 @@ public class AudioConnection
         if (combinedAudioExecutor == null)
         {
             combinedAudioExecutor = Executors.newSingleThreadScheduledExecutor( r ->
-                    new Thread(ConnectionManager.AUDIO_THREADS, r, threadIdentifier + " Combined Thread"));
+                    new Thread(AudioManager.AUDIO_THREADS, r, threadIdentifier + " Combined Thread"));
             combinedAudioExecutor.scheduleAtFixedRate(() ->
             {
                 try

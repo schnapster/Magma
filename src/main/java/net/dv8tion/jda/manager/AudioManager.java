@@ -32,6 +32,7 @@ import java.io.IOException;
 
 public class AudioManager
 {
+    public static final ThreadGroup AUDIO_THREADS = new ThreadGroup("jda-audio");
     //These values are set at the bottom of this file.
     public static boolean AUDIO_SUPPORTED;
     public static String OPUS_LIB_NAME;
