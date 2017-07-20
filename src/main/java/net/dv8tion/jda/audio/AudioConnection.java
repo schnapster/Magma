@@ -19,6 +19,7 @@ package net.dv8tion.jda.audio;
 import com.sun.jna.ptr.PointerByReference;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
+import net.dv8tion.jda.ConnectionManager;
 import net.dv8tion.jda.audio.factory.DefaultSendFactory;
 import net.dv8tion.jda.audio.factory.IAudioSendFactory;
 import net.dv8tion.jda.audio.factory.IAudioSendSystem;
@@ -36,7 +37,13 @@ import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -277,7 +284,7 @@ public class AudioConnection
     {
         if (receiveThread == null)
         {
-            receiveThread = new Thread(threadIdentifier + " Receiving Thread")
+            receiveThread = new Thread(ConnectionManager.AUDIO_THREADS, threadIdentifier + " Receiving Thread")
             {
                 @Override
                 public void run()
@@ -393,7 +400,8 @@ public class AudioConnection
     {
         if (combinedAudioExecutor == null)
         {
-            combinedAudioExecutor = Executors.newSingleThreadScheduledExecutor( r -> new Thread(r, threadIdentifier + " Combined Thread"));
+            combinedAudioExecutor = Executors.newSingleThreadScheduledExecutor( r ->
+                    new Thread(ConnectionManager.AUDIO_THREADS, r, threadIdentifier + " Combined Thread"));
             combinedAudioExecutor.scheduleAtFixedRate(() ->
             {
                 try

@@ -31,6 +31,7 @@ public class ConnectionManager
 {
     public static final SimpleLog LOG = SimpleLog.getLog("ConnectionManager");
 
+    public static final ThreadGroup AUDIO_THREADS = new ThreadGroup("jda-audio");
     //GuildId, <TimeOfNextAttempt, AudioConnection (ChannelId)>
     private final HashMap<String, MutablePair<Long, String>> queuedAudioConnections = new HashMap<>();
     private final Core core;

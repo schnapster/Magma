@@ -17,6 +17,7 @@
 package net.dv8tion.jda.audio.factory;
 
 
+import net.dv8tion.jda.ConnectionManager;
 import net.dv8tion.jda.audio.AudioConnection;
 
 import java.net.DatagramPacket;
@@ -46,7 +47,7 @@ public class DefaultSendSystem implements IAudioSendSystem
         final DatagramSocket udpSocket = packetProvider.getUdpSocket();
 
 
-        sendThread = new Thread(packetProvider.getIdentifier() + " Sending Thread")
+        sendThread = new Thread(ConnectionManager.AUDIO_THREADS, packetProvider.getIdentifier() + " Sending Thread")
         {
             @Override
             public void run()
