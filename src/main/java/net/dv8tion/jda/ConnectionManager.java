@@ -175,7 +175,7 @@ public class ConnectionManager
 
                         Map.Entry<String, MutablePair<Long, String>> requestEntry = getNextAudioConnectRequest();
 
-                        System.out.println(requestEntry);
+                        LOG.trace(requestEntry);
                         if (requestEntry != null)
                         {
                             String guildId = requestEntry.getKey();
@@ -191,7 +191,7 @@ public class ConnectionManager
                                             .put("self_deaf", audioManager.isSelfDeafened())
                                     );
                             needRatelimit = !send(audioConnectPacket.toString());
-                            System.out.println(needRatelimit);
+                            LOG.trace(needRatelimit);
                             if (!needRatelimit)
                             {
                                 //If we didn't get RateLimited, Next allowed connect request will be 2 seconds from now
