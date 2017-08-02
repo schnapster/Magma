@@ -93,7 +93,7 @@ public class ConnectionManager
                         continue;
                     }
 
-                    if (!core.getClient().voiceChannelExists(channelId))
+                    if (!core.getClient().voiceChannelExists(guildId, channelId))
                     {
                         it.remove();
                         if (listener != null)
@@ -101,7 +101,7 @@ public class ConnectionManager
                         continue;
                     }
 
-                    if (!core.getClient().hasPermissionInChannel(channelId, 1 << 20)) //VOICE_CONNECT
+                    if (!core.getClient().hasPermissionInChannel(guildId, channelId, 1 << 20)) //VOICE_CONNECT
                     {
                         it.remove();
                         if (listener != null)

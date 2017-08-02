@@ -21,6 +21,6 @@ public interface CoreClient
     void sendWS(String message);
     boolean isConnected();
     boolean inGuild(String guildId);
-    boolean voiceChannelExists(String channelId);
-    boolean hasPermissionInChannel(String channelId, long permission);
+    boolean voiceChannelExists(String guildId, String channelId);
+    boolean hasPermissionInChannel(String guildId, String channelId, long permission);
 }
