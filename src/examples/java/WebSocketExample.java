@@ -156,13 +156,13 @@ public class WebSocketExample extends WebSocketAdapter
         }
 
         @Override
-        public boolean voiceChannelExists(String channelId)
+        public boolean voiceChannelExists(String guildId, String channelId)
         {
             return true;
         }
 
         @Override
-        public boolean hasPermissionInChannel(String channelId, long permission)
+        public boolean hasPermissionInChannel(String guildId, String channelId, long permission)
         {
             return true;
         }

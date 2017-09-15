@@ -43,13 +43,13 @@ public class Tester
             }
 
             @Override
-            public boolean voiceChannelExists(String channelId)
+            public boolean voiceChannelExists(String guildId, String channelId)
             {
                 return false;
             }
 
             @Override
-            public boolean hasPermissionInChannel(String channelId, long permission)
+            public boolean hasPermissionInChannel(String guildId, String channelId, long permission)
             {
                 return false;
             }

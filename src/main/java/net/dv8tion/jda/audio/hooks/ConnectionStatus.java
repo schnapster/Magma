@@ -86,7 +86,7 @@ public enum ConnectionStatus
      * <br>JDA automatically attempts to reconnect when this error occurs.
      */
     ERROR_UDP_UNABLE_TO_CONNECT,
-    /**
+    ERROR_CANNOT_RESUME, DISCONNECTED_AUTHENTICATION_FAILURE, /**
      * Occurs when it takes longer than
      * {@link net.dv8tion.jda.core.managers.AudioManager#getConnectTimeout() AudioManager.getConnectTimeout()} to establish
      * the Websocket connection and setup the UDP connection.

@@ -37,17 +37,12 @@ import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Queue;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class AudioConnection
 {
@@ -172,7 +167,25 @@ public class AudioConnection
         this.channelId = channelId;
     }
 
-    public void updateUserSSRC(int ssrc, String userId, boolean talking)
+    public void removeUserSSRC(String userId)
+    {
+        final AtomicInteger ssrcRef = new AtomicInteger(0);
+        final boolean modified = ssrcMap.retainEntries((ssrc, id) ->
+        {
+            final boolean isEntry = id.equals(userId);
+            if (isEntry)
+                ssrcRef.set(ssrc);
+            // if isEntry == true we don't want to retain it
+            return !isEntry;
+        });
+        if (!modified)
+            return;
+        final Decoder decoder = opusDecoders.remove(ssrcRef.get());
+        if (decoder != null) // cleanup decoder
+            decoder.close();
+    }
+
+    public void updateUserSSRC(int ssrc, String userId)
     {
         if (ssrcMap.containsKey(ssrc))
         {
@@ -284,108 +297,105 @@ public class AudioConnection
     {
         if (receiveThread == null)
         {
-            receiveThread = new Thread(AudioManager.AUDIO_THREADS, threadIdentifier + " Receiving Thread")
+            receiveThread = new Thread(AudioManager.AUDIO_THREADS, () ->
             {
-                @Override
-                public void run()
+                try
                 {
+                    udpSocket.setSoTimeout(1000);
+                }
+                catch (SocketException e)
+                {
+                    LOG.log(e);
+                }
+                while (!udpSocket.isClosed() && !Thread.currentThread().isInterrupted())
+                {
+                    DatagramPacket receivedPacket = new DatagramPacket(new byte[1920], 1920);
                     try
                     {
-                        udpSocket.setSoTimeout(1000);
+                        udpSocket.receive(receivedPacket);
+
+                        if (receiveHandler != null && (receiveHandler.canReceiveUser() || receiveHandler.canReceiveCombined()) && webSocket.getSecretKey() != null)
+                        {
+                            if (!couldReceive)
+                            {
+                                couldReceive = true;
+                                sendSilentPackets();
+                            }
+                            AudioPacket decryptedPacket = AudioPacket.decryptAudioPacket(receivedPacket, webSocket.getSecretKey());
+
+                            int ssrc = decryptedPacket.getSSRC();
+                            final String userId = ssrcMap.get(ssrc);
+                            Decoder decoder = opusDecoders.get(ssrc);
+                            if (userId == null)
+                            {
+                                byte[] audio = decryptedPacket.getEncodedAudio();
+
+                                //If the bytes are silence, then this was caused by a User joining the voice channelId,
+                                // and as such, we haven't yet received information to pair the SSRC with the UserId.
+                                if (!Arrays.equals(audio, silenceBytes))
+                                    LOG.debug("Received audio data with an unknown SSRC id. Ignoring");
+
+                                continue;
+                            }
+                            if (decoder == null)
+                            {
+                                decoder = new Decoder(ssrc);
+                                opusDecoders.put(ssrc, decoder);
+                            }
+                            if (!decoder.isInOrder(decryptedPacket.getSequence()))
+                            {
+                                LOG.trace("Got out-of-order audio packet. Ignoring.");
+                                continue;
+                            }
+
+                            short[] decodedAudio = decoder.decodeFromOpus(decryptedPacket);
+
+                            //If decodedAudio is null, then the Opus decode failed, so throw away the packet.
+                            if (decodedAudio == null)
+                            {
+                                LOG.trace("Received audio data but Opus failed to properly decode, instead it returned an error");
+                            }
+                            else
+                            {
+                                if (receiveHandler.canReceiveUser())
+                                {
+                                    receiveHandler.handleUserAudio(new UserAudio(userId, decodedAudio));
+                                }
+                                if (receiveHandler.canReceiveCombined())
+                                {
+                                    Queue<Pair<Long, short[]>> queue = combinedQueue.get(userId);
+                                    if (queue == null)
+                                    {
+                                        queue = new ConcurrentLinkedQueue<>();
+                                        combinedQueue.put(userId, queue);
+                                    }
+                                    queue.add(Pair.<Long, short[]>of(System.currentTimeMillis(), decodedAudio));
+                                }
+                            }
+                        }
+                        else if (couldReceive)
+                        {
+                            couldReceive = false;
+                            sendSilentPackets();
+                        }
+                    }
+                    catch (SocketTimeoutException e)
+                    {
+                        //Ignore. We set a low timeout so that we wont block forever so we can properly shutdown the loop.
                     }
                     catch (SocketException e)
                     {
+                        //The socket was closed while we were listening for the next packet.
+                        //This is expected. Ignore the exception. The thread will exit during the next while
+                        // iteration because the udpSocket.isClosed() will return true.
+                    }
+                    catch (Exception e)
+                    {
                         LOG.log(e);
                     }
-                    while (!udpSocket.isClosed() && !this.isInterrupted())
-                    {
-                        DatagramPacket receivedPacket = new DatagramPacket(new byte[1920], 1920);
-                        try
-                        {
-                            udpSocket.receive(receivedPacket);
-
-                            if (receiveHandler != null && (receiveHandler.canReceiveUser() || receiveHandler.canReceiveCombined()) && webSocket.getSecretKey() != null)
-                            {
-                                if (!couldReceive)
-                                {
-                                    couldReceive = true;
-                                    sendSilentPackets();
-                                }
-                                AudioPacket decryptedPacket = AudioPacket.decryptAudioPacket(receivedPacket, webSocket.getSecretKey());
-
-                                int ssrc = decryptedPacket.getSSRC();
-                                final String userId = ssrcMap.get(ssrc);
-                                Decoder decoder = opusDecoders.get(ssrc);
-                                if (userId == null)
-                                {
-                                    byte[] audio = decryptedPacket.getEncodedAudio();
-
-                                    //If the bytes are silence, then this was caused by a User joining the voice channelId,
-                                    // and as such, we haven't yet received information to pair the SSRC with the UserId.
-                                    if (!Arrays.equals(audio, silenceBytes))
-                                        LOG.debug("Received audio data with an unknown SSRC id. Ignoring");
-
-                                    continue;
-                                }
-                                if (decoder == null)
-                                {
-                                    decoder = new Decoder(ssrc);
-                                    opusDecoders.put(ssrc, decoder);
-                                }
-                                if (!decoder.isInOrder(decryptedPacket.getSequence()))
-                                {
-                                    LOG.trace("Got out-of-order audio packet. Ignoring.");
-                                    continue;
-                                }
-
-                                short[] decodedAudio = decoder.decodeFromOpus(decryptedPacket);
-
-                                //If decodedAudio is null, then the Opus decode failed, so throw away the packet.
-                                if (decodedAudio == null)
-                                {
-                                    LOG.trace("Received audio data but Opus failed to properly decode, instead it returned an error");
-                                }
-                                else
-                                {
-                                    if (receiveHandler.canReceiveUser())
-                                    {
-                                        receiveHandler.handleUserAudio(new UserAudio(userId, decodedAudio));
-                                    }
-                                    if (receiveHandler.canReceiveCombined())
-                                    {
-                                        Queue<Pair<Long, short[]>> queue = combinedQueue.get(userId);
-                                        if (queue == null)
-                                        {
-                                            queue = new ConcurrentLinkedQueue<>();
-                                            combinedQueue.put(userId, queue);
-                                        }
-                                        queue.add(Pair.<Long, short[]>of(System.currentTimeMillis(), decodedAudio));
-                                    }
-                                }
-                            }
-                            else if (couldReceive)
-                            {
-                                couldReceive = false;
-                                sendSilentPackets();
-                            }
-                        }
-                        catch (SocketTimeoutException e)
-                        {
-                            //Ignore. We set a low timeout so that we wont block forever so we can properly shutdown the loop.
-                        }
-                        catch (SocketException e)
-                        {
-                            //The socket was closed while we were listening for the next packet.
-                            //This is expected. Ignore the exception. The thread will exit during the next while
-                            // iteration because the udpSocket.isClosed() will return true.
-                        }
-                        catch (Exception e)
-                        {
-                            LOG.log(e);
-                        }
-                    }
                 }
-            };
+            });
+            receiveThread.setName(threadIdentifier + " Receiving Thread");
             receiveThread.setDaemon(true);
             receiveThread.start();
         }
@@ -415,17 +425,17 @@ public class AudioConnection
                         {
                             String user = entry.getKey();
                             Queue<Pair<Long, short[]>> queue = entry.getValue();
-            
+
                             if (queue.isEmpty())
                                 continue;
-            
+
                             Pair<Long, short[]> audioData = queue.poll();
                             //Make sure the audio packet is younger than 100ms
                             while (audioData != null && currentTime - audioData.getLeft() > queueTimeout)
                             {
                                 audioData = queue.poll();
                             }
-            
+
                             //If none of the audio packets were younger than 100ms, then there is nothing to add.
                             if (audioData == null)
                             {
@@ -434,7 +444,7 @@ public class AudioConnection
                             users.add(user);
                             audioParts.add(audioData.getRight());
                         }
-            
+
                         if (!audioParts.isEmpty())
                         {
                             int audioLength = audioParts.get(0).length;
@@ -471,9 +481,69 @@ public class AudioConnection
         }
     }
 
+    private byte[] encodeToOpus(byte[] rawAudio)
+    {
+        ShortBuffer nonEncodedBuffer = ShortBuffer.allocate(rawAudio.length / 2);
+        ByteBuffer encoded = ByteBuffer.allocate(4096);
+        for (int i = 0; i < rawAudio.length; i += 2)
+        {
+            int firstByte =  (0x000000FF & rawAudio[i]);      //Promotes to int and handles the fact that it was unsigned.
+            int secondByte = (0x000000FF & rawAudio[i + 1]);  //
+
+            //Combines the 2 bytes into a short. Opus deals with unsigned shorts, not bytes.
+            short toShort = (short) ((firstByte << 8) | secondByte);
+
+            nonEncodedBuffer.put(toShort);
+        }
+        nonEncodedBuffer.flip();
+
+        //TODO: check for 0 / negative value for error.
+        int result = Opus.INSTANCE.opus_encode(opusEncoder, nonEncodedBuffer, OPUS_FRAME_SIZE, encoded, encoded.capacity());
+
+        //ENCODING STOPS HERE
+
+        byte[] audio = new byte[result];
+        encoded.get(audio);
+        return audio;
+    }
+
+    private void setSpeaking(boolean isSpeaking)
+    {
+        this.speaking = isSpeaking;
+        JSONObject obj = new JSONObject()
+                .put("op", 5)
+                .put("d", new JSONObject()
+                        .put("speaking", isSpeaking)
+                        .put("delay", 0)
+                );
+        webSocket.send(obj.toString());
+        if (!isSpeaking)
+            sendSilentPackets();
+    }
+
+    //Actual logic for this is in the Sending Thread.
+
+    private void sendSilentPackets()
+    {
+        silenceCounter = 0;
+    }
+
+    public AudioWebSocket getWebSocket()
+    {
+        return webSocket;
+    }
+
+    @Override
+    protected void finalize() throws Throwable
+    {
+        super.finalize();
+        shutdown();
+    }
+
     private class PacketProvider implements IPacketProvider
     {
         char seq = 0;           //Sequence of audio packets. Used to determine the order of the packets.
+
         int timestamp = 0;      //Used to sync up our packets within the same timeframe of other people talking.
 
         @Override
@@ -566,7 +636,6 @@ public class AudioConnection
             LOG.warn("Shutting down AudioConnection.");
             webSocket.close(status);
         }
-
         @Override
         public void onConnectionLost()
         {
@@ -575,63 +644,6 @@ public class AudioConnection
                     "Are you sure you have internet connection? It is likely that you've lost connection.");
             webSocket.close(ConnectionStatus.ERROR_LOST_CONNECTION);
         }
-    }
 
-    private byte[] encodeToOpus(byte[] rawAudio)
-    {
-        ShortBuffer nonEncodedBuffer = ShortBuffer.allocate(rawAudio.length / 2);
-        ByteBuffer encoded = ByteBuffer.allocate(4096);
-        for (int i = 0; i < rawAudio.length; i += 2)
-        {
-            int firstByte =  (0x000000FF & rawAudio[i]);      //Promotes to int and handles the fact that it was unsigned.
-            int secondByte = (0x000000FF & rawAudio[i + 1]);  //
-
-            //Combines the 2 bytes into a short. Opus deals with unsigned shorts, not bytes.
-            short toShort = (short) ((firstByte << 8) | secondByte);
-
-            nonEncodedBuffer.put(toShort);
-        }
-        nonEncodedBuffer.flip();
-
-        //TODO: check for 0 / negative value for error.
-        int result = Opus.INSTANCE.opus_encode(opusEncoder, nonEncodedBuffer, OPUS_FRAME_SIZE, encoded, encoded.capacity());
-
-        //ENCODING STOPS HERE
-
-        byte[] audio = new byte[result];
-        encoded.get(audio);
-        return audio;
-    }
-
-    private void setSpeaking(boolean isSpeaking)
-    {
-        this.speaking = isSpeaking;
-        JSONObject obj = new JSONObject()
-                .put("op", 5)
-                .put("d", new JSONObject()
-                        .put("speaking", isSpeaking)
-                        .put("delay", 0)
-                );
-        webSocket.send(obj.toString());
-        if (!isSpeaking)
-            sendSilentPackets();
-    }
-
-    //Actual logic for this is in the Sending Thread.
-    private void sendSilentPackets()
-    {
-        silenceCounter = 0;
-    }
-
-    public AudioWebSocket getWebSocket()
-    {
-        return webSocket;
-    }
-
-    @Override
-    protected void finalize() throws Throwable
-    {
-        super.finalize();
-        shutdown();
     }
 }
