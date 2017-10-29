@@ -17,6 +17,8 @@
 package net.dv8tion.jda;
 
 import net.dv8tion.jda.audio.AudioWebSocket;
+import net.dv8tion.jda.audio.factory.DefaultSendFactory;
+import net.dv8tion.jda.audio.factory.IAudioSendFactory;
 import net.dv8tion.jda.handle.VoiceServerUpdateHandler;
 import net.dv8tion.jda.manager.AudioManager;
 import net.dv8tion.jda.utils.SimpleLog;
@@ -35,6 +37,7 @@ public class Core
     private final VoiceServerUpdateHandler vsuHandler;
     private final String userId;
     private final CoreClient coreClient;
+    private final IAudioSendFactory sendFactory;
 
     /**
      * Creates a new Core instance. You should probably have one of these for each shard, but you do you.
@@ -44,11 +47,24 @@ public class Core
      */
     public Core(String userId, CoreClient coreClient)
     {
+        this(userId, coreClient, new DefaultSendFactory());
+    }
+
+    /**
+     * Creates a new Core instance. You should probably have one of these for each shard, but you do you.
+     *
+     * @param userId The UserId of the bot.
+     * @param coreClient used to insert required functionality to connect Core to the MainWS
+     * @param coreClient the {@link net.dv8tion.jda.audio.factory.IAudioSendFactory} to use.
+     */
+    public Core(String userId, CoreClient coreClient, IAudioSendFactory sendFactory)
+    {
         this.userId = userId;
         this.coreClient = coreClient;
         this.connManager = new ConnectionManager(this);
         this.vsuHandler = new VoiceServerUpdateHandler(this);
         this.audioKeepAlivePool = new ScheduledThreadPoolExecutor(1, new AudioWebSocket.KeepAliveThreadFactory());
+        this.sendFactory = sendFactory;
     }
 
     // ==================================================================
@@ -78,6 +94,11 @@ public class Core
         }
 
         return manager;
+    }
+
+    public IAudioSendFactory getSendFactory()
+    {
+        return sendFactory;
     }
 
     // ====================================================================

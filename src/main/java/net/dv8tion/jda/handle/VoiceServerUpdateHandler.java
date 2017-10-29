@@ -69,7 +69,7 @@ public class VoiceServerUpdateHandler
             }
 
             AudioWebSocket socket = new AudioWebSocket(audioManager.getListenerProxy(), endpoint, core, guildId, sessionId, token, audioManager.isAutoReconnect());
-            AudioConnection connection = new AudioConnection(socket, audioManager.getQueuedAudioConnectionId());
+            AudioConnection connection = new AudioConnection(socket, audioManager.getQueuedAudioConnectionId(), core.getSendFactory());
             audioManager.setAudioConnection(connection);
             socket.startConnection();
 
