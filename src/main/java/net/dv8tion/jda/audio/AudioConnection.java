@@ -19,7 +19,6 @@ package net.dv8tion.jda.audio;
 import com.sun.jna.ptr.PointerByReference;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
-import net.dv8tion.jda.audio.factory.DefaultSendFactory;
 import net.dv8tion.jda.audio.factory.IAudioSendFactory;
 import net.dv8tion.jda.audio.factory.IAudioSendSystem;
 import net.dv8tion.jda.audio.factory.IPacketProvider;
@@ -53,7 +52,7 @@ public class AudioConnection
     public static final int OPUS_CHANNEL_COUNT = 2;     //We want to use stereo. If the audio given is mono, the encoder promotes it
                                                         // to Left and Right mono (stereo that is the same on both sides)
 
-    public static IAudioSendFactory sendFactory = new DefaultSendFactory();
+    public final IAudioSendFactory sendFactory;
 
     private final TIntObjectMap<String> ssrcMap = new TIntObjectHashMap();
     private final TIntObjectMap<Decoder> opusDecoders = new TIntObjectHashMap<>();
@@ -79,21 +78,14 @@ public class AudioConnection
     boolean sentSilenceOnConnect = false;
     private final byte[] silenceBytes = new byte[] {(byte)0xF8, (byte)0xFF, (byte)0xFE};
 
-    public AudioConnection(AudioWebSocket webSocket, String channelId)
+    public AudioConnection(AudioWebSocket webSocket, String channelId, IAudioSendFactory sendFactory)
     {
         this.channelId = channelId;
         this.webSocket = webSocket;
+        this.sendFactory = sendFactory;
         this.webSocket.audioConnection = this;
 
         this.threadIdentifier = /**api.getIdentifierString() + */ " AudioConnection ChannelId: " + channelId;
-    }
-
-    public static void setAudioSendFactory(IAudioSendFactory factory)
-    {
-        if (sendFactory == null)
-            throw new IllegalArgumentException("Send factory is null!");
-
-        sendFactory = factory;
     }
 
     public void ready(long timeout)
