@@ -32,7 +32,7 @@ public class Core
     public static SimpleLog LOG = SimpleLog.getLog("Core");
 
     private final HashMap<String, AudioManager> audioManagers = new HashMap<>();
-    private final ConnectionManager connManager;
+    private final DefaultConnectionManager connManager;
     private final ScheduledThreadPoolExecutor audioKeepAlivePool;
     private final VoiceServerUpdateHandler vsuHandler;
     private final String userId;
@@ -61,7 +61,7 @@ public class Core
     {
         this.userId = userId;
         this.coreClient = coreClient;
-        this.connManager = new ConnectionManager(this);
+        this.connManager = new DefaultConnectionManager(this);
         this.vsuHandler = new VoiceServerUpdateHandler(this);
         this.audioKeepAlivePool = new ScheduledThreadPoolExecutor(1, new AudioWebSocket.KeepAliveThreadFactory());
         this.sendFactory = sendFactory;
