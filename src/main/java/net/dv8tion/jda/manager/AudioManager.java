@@ -108,7 +108,7 @@ public class AudioManager
     {
         synchronized (CONNECTION_LOCK)
         {
-            core.getConnectionManager().getQueuedAudioConnectionMap().remove(guildId);
+            core.getConnectionManager().removeAudioConnection(guildId);
             this.queuedAudioConnectionId = null;
             if (audioConnection == null)
                 return;

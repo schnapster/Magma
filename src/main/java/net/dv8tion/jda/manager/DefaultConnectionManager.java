@@ -49,9 +49,18 @@ public class DefaultConnectionManager implements ConnectionManager
     }
 
     @Override
+    public void shouldReconnect(String guildId) {
+    }
+
+    @Override
     public void queueAudioConnect(String guildId, String channelId)
     {
         queuedAudioConnections.put(guildId, new MutablePair<>(System.currentTimeMillis(), channelId));
+    }
+
+    @Override
+    public void removeAudioConnection(String guildId) {
+        queuedAudioConnections.remove(guildId);
     }
 
     public HashMap<String, MutablePair<Long, String>> getQueuedAudioConnectionMap()
