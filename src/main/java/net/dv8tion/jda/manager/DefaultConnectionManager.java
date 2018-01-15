@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package net.dv8tion.jda;
+package net.dv8tion.jda.manager;
 
+import net.dv8tion.jda.Core;
 import net.dv8tion.jda.audio.hooks.ConnectionListener;
 import net.dv8tion.jda.audio.hooks.ConnectionStatus;
-import net.dv8tion.jda.manager.AudioManager;
 import net.dv8tion.jda.utils.SimpleLog;
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.json.JSONObject;

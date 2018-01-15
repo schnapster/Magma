@@ -21,6 +21,9 @@ import net.dv8tion.jda.audio.factory.DefaultSendFactory;
 import net.dv8tion.jda.audio.factory.IAudioSendFactory;
 import net.dv8tion.jda.handle.VoiceServerUpdateHandler;
 import net.dv8tion.jda.manager.AudioManager;
+import net.dv8tion.jda.manager.ConnectionManager;
+import net.dv8tion.jda.manager.ConnectionManagerBuilder;
+import net.dv8tion.jda.manager.DefaultConnectionManager;
 import net.dv8tion.jda.utils.SimpleLog;
 import org.json.JSONObject;
 
@@ -32,7 +35,7 @@ public class Core
     public static SimpleLog LOG = SimpleLog.getLog("Core");
 
     private final HashMap<String, AudioManager> audioManagers = new HashMap<>();
-    private final DefaultConnectionManager connManager;
+    private final ConnectionManager connManager;
     private final ScheduledThreadPoolExecutor audioKeepAlivePool;
     private final VoiceServerUpdateHandler vsuHandler;
     private final String userId;
@@ -47,7 +50,7 @@ public class Core
      */
     public Core(String userId, CoreClient coreClient)
     {
-        this(userId, coreClient, new DefaultSendFactory());
+        this(userId, coreClient, DefaultConnectionManager::new, new DefaultSendFactory());
     }
 
     /**
@@ -55,14 +58,37 @@ public class Core
      *
      * @param userId The UserId of the bot.
      * @param coreClient used to insert required functionality to connect Core to the MainWS
-     * @param coreClient the {@link net.dv8tion.jda.audio.factory.IAudioSendFactory} to use.
+     * @param sendFactory the {@link net.dv8tion.jda.audio.factory.IAudioSendFactory} to use.
      */
-    public Core(String userId, CoreClient coreClient, IAudioSendFactory sendFactory)
+    public Core(String userId, CoreClient coreClient, IAudioSendFactory sendFactory) {
+        this(userId, coreClient, DefaultConnectionManager::new, sendFactory);
+    }
+
+    /**
+     * Creates a new Core instance. You should probably have one of these for each shard, but you do you.
+     *
+     * @param userId The UserId of the bot.
+     * @param coreClient used to insert required functionality to connect Core to the MainWS
+     * @param connectionManagerBuilder connection manager to use
+     */
+    public Core(String userId, CoreClient coreClient, ConnectionManagerBuilder connectionManagerBuilder) {
+        this(userId, coreClient, connectionManagerBuilder, new DefaultSendFactory());
+    }
+
+    /**
+     * Creates a new Core instance. You should probably have one of these for each shard, but you do you.
+     *
+     * @param userId The UserId of the bot.
+     * @param coreClient used to insert required functionality to connect Core to the MainWS
+     * @param connectionManagerBuilder Connection manager builder
+     * @param sendFactory the {@link net.dv8tion.jda.audio.factory.IAudioSendFactory} to use.
+     */
+    public Core(String userId, CoreClient coreClient, ConnectionManagerBuilder connectionManagerBuilder, IAudioSendFactory sendFactory)
     {
         this.userId = userId;
         this.coreClient = coreClient;
-        this.connManager = new DefaultConnectionManager(this);
         this.vsuHandler = new VoiceServerUpdateHandler(this);
+        this.connManager = connectionManagerBuilder.build(this);
         this.audioKeepAlivePool = new ScheduledThreadPoolExecutor(1, new AudioWebSocket.KeepAliveThreadFactory());
         this.sendFactory = sendFactory;
     }
