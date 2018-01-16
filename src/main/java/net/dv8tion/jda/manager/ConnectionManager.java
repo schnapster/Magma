@@ -10,5 +10,5 @@ public interface ConnectionManager {
 
     void removeAudioConnection(String guildId);
 
-    void shouldReconnect(String guildId);
+    void onDisconnect(String guildId);
 }

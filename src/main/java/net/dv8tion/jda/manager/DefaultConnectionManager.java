@@ -49,7 +49,7 @@ public class DefaultConnectionManager implements ConnectionManager
     }
 
     @Override
-    public void shouldReconnect(String guildId) {
+    public void onDisconnect(String guildId) {
     }
 
     @Override
