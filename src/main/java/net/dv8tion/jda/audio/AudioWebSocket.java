@@ -450,7 +450,6 @@ public class AudioWebSocket extends WebSocketAdapter
         {
             manager.setQueuedAudioConnectionId(disconnectedChannelId);
             core.getConnectionManager().queueAudioConnect(guildId, disconnectedChannelId);
-            core.getConnectionManager().onDisconnect(guildId);
         }
     }
 

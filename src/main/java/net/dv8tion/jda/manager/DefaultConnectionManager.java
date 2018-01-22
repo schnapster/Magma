@@ -49,10 +49,6 @@ public class DefaultConnectionManager implements ConnectionManager
     }
 
     @Override
-    public void onDisconnect(String guildId) {
-    }
-
-    @Override
     public void queueAudioConnect(String guildId, String channelId)
     {
         queuedAudioConnections.put(guildId, new MutablePair<>(System.currentTimeMillis(), channelId));
