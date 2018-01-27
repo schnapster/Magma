@@ -38,7 +38,7 @@ public class VoiceServerUpdateHandler
             throw new IllegalArgumentException("Provided session id was null or empty!");
 
         final String guildId = content.getString("guild_id");
-        core.getConnectionManager().getQueuedAudioConnectionMap().remove(guildId);
+        core.getConnectionManager().removeAudioConnection(guildId);
 
         if (content.isNull("endpoint"))
         {
@@ -61,13 +61,7 @@ public class VoiceServerUpdateHandler
         {
             if (audioManager.isConnected())
                 audioManager.prepareForRegionChange();
-            if (!audioManager.isAttemptingToConnect())
-            {
-                Core.LOG.debug("Received a VOICE_SERVER_UPDATE but JDA is not currently connected nor attempted to connect " +
-                        "to a VoiceChannel. Assuming that this is caused by another client running on this account. Ignoring the event.");
-                return null;
-            }
-
+            
             AudioWebSocket socket = new AudioWebSocket(audioManager.getListenerProxy(), endpoint, core, guildId, sessionId, token, audioManager.isAutoReconnect());
             AudioConnection connection = new AudioConnection(socket, audioManager.getQueuedAudioConnectionId(), core.getSendFactory());
             audioManager.setAudioConnection(connection);

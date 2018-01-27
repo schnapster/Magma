@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package net.dv8tion.jda;
+package net.dv8tion.jda.manager;
 
+import net.dv8tion.jda.Core;
 import net.dv8tion.jda.audio.hooks.ConnectionListener;
 import net.dv8tion.jda.audio.hooks.ConnectionStatus;
-import net.dv8tion.jda.manager.AudioManager;
 import net.dv8tion.jda.utils.SimpleLog;
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.json.JSONObject;
@@ -27,7 +27,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-public class ConnectionManager
+public class DefaultConnectionManager implements ConnectionManager
 {
     public static final SimpleLog LOG = SimpleLog.getLog("ConnectionManager");
 
@@ -42,15 +42,21 @@ public class ConnectionManager
 
     private int maxWebsocketMessagesPerMinute = 115;
 
-    public ConnectionManager(Core core)
+    public DefaultConnectionManager(Core core)
     {
         this.core = core;
         setupSendingThread();
     }
 
+    @Override
     public void queueAudioConnect(String guildId, String channelId)
     {
         queuedAudioConnections.put(guildId, new MutablePair<>(System.currentTimeMillis(), channelId));
+    }
+
+    @Override
+    public void removeAudioConnection(String guildId) {
+        queuedAudioConnections.remove(guildId);
     }
 
     public HashMap<String, MutablePair<Long, String>> getQueuedAudioConnectionMap()
