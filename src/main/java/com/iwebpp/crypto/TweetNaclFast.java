@@ -29,27 +29,27 @@ public final class TweetNaclFast
 
         private final static String TAG = "Box";
 
-        private AtomicLong nonce;
+        private final AtomicLong nonce;
 
-        private byte [] theirPublicKey;
-        private byte [] mySecretKey;
+        private final byte[] theirPublicKey;
+        private final byte[] mySecretKey;
         private byte [] sharedKey;
 
-        public Box(byte [] theirPublicKey, byte [] mySecretKey) {
+        public Box(final byte[] theirPublicKey, final byte[] mySecretKey) {
             this(theirPublicKey, mySecretKey, 68);
         }
 
-        public Box(byte [] theirPublicKey, byte [] mySecretKey, long nonce) {
+        public Box(final byte[] theirPublicKey, final byte[] mySecretKey, final long nonce) {
             this.theirPublicKey = theirPublicKey;
             this.mySecretKey = mySecretKey;
 
             this.nonce = new AtomicLong(nonce);
 
             // generate pre-computed shared key
-            before();
+            this.before();
         }
 
-        public void setNonce(long nonce) {
+        public void setNonce(final long nonce) {
             this.nonce.set(nonce);
         }
         public long getNonce() {
@@ -60,9 +60,9 @@ public final class TweetNaclFast
         }
         private byte[] generateNonce() {
             // generate nonce
-            long nonce = this.nonce.get();
+            final long nonce = this.nonce.get();
 
-            byte [] n = new byte[nonceLength];
+            final byte[] n = new byte[nonceLength];
             for (int i = 0; i < nonceLength; i += 8) {
                 n[i+0] = (byte) (nonce>>> 0);
                 n[i+1] = (byte) (nonce>>> 8);
@@ -86,23 +86,23 @@ public final class TweetNaclFast
          *   Returns an encrypted and authenticated message,
          *   which is nacl.box.overheadLength longer than the original message.
          * */
-        public byte [] box(byte [] message) {
+        public byte[] box(final byte[] message) {
             if (message==null) return null;
-            return box(message, 0, message.length);
+            return this.box(message, 0, message.length);
         }
 
-        public byte [] box(byte [] message, final int moff) {
+        public byte[] box(final byte[] message, final int moff) {
             if (!(message!=null && message.length>moff)) return null;
-            return box(message, moff, message.length-moff);
+            return this.box(message, moff, message.length - moff);
         }
 
-        public byte [] box(byte [] message, final int moff, final int mlen) {
+        public byte[] box(final byte[] message, final int moff, final int mlen) {
             if (!(message!=null && message.length>=(moff+mlen))) return null;
 
             // prepare shared key
-            if (this.sharedKey == null) before();
+            if (this.sharedKey == null) this.before();
 
-            return after(message, moff, mlen);
+            return this.after(message, moff, mlen);
         }
 
         /*
@@ -116,25 +116,25 @@ public final class TweetNaclFast
          *   Returns an encrypted and authenticated message,
          *   which is nacl.box.overheadLength longer than the original message.
          * */
-        public byte [] box(byte [] message, byte [] theNonce) {
+        public byte[] box(final byte[] message, final byte[] theNonce) {
             if (message==null) return null;
-            return box(message, 0, message.length, theNonce);
+            return this.box(message, 0, message.length, theNonce);
         }
 
-        public byte [] box(byte [] message, final int moff, byte [] theNonce) {
+        public byte[] box(final byte[] message, final int moff, final byte[] theNonce) {
             if (!(message!=null && message.length>moff)) return null;
-            return box(message, moff, message.length-moff, theNonce);
+            return this.box(message, moff, message.length - moff, theNonce);
         }
 
-        public byte [] box(byte [] message, final int moff, final int mlen, byte [] theNonce) {
+        public byte[] box(final byte[] message, final int moff, final int mlen, final byte[] theNonce) {
             if (!(message!=null && message.length>=(moff+mlen) &&
                     theNonce!=null && theNonce.length==nonceLength))
                 return null;
 
             // prepare shared key
-            if (this.sharedKey == null) before();
+            if (this.sharedKey == null) this.before();
 
-            return after(message, moff, mlen, theNonce);
+            return this.after(message, moff, mlen, theNonce);
         }
 
         /*
@@ -144,29 +144,31 @@ public final class TweetNaclFast
          *
          *   Returns the original message, or null if authentication fails.
          * */
-        public byte [] open(byte [] box) {
+        public byte[] open(final byte[] box) {
             if (box==null) return null;
 
             // prepare shared key
-            if (this.sharedKey == null) before();
+            if (this.sharedKey == null) this.before();
 
-            return open_after(box, 0, box.length);
+            return this.open_after(box, 0, box.length);
         }
-        public byte [] open(byte [] box, final int boxoff) {
+
+        public byte[] open(final byte[] box, final int boxoff) {
             if (!(box!=null && box.length>boxoff)) return null;
 
             // prepare shared key
-            if (this.sharedKey == null) before();
+            if (this.sharedKey == null) this.before();
 
-            return open_after(box, boxoff, box.length-boxoff);
+            return this.open_after(box, boxoff, box.length - boxoff);
         }
-        public byte [] open(byte [] box, final int boxoff, final int boxlen) {
+
+        public byte[] open(final byte[] box, final int boxoff, final int boxlen) {
             if (!(box!=null && box.length>=(boxoff+boxlen))) return null;
 
             // prepare shared key
-            if (this.sharedKey == null) before();
+            if (this.sharedKey == null) this.before();
 
-            return open_after(box, boxoff, boxlen);
+            return this.open_after(box, boxoff, boxlen);
         }
 
 
@@ -177,35 +179,37 @@ public final class TweetNaclFast
          *   Explicit passing of nonce
          *   Returns the original message, or null if authentication fails.
          * */
-        public byte [] open(byte [] box, byte [] theNonce) {
+        public byte[] open(final byte[] box, final byte[] theNonce) {
             if (!(box!=null &&
                     theNonce!=null && theNonce.length==nonceLength))
                 return null;
 
             // prepare shared key
-            if (this.sharedKey == null) before();
+            if (this.sharedKey == null) this.before();
 
-            return open_after(box, 0, box.length, theNonce);
+            return this.open_after(box, 0, box.length, theNonce);
         }
-        public byte [] open(byte [] box, final int boxoff, byte [] theNonce) {
+
+        public byte[] open(final byte[] box, final int boxoff, final byte[] theNonce) {
             if (!(box!=null && box.length>boxoff &&
                     theNonce!=null && theNonce.length==nonceLength))
                 return null;
 
             // prepare shared key
-            if (this.sharedKey == null) before();
+            if (this.sharedKey == null) this.before();
 
-            return open_after(box, boxoff, box.length-boxoff, theNonce);
+            return this.open_after(box, boxoff, box.length - boxoff, theNonce);
         }
-        public byte [] open(byte [] box, final int boxoff, final int boxlen, byte [] theNonce) {
+
+        public byte[] open(final byte[] box, final int boxoff, final int boxlen, final byte[] theNonce) {
             if (!(box!=null && box.length>=(boxoff+boxlen) &&
                     theNonce!=null && theNonce.length==nonceLength))
                 return null;
 
             // prepare shared key
-            if (this.sharedKey == null) before();
+            if (this.sharedKey == null) this.before();
 
-            return open_after(box, boxoff, boxlen, theNonce);
+            return this.open_after(box, boxoff, boxlen, theNonce);
         }
 
 
@@ -227,8 +231,8 @@ public final class TweetNaclFast
          * @description
          *   Same as nacl.box, but uses a shared key precomputed with nacl.box.before.
          * */
-        public byte [] after(byte [] message, final int moff, final int mlen) {
-            return after(message, moff, mlen, generateNonce());
+        public byte[] after(final byte[] message, final int moff, final int mlen) {
+            return this.after(message, moff, mlen, this.generateNonce());
         }
 
         /*
@@ -236,27 +240,27 @@ public final class TweetNaclFast
          *   Same as nacl.box, but uses a shared key precomputed with nacl.box.before,
          *   and passes a nonce explicitly.
          * */
-        public byte [] after(byte [] message, final int moff, final int mlen, byte [] theNonce) {
+        public byte[] after(final byte[] message, final int moff, final int mlen, final byte[] theNonce) {
             // check message
             if (!(message!=null && message.length>=(moff+mlen) &&
                     theNonce!=null && theNonce.length==nonceLength))
                 return null;
 
             // message buffer
-            byte [] m = new byte[mlen + zerobytesLength];
+            final byte[] m = new byte[mlen + zerobytesLength];
 
             // cipher buffer
-            byte [] c = new byte[m.length];
+            final byte[] c = new byte[m.length];
 
             for (int i = 0; i < mlen; i ++)
                 m[i+zerobytesLength] = message[i+moff];
 
-            if (0 != crypto_box_afternm(c, m, m.length, theNonce, sharedKey))
+            if (0 != crypto_box_afternm(c, m, m.length, theNonce, this.sharedKey))
                 return null;
 
             // wrap byte_buf_t on c offset@boxzerobytesLength
             ///return new byte_buf_t(c, boxzerobytesLength, c.length-boxzerobytesLength);
-            byte [] ret = new byte[c.length-boxzerobytesLength];
+            final byte[] ret = new byte[c.length - boxzerobytesLength];
 
             for (int i = 0; i < ret.length; i ++)
                 ret[i] = c[i+boxzerobytesLength];
@@ -269,30 +273,30 @@ public final class TweetNaclFast
          *   Same as nacl.box.open,
          *   but uses a shared key pre-computed with nacl.box.before.
          * */
-        public byte [] open_after(byte [] box, final int boxoff, final int boxlen) {
-            return open_after(box, boxoff, boxlen, generateNonce());
+        public byte[] open_after(final byte[] box, final int boxoff, final int boxlen) {
+            return this.open_after(box, boxoff, boxlen, this.generateNonce());
         }
 
-        public byte [] open_after(byte [] box, final int boxoff, final int boxlen, byte [] theNonce) {
+        public byte[] open_after(final byte[] box, final int boxoff, final int boxlen, final byte[] theNonce) {
             // check message
             if (!(box!=null && box.length>=(boxoff+boxlen) && boxlen>=boxzerobytesLength))
                 return null;
 
             // cipher buffer
-            byte [] c = new byte[boxlen + boxzerobytesLength];
+            final byte[] c = new byte[boxlen + boxzerobytesLength];
 
             // message buffer
-            byte [] m = new byte[c.length];
+            final byte[] m = new byte[c.length];
 
             for (int i = 0; i < boxlen; i++)
                 c[i+boxzerobytesLength] = box[i+boxoff];
 
-            if (crypto_box_open_afternm(m, c, c.length, theNonce, sharedKey) != 0)
+            if (crypto_box_open_afternm(m, c, c.length, theNonce, this.sharedKey) != 0)
                 return null;
 
             // wrap byte_buf_t on m offset@zerobytesLength
             ///return new byte_buf_t(m, zerobytesLength, m.length-zerobytesLength);
-            byte [] ret = new byte[m.length-zerobytesLength];
+            final byte[] ret = new byte[m.length - zerobytesLength];
 
             for (int i = 0; i < ret.length; i ++)
                 ret[i] = m[i+zerobytesLength];
@@ -342,20 +346,20 @@ public final class TweetNaclFast
         public static final int overheadLength  = 16;
 
         public static class KeyPair {
-            private byte [] publicKey;
-            private byte [] secretKey;
+            private final byte[] publicKey;
+            private final byte[] secretKey;
 
             public KeyPair() {
-                publicKey = new byte[publicKeyLength];
-                secretKey = new byte[secretKeyLength];
+                this.publicKey = new byte[publicKeyLength];
+                this.secretKey = new byte[secretKeyLength];
             }
 
             public byte [] getPublicKey() {
-                return publicKey;
+                return this.publicKey;
             }
 
             public byte [] getSecretKey() {
-                return secretKey;
+                return this.secretKey;
             }
         }
 
@@ -365,16 +369,16 @@ public final class TweetNaclFast
          *   returns it as an object with publicKey and secretKey members:
          * */
         public static KeyPair keyPair() {
-            KeyPair kp = new KeyPair();
+            final KeyPair kp = new KeyPair();
 
             crypto_box_keypair(kp.getPublicKey(), kp.getSecretKey());
             return kp;
         }
 
-        public static KeyPair keyPair_fromSecretKey(byte [] secretKey) {
-            KeyPair kp = new KeyPair();
-            byte [] sk = kp.getSecretKey();
-            byte [] pk = kp.getPublicKey();
+        public static KeyPair keyPair_fromSecretKey(final byte[] secretKey) {
+            final KeyPair kp = new KeyPair();
+            final byte[] sk = kp.getSecretKey();
+            final byte[] pk = kp.getPublicKey();
 
             // copy sk
             for (int i = 0; i < sk.length; i ++)
@@ -394,21 +398,21 @@ public final class TweetNaclFast
 
         private final static String TAG = "SecretBox";
 
-        private AtomicLong nonce;
+        private final AtomicLong nonce;
 
-        private byte [] key;
+        private final byte[] key;
 
-        public SecretBox(byte [] key) {
+        public SecretBox(final byte[] key) {
             this(key, 68);
         }
 
-        public SecretBox(byte [] key, long nonce) {
+        public SecretBox(final byte[] key, final long nonce) {
             this.key = key;
 
             this.nonce = new AtomicLong(nonce);
         }
 
-        public void setNonce(long nonce) {
+        public void setNonce(final long nonce) {
             this.nonce.set(nonce);
         }
         public long getNonce() {
@@ -419,9 +423,9 @@ public final class TweetNaclFast
         }
         private byte[] generateNonce() {
             // generate nonce
-            long nonce = this.nonce.get();
+            final long nonce = this.nonce.get();
 
-            byte [] n = new byte[nonceLength];
+            final byte[] n = new byte[nonceLength];
             for (int i = 0; i < nonceLength; i += 8) {
                 n[i+0] = (byte) (nonce>>> 0);
                 n[i+1] = (byte) (nonce>>> 8);
@@ -444,55 +448,55 @@ public final class TweetNaclFast
          *   Returns an encrypted and authenticated message,
          *   which is nacl.secretbox.overheadLength longer than the original message.
          * */
-        public byte [] box(byte [] message) {
+        public byte[] box(final byte[] message) {
             if (message==null) return null;
-            return box(message, 0, message.length);
+            return this.box(message, 0, message.length);
         }
 
-        public byte [] box(byte [] message, final int moff) {
+        public byte[] box(final byte[] message, final int moff) {
             if (!(message!=null && message.length>moff)) return null;
-            return box(message, moff, message.length-moff);
+            return this.box(message, moff, message.length - moff);
         }
 
-        public byte [] box(byte [] message, final int moff, final int mlen) {
+        public byte[] box(final byte[] message, final int moff, final int mlen) {
             // check message
             if (!(message!=null && message.length>=(moff+mlen)))
                 return null;
-            return box(message, moff, message.length-moff, generateNonce());
+            return this.box(message, moff, message.length - moff, this.generateNonce());
         }
 
-        public byte [] box(byte [] message, byte [] theNonce) {
+        public byte[] box(final byte[] message, final byte[] theNonce) {
             if (message==null) return null;
-            return box(message, 0, message.length, theNonce);
+            return this.box(message, 0, message.length, theNonce);
         }
 
-        public byte [] box(byte [] message, final int moff, byte [] theNonce) {
+        public byte[] box(final byte[] message, final int moff, final byte[] theNonce) {
             if (!(message!=null && message.length>moff)) return null;
-            return box(message, moff, message.length-moff, theNonce);
+            return this.box(message, moff, message.length - moff, theNonce);
         }
 
-        public byte [] box(byte [] message, final int moff, final int mlen, byte [] theNonce) {
+        public byte[] box(final byte[] message, final int moff, final int mlen, final byte[] theNonce) {
             // check message
             if (!(message!=null && message.length>=(moff+mlen) &&
                     theNonce!=null && theNonce.length==nonceLength))
                 return null;
 
             // message buffer
-            byte [] m = new byte[mlen + zerobytesLength];
+            final byte[] m = new byte[mlen + zerobytesLength];
 
             // cipher buffer
-            byte [] c = new byte[m.length];
+            final byte[] c = new byte[m.length];
 
             for (int i = 0; i < mlen; i ++)
                 m[i+zerobytesLength] = message[i+moff];
 
-            if (0 != crypto_secretbox(c, m, m.length, theNonce, key))
+            if (0 != crypto_secretbox(c, m, m.length, theNonce, this.key))
                 return null;
 
             // TBD optimizing ...
             // wrap byte_buf_t on c offset@boxzerobytesLength
             ///return new byte_buf_t(c, boxzerobytesLength, c.length-boxzerobytesLength);
-            byte [] ret = new byte[c.length-boxzerobytesLength];
+            final byte[] ret = new byte[c.length - boxzerobytesLength];
 
             for (int i = 0; i < ret.length; i ++)
                 ret[i] = c[i+boxzerobytesLength];
@@ -507,54 +511,54 @@ public final class TweetNaclFast
          *
          *   Returns the original message, or null if authentication fails.
          * */
-        public byte [] open(byte [] box) {
+        public byte[] open(final byte[] box) {
             if (box==null) return null;
-            return open(box, 0, box.length);
+            return this.open(box, 0, box.length);
         }
 
-        public byte [] open(byte [] box, final int boxoff) {
+        public byte[] open(final byte[] box, final int boxoff) {
             if (!(box!=null && box.length>boxoff)) return null;
-            return open(box, boxoff, box.length-boxoff);
+            return this.open(box, boxoff, box.length - boxoff);
         }
 
-        public byte [] open(byte [] box, final int boxoff, final int boxlen) {
+        public byte[] open(final byte[] box, final int boxoff, final int boxlen) {
             // check message
             if (!(box!=null && box.length>=(boxoff+boxlen) && boxlen>=boxzerobytesLength))
                 return null;
-            return open(box, boxoff, box.length-boxoff, generateNonce());
+            return this.open(box, boxoff, box.length - boxoff, this.generateNonce());
         }
 
-        public byte [] open(byte [] box, byte [] theNonce) {
+        public byte[] open(final byte[] box, final byte[] theNonce) {
             if (box==null) return null;
-            return open(box, 0, box.length, theNonce);
+            return this.open(box, 0, box.length, theNonce);
         }
 
-        public byte [] open(byte [] box, final int boxoff, byte [] theNonce) {
+        public byte[] open(final byte[] box, final int boxoff, final byte[] theNonce) {
             if (!(box!=null && box.length>boxoff)) return null;
-            return open(box, boxoff, box.length-boxoff, theNonce);
+            return this.open(box, boxoff, box.length - boxoff, theNonce);
         }
 
-        public byte [] open(byte [] box, final int boxoff, final int boxlen, byte [] theNonce) {
+        public byte[] open(final byte[] box, final int boxoff, final int boxlen, final byte[] theNonce) {
             // check message
             if (!(box!=null && box.length>=(boxoff+boxlen) && boxlen>=boxzerobytesLength &&
                     theNonce!=null && theNonce.length==nonceLength))
                 return null;
 
             // cipher buffer
-            byte [] c = new byte[boxlen + boxzerobytesLength];
+            final byte[] c = new byte[boxlen + boxzerobytesLength];
 
             // message buffer
-            byte [] m = new byte[c.length];
+            final byte[] m = new byte[c.length];
 
             for (int i = 0; i < boxlen; i++)
                 c[i+boxzerobytesLength] = box[i+boxoff];
 
-            if (0 != crypto_secretbox_open(m, c, c.length, theNonce, key))
+            if (0 != crypto_secretbox_open(m, c, c.length, theNonce, this.key))
                 return null;
 
             // wrap byte_buf_t on m offset@zerobytesLength
             ///return new byte_buf_t(m, zerobytesLength, m.length-zerobytesLength);
-            byte [] ret = new byte[m.length-zerobytesLength];
+            final byte[] ret = new byte[m.length - zerobytesLength];
 
             for (int i = 0; i < ret.length; i ++)
                 ret[i] = m[i+zerobytesLength];
@@ -606,11 +610,11 @@ public final class TweetNaclFast
          *   Multiplies an integer n by a group element p and
          *   returns the resulting group element.
          * */
-        public static byte [] scalseMult(byte [] n, byte [] p) {
+        public static byte[] scalseMult(final byte[] n, final byte[] p) {
             if (!(n.length==scalarLength && p.length==groupElementLength))
                 return null;
 
-            byte [] q = new byte [scalarLength];
+            final byte[] q = new byte[scalarLength];
 
             crypto_scalarmult(q, n, p);
 
@@ -622,11 +626,11 @@ public final class TweetNaclFast
          *   Multiplies an integer n by a standard group element and
          *   returns the resulting group element.
          * */
-        public static byte [] scalseMult_base(byte [] n) {
+        public static byte[] scalseMult_base(final byte[] n) {
             if (!(n.length==scalarLength))
                 return null;
 
-            byte [] q = new byte [scalarLength];
+            final byte[] q = new byte[scalarLength];
 
             crypto_scalarmult_base(q, n);
 
@@ -660,17 +664,18 @@ public final class TweetNaclFast
          * @description
          *   Returns SHA-512 hash of the message.
          * */
-        public static byte[] sha512(byte [] message) {
+        public static byte[] sha512(final byte[] message) {
             if (!(message!=null && message.length>0))
                 return null;
 
-            byte [] out = new byte[hashLength];
+            final byte[] out = new byte[hashLength];
 
             crypto_hash(out, message);
 
             return out;
         }
-        public static byte[] sha512(String message) throws UnsupportedEncodingException {
+
+        public static byte[] sha512(final String message) throws UnsupportedEncodingException {
             return sha512(message.getBytes("utf-8"));
         }
 
@@ -691,10 +696,10 @@ public final class TweetNaclFast
 
         private final static String TAG = "Signature";
 
-        private byte [] theirPublicKey;
-        private byte [] mySecretKey;
+        private final byte[] theirPublicKey;
+        private final byte[] mySecretKey;
 
-        public Signature(byte [] theirPublicKey, byte [] mySecretKey) {
+        public Signature(final byte[] theirPublicKey, final byte[] mySecretKey) {
             this.theirPublicKey = theirPublicKey;
             this.mySecretKey = mySecretKey;
         }
@@ -703,25 +708,27 @@ public final class TweetNaclFast
          * @description
          *   Signs the message using the secret key and returns a signed message.
          * */
-        public byte [] sign(byte [] message) {
+        public byte[] sign(final byte[] message) {
             if (message==null) return null;
 
-            return sign(message, 0, message.length);
+            return this.sign(message, 0, message.length);
         }
-        public byte [] sign(byte [] message, final int moff) {
+
+        public byte[] sign(final byte[] message, final int moff) {
             if (!(message!=null && message.length>moff)) return null;
 
-            return sign(message, moff, message.length-moff);
+            return this.sign(message, moff, message.length - moff);
         }
-        public byte [] sign(byte [] message, final int moff, final int mlen) {
+
+        public byte[] sign(final byte[] message, final int moff, final int mlen) {
             // check message
             if (!(message!=null && message.length>=(moff+mlen)))
                 return null;
 
             // signed message
-            byte [] sm = new byte[mlen + signatureLength];
+            final byte[] sm = new byte[mlen + signatureLength];
 
-            crypto_sign(sm, -1, message, moff, mlen, mySecretKey);
+            crypto_sign(sm, -1, message, moff, mlen, this.mySecretKey);
 
             return sm;
         }
@@ -731,29 +738,31 @@ public final class TweetNaclFast
          *   Verifies the signed message and returns the message without signature.
          *   Returns null if verification failed.
          * */
-        public byte [] open(byte [] signedMessage) {
+        public byte[] open(final byte[] signedMessage) {
             if (signedMessage==null) return null;
 
-            return open(signedMessage, 0, signedMessage.length);
+            return this.open(signedMessage, 0, signedMessage.length);
         }
-        public byte [] open(byte [] signedMessage, final int smoff) {
+
+        public byte[] open(final byte[] signedMessage, final int smoff) {
             if (!(signedMessage!=null && signedMessage.length>smoff)) return null;
 
-            return open(signedMessage, smoff, signedMessage.length-smoff);
+            return this.open(signedMessage, smoff, signedMessage.length - smoff);
         }
-        public byte [] open(byte [] signedMessage, final int smoff, final int smlen) {
+
+        public byte[] open(final byte[] signedMessage, final int smoff, final int smlen) {
             // check sm length
             if (!(signedMessage!=null && signedMessage.length>=(smoff+smlen) && smlen>=signatureLength))
                 return null;
 
             // temp buffer
-            byte [] tmp = new byte[smlen];
+            final byte[] tmp = new byte[smlen];
 
-            if (0 != crypto_sign_open(tmp, -1, signedMessage, smoff, smlen, theirPublicKey))
+            if (0 != crypto_sign_open(tmp, -1, signedMessage, smoff, smlen, this.theirPublicKey))
                 return null;
 
             // message
-            byte [] msg = new byte[smlen-signatureLength];
+            final byte[] msg = new byte[smlen - signatureLength];
             for (int i = 0; i < msg.length; i ++)
                 msg[i] = signedMessage[smoff+ i+signatureLength];
 
@@ -764,9 +773,9 @@ public final class TweetNaclFast
          * @description
          *   Signs the message using the secret key and returns a signature.
          * */
-        public byte [] detached(byte [] message) {
-            byte[] signedMsg = this.sign(message);
-            byte[] sig = new byte[signatureLength];
+        public byte[] detached(final byte[] message) {
+            final byte[] signedMsg = this.sign(message);
+            final byte[] sig = new byte[signatureLength];
             for (int i = 0; i < sig.length; i++)
                 sig[i] = signedMsg[i];
             return sig;
@@ -777,18 +786,18 @@ public final class TweetNaclFast
          *   Verifies the signature for the message and
          *   returns true if verification succeeded or false if it failed.
          * */
-        public boolean detached_verify(byte [] message, byte [] signature) {
+        public boolean detached_verify(final byte[] message, final byte[] signature) {
             if (signature.length != signatureLength)
                 return false;
-            if (theirPublicKey.length != publicKeyLength)
+            if (this.theirPublicKey.length != publicKeyLength)
                 return false;
-            byte [] sm = new byte[signatureLength + message.length];
-            byte [] m = new byte[signatureLength + message.length];
+            final byte[] sm = new byte[signatureLength + message.length];
+            final byte[] m = new byte[signatureLength + message.length];
             for (int i = 0; i < signatureLength; i++)
                 sm[i] = signature[i];
             for (int i = 0; i < message.length; i++)
                 sm[i + signatureLength] = message[i];
-            return (crypto_sign_open(m, -1, sm, 0, sm.length, theirPublicKey) >= 0);
+            return (crypto_sign_open(m, -1, sm, 0, sm.length, this.theirPublicKey) >= 0);
         }
 
         /*
@@ -797,20 +806,20 @@ public final class TweetNaclFast
          *   returns it as an object with publicKey and secretKey members
          * */
         public static class KeyPair {
-            private byte [] publicKey;
-            private byte [] secretKey;
+            private final byte[] publicKey;
+            private final byte[] secretKey;
 
             public KeyPair() {
-                publicKey = new byte[publicKeyLength];
-                secretKey = new byte[secretKeyLength];
+                this.publicKey = new byte[publicKeyLength];
+                this.secretKey = new byte[secretKeyLength];
             }
 
             public byte [] getPublicKey() {
-                return publicKey;
+                return this.publicKey;
             }
 
             public byte [] getSecretKey() {
-                return secretKey;
+                return this.secretKey;
             }
         }
 
@@ -819,15 +828,16 @@ public final class TweetNaclFast
          *   Signs the message using the secret key and returns a signed message.
          * */
         public static KeyPair keyPair() {
-            KeyPair kp = new KeyPair();
+            final KeyPair kp = new KeyPair();
 
             crypto_sign_keypair(kp.getPublicKey(), kp.getSecretKey(), false);
             return kp;
         }
-        public static KeyPair keyPair_fromSecretKey(byte [] secretKey) {
-            KeyPair kp = new KeyPair();
-            byte [] pk = kp.getPublicKey();
-            byte [] sk = kp.getSecretKey();
+
+        public static KeyPair keyPair_fromSecretKey(final byte[] secretKey) {
+            final KeyPair kp = new KeyPair();
+            final byte[] pk = kp.getPublicKey();
+            final byte[] sk = kp.getSecretKey();
 
             // copy sk
             for (int i = 0; i < kp.getSecretKey().length; i ++)
@@ -840,10 +850,10 @@ public final class TweetNaclFast
             return kp;
         }
 
-        public static KeyPair keyPair_fromSeed(byte [] seed) {
-            KeyPair kp = new KeyPair();
-            byte [] pk = kp.getPublicKey();
-            byte [] sk = kp.getSecretKey();
+        public static KeyPair keyPair_fromSeed(final byte[] seed) {
+            final KeyPair kp = new KeyPair();
+            final byte[] pk = kp.getPublicKey();
+            final byte[] sk = kp.getSecretKey();
 
             // copy sk
             for (int i = 0; i < seedLength; i ++)
@@ -940,7 +950,7 @@ public final class TweetNaclFast
             0xdf0b, 0x4fc1, 0x2480, 0x2b83
     };
 
-    private static void ts64(byte [] x, final int xoff, long u)
+    private static void ts64(final byte[] x, final int xoff, long u)
     {
         ///int i;
         ///for (i = 7;i >= 0;--i) { x[i+xoff] = (byte)(u&0xff); u >>>= 8; }
@@ -956,9 +966,9 @@ public final class TweetNaclFast
     }
 
     private static int vn(
-            byte [] x, final int xoff,
-            byte [] y, final int yoff,
-            int n)
+            final byte[] x, final int xoff,
+            final byte[] y, final int yoff,
+            final int n)
     {
         int i,d = 0;
         for (i = 0; i < n; i ++) d |= (x[i+xoff]^y[i+yoff]) & 0xff;
@@ -966,44 +976,46 @@ public final class TweetNaclFast
     }
 
     private static int crypto_verify_16(
-            byte [] x, final int xoff,
-            byte [] y, final int yoff)
+            final byte[] x, final int xoff,
+            final byte[] y, final int yoff)
     {
         return vn(x,xoff,y,yoff,16);
     }
-    public static int crypto_verify_16(byte [] x, byte [] y)
+
+    public static int crypto_verify_16(final byte[] x, final byte[] y)
     {
         return crypto_verify_16(x,0, y,0);
     }
 
     private static int crypto_verify_32(
-            byte [] x, final int xoff,
-            byte [] y, final int yoff)
+            final byte[] x, final int xoff,
+            final byte[] y, final int yoff)
     {
         return vn(x,xoff,y,yoff,32);
     }
-    public static int crypto_verify_32(byte [] x, byte [] y)
+
+    public static int crypto_verify_32(final byte[] x, final byte[] y)
     {
         return crypto_verify_32(x,0, y,0);
     }
 
-    private static void core_salsa20(byte [] o, byte [] p, byte [] k, byte [] c) {
-        int     j0  = c[ 0] & 0xff | (c[ 1] & 0xff)<<8 | (c[ 2] & 0xff)<<16 | (c[ 3] & 0xff)<<24,
-                j1  = k[ 0] & 0xff | (k[ 1] & 0xff)<<8 | (k[ 2] & 0xff)<<16 | (k[ 3] & 0xff)<<24,
-                j2  = k[ 4] & 0xff | (k[ 5] & 0xff)<<8 | (k[ 6] & 0xff)<<16 | (k[ 7] & 0xff)<<24,
-                j3  = k[ 8] & 0xff | (k[ 9] & 0xff)<<8 | (k[10] & 0xff)<<16 | (k[11] & 0xff)<<24,
-                j4  = k[12] & 0xff | (k[13] & 0xff)<<8 | (k[14] & 0xff)<<16 | (k[15] & 0xff)<<24,
-                j5  = c[ 4] & 0xff | (c[ 5] & 0xff)<<8 | (c[ 6] & 0xff)<<16 | (c[ 7] & 0xff)<<24,
-                j6  = p[ 0] & 0xff | (p[ 1] & 0xff)<<8 | (p[ 2] & 0xff)<<16 | (p[ 3] & 0xff)<<24,
-                j7  = p[ 4] & 0xff | (p[ 5] & 0xff)<<8 | (p[ 6] & 0xff)<<16 | (p[ 7] & 0xff)<<24,
-                j8  = p[ 8] & 0xff | (p[ 9] & 0xff)<<8 | (p[10] & 0xff)<<16 | (p[11] & 0xff)<<24,
-                j9  = p[12] & 0xff | (p[13] & 0xff)<<8 | (p[14] & 0xff)<<16 | (p[15] & 0xff)<<24,
-                j10 = c[ 8] & 0xff | (c[ 9] & 0xff)<<8 | (c[10] & 0xff)<<16 | (c[11] & 0xff)<<24,
-                j11 = k[16] & 0xff | (k[17] & 0xff)<<8 | (k[18] & 0xff)<<16 | (k[19] & 0xff)<<24,
-                j12 = k[20] & 0xff | (k[21] & 0xff)<<8 | (k[22] & 0xff)<<16 | (k[23] & 0xff)<<24,
-                j13 = k[24] & 0xff | (k[25] & 0xff)<<8 | (k[26] & 0xff)<<16 | (k[27] & 0xff)<<24,
-                j14 = k[28] & 0xff | (k[29] & 0xff)<<8 | (k[30] & 0xff)<<16 | (k[31] & 0xff)<<24,
-                j15 = c[12] & 0xff | (c[13] & 0xff)<<8 | (c[14] & 0xff)<<16 | (c[15] & 0xff)<<24;
+    private static void core_salsa20(final byte[] o, final byte[] p, final byte[] k, final byte[] c) {
+        final int j0 = c[0] & 0xff | (c[1] & 0xff) << 8 | (c[2] & 0xff) << 16 | (c[3] & 0xff) << 24;
+        final int j1 = k[0] & 0xff | (k[1] & 0xff) << 8 | (k[2] & 0xff) << 16 | (k[3] & 0xff) << 24;
+        final int j2 = k[4] & 0xff | (k[5] & 0xff) << 8 | (k[6] & 0xff) << 16 | (k[7] & 0xff) << 24;
+        final int j3 = k[8] & 0xff | (k[9] & 0xff) << 8 | (k[10] & 0xff) << 16 | (k[11] & 0xff) << 24;
+        final int j4 = k[12] & 0xff | (k[13] & 0xff) << 8 | (k[14] & 0xff) << 16 | (k[15] & 0xff) << 24;
+        final int j5 = c[4] & 0xff | (c[5] & 0xff) << 8 | (c[6] & 0xff) << 16 | (c[7] & 0xff) << 24;
+        final int j6 = p[0] & 0xff | (p[1] & 0xff) << 8 | (p[2] & 0xff) << 16 | (p[3] & 0xff) << 24;
+        final int j7 = p[4] & 0xff | (p[5] & 0xff) << 8 | (p[6] & 0xff) << 16 | (p[7] & 0xff) << 24;
+        final int j8 = p[8] & 0xff | (p[9] & 0xff) << 8 | (p[10] & 0xff) << 16 | (p[11] & 0xff) << 24;
+        final int j9 = p[12] & 0xff | (p[13] & 0xff) << 8 | (p[14] & 0xff) << 16 | (p[15] & 0xff) << 24;
+        final int j10 = c[8] & 0xff | (c[9] & 0xff) << 8 | (c[10] & 0xff) << 16 | (c[11] & 0xff) << 24;
+        final int j11 = k[16] & 0xff | (k[17] & 0xff) << 8 | (k[18] & 0xff) << 16 | (k[19] & 0xff) << 24;
+        final int j12 = k[20] & 0xff | (k[21] & 0xff) << 8 | (k[22] & 0xff) << 16 | (k[23] & 0xff) << 24;
+        final int j13 = k[24] & 0xff | (k[25] & 0xff) << 8 | (k[26] & 0xff) << 16 | (k[27] & 0xff) << 24;
+        final int j14 = k[28] & 0xff | (k[29] & 0xff) << 8 | (k[30] & 0xff) << 16 | (k[31] & 0xff) << 24;
+        final int j15 = c[12] & 0xff | (c[13] & 0xff) << 8 | (c[14] & 0xff) << 16 | (c[15] & 0xff) << 24;
 
         int     x0 = j0, x1 = j1, x2 = j2, x3 = j3, x4 = j4, x5 = j5, x6 = j6, x7 = j7,
                 x8 = j8, x9 = j9, x10 = j10, x11 = j11, x12 = j12, x13 = j13, x14 = j14,
@@ -1185,23 +1197,23 @@ public final class TweetNaclFast
 */
     }
 
-    private static void core_hsalsa20(byte [] o, byte [] p, byte [] k, byte [] c) {
-        int     j0  = c[ 0] & 0xff | (c[ 1] & 0xff)<<8 | (c[ 2] & 0xff)<<16 | (c[ 3] & 0xff)<<24,
-                j1  = k[ 0] & 0xff | (k[ 1] & 0xff)<<8 | (k[ 2] & 0xff)<<16 | (k[ 3] & 0xff)<<24,
-                j2  = k[ 4] & 0xff | (k[ 5] & 0xff)<<8 | (k[ 6] & 0xff)<<16 | (k[ 7] & 0xff)<<24,
-                j3  = k[ 8] & 0xff | (k[ 9] & 0xff)<<8 | (k[10] & 0xff)<<16 | (k[11] & 0xff)<<24,
-                j4  = k[12] & 0xff | (k[13] & 0xff)<<8 | (k[14] & 0xff)<<16 | (k[15] & 0xff)<<24,
-                j5  = c[ 4] & 0xff | (c[ 5] & 0xff)<<8 | (c[ 6] & 0xff)<<16 | (c[ 7] & 0xff)<<24,
-                j6  = p[ 0] & 0xff | (p[ 1] & 0xff)<<8 | (p[ 2] & 0xff)<<16 | (p[ 3] & 0xff)<<24,
-                j7  = p[ 4] & 0xff | (p[ 5] & 0xff)<<8 | (p[ 6] & 0xff)<<16 | (p[ 7] & 0xff)<<24,
-                j8  = p[ 8] & 0xff | (p[ 9] & 0xff)<<8 | (p[10] & 0xff)<<16 | (p[11] & 0xff)<<24,
-                j9  = p[12] & 0xff | (p[13] & 0xff)<<8 | (p[14] & 0xff)<<16 | (p[15] & 0xff)<<24,
-                j10 = c[ 8] & 0xff | (c[ 9] & 0xff)<<8 | (c[10] & 0xff)<<16 | (c[11] & 0xff)<<24,
-                j11 = k[16] & 0xff | (k[17] & 0xff)<<8 | (k[18] & 0xff)<<16 | (k[19] & 0xff)<<24,
-                j12 = k[20] & 0xff | (k[21] & 0xff)<<8 | (k[22] & 0xff)<<16 | (k[23] & 0xff)<<24,
-                j13 = k[24] & 0xff | (k[25] & 0xff)<<8 | (k[26] & 0xff)<<16 | (k[27] & 0xff)<<24,
-                j14 = k[28] & 0xff | (k[29] & 0xff)<<8 | (k[30] & 0xff)<<16 | (k[31] & 0xff)<<24,
-                j15 = c[12] & 0xff | (c[13] & 0xff)<<8 | (c[14] & 0xff)<<16 | (c[15] & 0xff)<<24;
+    private static void core_hsalsa20(final byte[] o, final byte[] p, final byte[] k, final byte[] c) {
+        final int j0 = c[0] & 0xff | (c[1] & 0xff) << 8 | (c[2] & 0xff) << 16 | (c[3] & 0xff) << 24;
+        final int j1 = k[0] & 0xff | (k[1] & 0xff) << 8 | (k[2] & 0xff) << 16 | (k[3] & 0xff) << 24;
+        final int j2 = k[4] & 0xff | (k[5] & 0xff) << 8 | (k[6] & 0xff) << 16 | (k[7] & 0xff) << 24;
+        final int j3 = k[8] & 0xff | (k[9] & 0xff) << 8 | (k[10] & 0xff) << 16 | (k[11] & 0xff) << 24;
+        final int j4 = k[12] & 0xff | (k[13] & 0xff) << 8 | (k[14] & 0xff) << 16 | (k[15] & 0xff) << 24;
+        final int j5 = c[4] & 0xff | (c[5] & 0xff) << 8 | (c[6] & 0xff) << 16 | (c[7] & 0xff) << 24;
+        final int j6 = p[0] & 0xff | (p[1] & 0xff) << 8 | (p[2] & 0xff) << 16 | (p[3] & 0xff) << 24;
+        final int j7 = p[4] & 0xff | (p[5] & 0xff) << 8 | (p[6] & 0xff) << 16 | (p[7] & 0xff) << 24;
+        final int j8 = p[8] & 0xff | (p[9] & 0xff) << 8 | (p[10] & 0xff) << 16 | (p[11] & 0xff) << 24;
+        final int j9 = p[12] & 0xff | (p[13] & 0xff) << 8 | (p[14] & 0xff) << 16 | (p[15] & 0xff) << 24;
+        final int j10 = c[8] & 0xff | (c[9] & 0xff) << 8 | (c[10] & 0xff) << 16 | (c[11] & 0xff) << 24;
+        final int j11 = k[16] & 0xff | (k[17] & 0xff) << 8 | (k[18] & 0xff) << 16 | (k[19] & 0xff) << 24;
+        final int j12 = k[20] & 0xff | (k[21] & 0xff) << 8 | (k[22] & 0xff) << 16 | (k[23] & 0xff) << 24;
+        final int j13 = k[24] & 0xff | (k[25] & 0xff) << 8 | (k[26] & 0xff) << 16 | (k[27] & 0xff) << 24;
+        final int j14 = k[28] & 0xff | (k[29] & 0xff) << 8 | (k[30] & 0xff) << 16 | (k[31] & 0xff) << 24;
+        final int j15 = c[12] & 0xff | (c[13] & 0xff) << 8 | (c[14] & 0xff) << 16 | (c[15] & 0xff) << 24;
 
         int     x0 = j0, x1 = j1, x2 = j2, x3 = j3, x4 = j4, x5 = j5, x6 = j6, x7 = j7,
                 x8 = j8, x9 = j9, x10 = j10, x11 = j11, x12 = j12, x13 = j13, x14 = j14,
@@ -1328,7 +1340,7 @@ public final class TweetNaclFast
 */
     }
 
-    public static int crypto_core_salsa20(byte [] out, byte [] in, byte [] k, byte [] c)
+    public static int crypto_core_salsa20(final byte[] out, final byte[] in, final byte[] k, final byte[] c)
     {
         ///core(out,in,k,c,0);
         core_salsa20(out,in,k,c);
@@ -1340,7 +1352,7 @@ public final class TweetNaclFast
         return 0;
     }
 
-    public static int crypto_core_hsalsa20(byte [] out, byte [] in, byte [] k, byte [] c)
+    public static int crypto_core_hsalsa20(final byte[] out, final byte[] in, final byte[] k, final byte[] c)
     {
         ///core(out,in,k,c,1);
         core_hsalsa20(out,in,k,c);
@@ -1363,9 +1375,10 @@ public final class TweetNaclFast
 		}
 	}*/
 
-    private static int crypto_stream_salsa20_xor(byte [] c,int cpos, byte [] m,int mpos, long b, byte [] n, byte [] k)
+    private static int crypto_stream_salsa20_xor(final byte[] c, int cpos, final byte[] m, int mpos, long b, final byte[] n, final byte[] k)
     {
-        byte [] z = new byte[16], x = new byte[64];
+        final byte[] z = new byte[16];
+        final byte[] x = new byte[64];
         int u, i;
         for (i = 0; i < 16; i++) z[i] = 0;
         for (i = 0; i < 8; i++) z[i] = n[i];
@@ -1394,8 +1407,9 @@ public final class TweetNaclFast
         return 0;
     }
 
-    public static int crypto_stream_salsa20(byte [] c,int cpos, long b, byte [] n, byte [] k) {
-        byte [] z = new byte[16], x = new byte[64];
+    public static int crypto_stream_salsa20(final byte[] c, int cpos, long b, final byte[] n, final byte[] k) {
+        final byte[] z = new byte[16];
+        final byte[] x = new byte[64];
         int u, i;
         for (i = 0; i < 16; i++) z[i] = 0;
         for (i = 0; i < 8; i++) z[i] = n[i];
@@ -1423,16 +1437,16 @@ public final class TweetNaclFast
         return 0;
     }
 
-    public static int  crypto_stream(byte [] c,int cpos, long d, byte [] n, byte [] k) {
-        byte [] s = new byte[32];
+    public static int crypto_stream(final byte[] c, final int cpos, final long d, final byte[] n, final byte[] k) {
+        final byte[] s = new byte[32];
         crypto_core_hsalsa20(s,n,k,sigma);
-        byte [] sn = new byte[8];
+        final byte[] sn = new byte[8];
         for (int i = 0; i < 8; i++) sn[i] = n[i+16];
         return crypto_stream_salsa20(c,cpos,d,sn,s);
     }
 
-    public static int crypto_stream_xor(byte [] c,int cpos, byte [] m,int mpos, long d, byte [] n, byte [] k) {
-        byte [] s = new byte[32];
+    public static int crypto_stream_xor(final byte[] c, final int cpos, final byte[] m, final int mpos, final long d, final byte[] n, final byte[] k) {
+        final byte[] s = new byte[32];
 		
 		/*String dbgt = "";
 		for (int dbg = 0; dbg < n.length; dbg ++) dbgt += " "+n[dbg];
@@ -1444,7 +1458,7 @@ public final class TweetNaclFast
 		*/
 
         crypto_core_hsalsa20(s,n,k,sigma);
-        byte [] sn = new byte[8];
+        final byte[] sn = new byte[8];
         for (int i = 0; i < 8; i++) sn[i] = n[i+16];
         return crypto_stream_salsa20_xor(c,cpos,m,mpos,d,sn,s);
     }
@@ -1455,14 +1469,14 @@ public final class TweetNaclFast
     */
     public static final class poly1305 {
 
-        private byte[] buffer;
-        private int[] r;
-        private int[] h;
-        private int[] pad;
+        private final byte[] buffer;
+        private final int[] r;
+        private final int[] h;
+        private final int[] pad;
         private int leftover;
         private int fin;
 
-        public poly1305(byte [] key) {
+        public poly1305(final byte[] key) {
             this.buffer = new byte[16];
             this.r = new int[10];
             this.h = new int[10];
@@ -1470,7 +1484,14 @@ public final class TweetNaclFast
             this.leftover = 0;
             this.fin = 0;
 
-            int t0, t1, t2, t3, t4, t5, t6, t7;
+            final int t0;
+            final int t1;
+            final int t2;
+            final int t3;
+            final int t4;
+            final int t5;
+            final int t6;
+            final int t7;
 
             t0 = key[ 0] & 0xff | (key[ 1] & 0xff) << 8; this.r[0] = ( t0                     ) & 0x1fff;
             t1 = key[ 2] & 0xff | (key[ 3] & 0xff) << 8; this.r[1] = ((t0 >>> 13) | (t1 <<  3)) & 0x1fff;
@@ -1493,8 +1514,8 @@ public final class TweetNaclFast
             this.pad[7] = key[30] & 0xff | (key[31] & 0xff) << 8;
         }
 
-        public poly1305 blocks(byte [] m, int mpos, int bytes) {
-            int hibit = this.fin!=0 ? 0 : (1 << 11);
+        public poly1305 blocks(final byte[] m, int mpos, int bytes) {
+            final int hibit = this.fin != 0 ? 0 : (1 << 11);
             int t0, t1, t2, t3, t4, t5, t6, t7, c;
             int d0, d1, d2, d3, d4, d5, d6, d7, d8, d9;
 
@@ -1509,16 +1530,16 @@ public final class TweetNaclFast
                     h8 = this.h[8],
                     h9 = this.h[9];
 
-            int     r0 = this.r[0],
-                    r1 = this.r[1],
-                    r2 = this.r[2],
-                    r3 = this.r[3],
-                    r4 = this.r[4],
-                    r5 = this.r[5],
-                    r6 = this.r[6],
-                    r7 = this.r[7],
-                    r8 = this.r[8],
-                    r9 = this.r[9];
+            final int r0 = this.r[0];
+            final int r1 = this.r[1];
+            final int r2 = this.r[2];
+            final int r3 = this.r[3];
+            final int r4 = this.r[4];
+            final int r5 = this.r[5];
+            final int r6 = this.r[6];
+            final int r7 = this.r[7];
+            final int r8 = this.r[8];
+            final int r9 = this.r[9];
 
             while (bytes >= 16) {
                 t0 = m[mpos+ 0] & 0xff | (m[mpos+ 1] & 0xff) << 8; h0 += ( t0                     ) & 0x1fff;
@@ -1708,8 +1729,8 @@ public final class TweetNaclFast
             return this;
         }
 
-        public poly1305 finish(byte [] mac, int macpos) {
-            int [] g = new int[10];
+        public poly1305 finish(final byte[] mac, final int macpos) {
+            final int[] g = new int[10];
             int c, mask, f, i;
 
             if (this.leftover != 0) {
@@ -1786,7 +1807,7 @@ public final class TweetNaclFast
             return this;
         }
 
-        public poly1305 update(byte [] m, int mpos, int bytes) {
+        public poly1305 update(final byte[] m, int mpos, int bytes) {
             int i, want;
 
             if (this.leftover != 0) {
@@ -1800,7 +1821,7 @@ public final class TweetNaclFast
                 this.leftover += want;
                 if (this.leftover < 16)
                     return this;
-                this.blocks(buffer, 0, 16);
+                this.blocks(this.buffer, 0, 16);
                 this.leftover = 0;
             }
 
@@ -1823,12 +1844,12 @@ public final class TweetNaclFast
     }
 
     private static int crypto_onetimeauth(
-            byte[] out,final int outpos,
-            byte[] m,final int mpos,
-            int n,
-            byte [] k)
+            final byte[] out, final int outpos,
+            final byte[] m, final int mpos,
+            final int n,
+            final byte[] k)
     {
-        poly1305 s = new poly1305(k);
+        final poly1305 s = new poly1305(k);
         s.update(m, mpos, n);
         s.finish(out, outpos);
 		
@@ -1839,28 +1860,31 @@ public final class TweetNaclFast
 
         return 0;
     }
-    public static int crypto_onetimeauth(byte [] out, byte [] m, int /*long*/ n , byte [] k) {
+
+    public static int crypto_onetimeauth(final byte[] out, final byte[] m, final int /*long*/ n, final byte[] k) {
         return crypto_onetimeauth(out,0, m,0, n, k);
     }
 
     private static int crypto_onetimeauth_verify(
-            byte[] h,final int hoff,
-            byte[] m,final int moff,
-            int /*long*/ n,
-            byte [] k)
+            final byte[] h, final int hoff,
+            final byte[] m, final int moff,
+            final int /*long*/ n,
+            final byte[] k)
     {
-        byte [] x = new byte[16];
+        final byte[] x = new byte[16];
         crypto_onetimeauth(x,0,m,moff,n,k);
         return crypto_verify_16(h,hoff,x,0);
     }
-    public static int crypto_onetimeauth_verify(byte [] h, byte [] m, int /*long*/ n, byte [] k) {
+
+    public static int crypto_onetimeauth_verify(final byte[] h, final byte[] m, final int /*long*/ n, final byte[] k) {
         return crypto_onetimeauth_verify(h,0, m,0, n, k);
     }
-    public static int crypto_onetimeauth_verify(byte [] h, byte [] m, byte [] k) {
+
+    public static int crypto_onetimeauth_verify(final byte[] h, final byte[] m, final byte[] k) {
         return crypto_onetimeauth_verify(h, m, m!=null? m.length:0, k);
     }
 
-    public static int crypto_secretbox(byte [] c, byte [] m, int /*long*/ d, byte [] n, byte [] k)
+    public static int crypto_secretbox(final byte[] c, final byte[] m, final int /*long*/ d, final byte[] n, final byte[] k)
     {
         int i;
         if (d < 32) return -1;
@@ -1870,10 +1894,10 @@ public final class TweetNaclFast
         return 0;
     }
 
-    public static int crypto_secretbox_open(byte []m,byte []c,int /*long*/ d,byte []n,byte []k)
+    public static int crypto_secretbox_open(final byte[] m, final byte[] c, final int /*long*/ d, final byte[] n, final byte[] k)
     {
         int i;
-        byte[] x = new byte[32];
+        final byte[] x = new byte[32];
         if (d < 32) return -1;
         crypto_stream(x,0,32,n,k);
         if (crypto_onetimeauth_verify(c,16, c,32, d-32, x) != 0) return -1;
@@ -1882,13 +1906,13 @@ public final class TweetNaclFast
         return 0;
     }
 
-    private static void set25519(long [] r, long [] a)
+    private static void set25519(final long[] r, final long[] a)
     {
         int i;
         for (i = 0; i < 16; i ++) r[i]=a[i];
     }
 
-    private static void car25519(long [] o)
+    private static void car25519(final long[] o)
     {
         int i;
         long v, c = 1;
@@ -1901,18 +1925,19 @@ public final class TweetNaclFast
     }
 
     private static void sel25519(
-            long[] p,
-            long[] q,
-            int b)
+            final long[] p,
+            final long[] q,
+            final int b)
     {
         sel25519(p,0, q,0, b);
     }
     private static void sel25519(
-            long[] p,final int poff,
-            long[] q,final int qoff,
-            int b)
+            final long[] p, final int poff,
+            final long[] q, final int qoff,
+            final int b)
     {
-        long t, c = ~(b-1);
+        long t;
+        final long c = ~(b - 1);
         for (int i = 0; i < 16; i++) {
             t = c & (p[i+poff] ^ q[i+qoff]);
             p[i+poff] ^= t;
@@ -1920,10 +1945,11 @@ public final class TweetNaclFast
         }
     }
 
-    private static void pack25519(byte [] o, long [] n,final int noff)
+    private static void pack25519(final byte[] o, final long[] n, final int noff)
     {
         int i, j, b;
-        long [] m = new long[16], t = new long[16];
+        final long[] m = new long[16];
+        final long[] t = new long[16];
         for (i = 0; i < 16; i++) t[i] = n[i+noff];
         car25519(t);
         car25519(t);
@@ -1945,29 +1971,32 @@ public final class TweetNaclFast
         }
     }
 
-    private static int neq25519(long [] a, long [] b) {
+    private static int neq25519(final long[] a, final long[] b) {
         return neq25519(a,0, b,0);
     }
-    private static int neq25519(long [] a,final int aoff, long [] b,final int boff)
+
+    private static int neq25519(final long[] a, final int aoff, final long[] b, final int boff)
     {
-        byte [] c = new byte[32], d = new byte[32];
+        final byte[] c = new byte[32];
+        final byte[] d = new byte[32];
         pack25519(c, a,aoff);
         pack25519(d, b,boff);
         return crypto_verify_32(c, 0, d, 0);
     }
 
-    private static byte par25519(long [] a)
+    private static byte par25519(final long[] a)
     {
         return par25519(a,0);
     }
-    private static byte par25519(long [] a,final int aoff)
+
+    private static byte par25519(final long[] a, final int aoff)
     {
-        byte [] d = new byte[32];
+        final byte[] d = new byte[32];
         pack25519(d, a,aoff);
         return (byte) (d[0] & 1);
     }
 
-    private static void unpack25519(long [] o, byte [] n)
+    private static void unpack25519(final long[] o, final byte[] n)
     {
         int i;
         for (i = 0; i < 16; i ++) o[i]=(n[2*i]&0xff)+((long)((n[2*i+1]<<8)&0xffff));
@@ -1975,70 +2004,98 @@ public final class TweetNaclFast
     }
 
     private static void A(
-            long [] o,
-            long [] a,
-            long [] b)
+            final long[] o,
+            final long[] a,
+            final long[] b)
     {
         A(o,0, a,0, b,0);
     }
     private static void A(
-            long [] o,final int ooff,
-            long [] a,final int aoff,
-            long [] b,final int boff)
+            final long[] o, final int ooff,
+            final long[] a, final int aoff,
+            final long[] b, final int boff)
     {
         int i;
         for (i = 0; i < 16; i ++) o[i+ooff] = a[i+aoff] + b[i+boff];
     }
 
     private static void Z(
-            long [] o,
-            long [] a,
-            long [] b)
+            final long[] o,
+            final long[] a,
+            final long[] b)
     {
         Z(o,0, a,0, b,0);
     }
     private static void Z(
-            long [] o,final int ooff,
-            long [] a,final int aoff,
-            long [] b,final int boff)
+            final long[] o, final int ooff,
+            final long[] a, final int aoff,
+            final long[] b, final int boff)
     {
         int i;
         for (i = 0; i < 16; i ++) o[i+ooff] = a[i+aoff] - b[i+boff];
     }
 
     private static void M(
-            long [] o,
-            long [] a,
-            long [] b)
+            final long[] o,
+            final long[] a,
+            final long[] b)
     {
         M(o,0, a,0, b,0);
     }
     private static void M(
-            long [] o,final int ooff,
-            long [] a,final int aoff,
-            long [] b,final int boff)
+            final long[] o, final int ooff,
+            final long[] a, final int aoff,
+            final long[] b, final int boff)
     {
-        long v, c,
-                t0 = 0,  t1 = 0,  t2 = 0,  t3 = 0,  t4 = 0,  t5 = 0,  t6 = 0,  t7 = 0,
-                t8 = 0,  t9 = 0, t10 = 0, t11 = 0, t12 = 0, t13 = 0, t14 = 0, t15 = 0,
-                t16 = 0, t17 = 0, t18 = 0, t19 = 0, t20 = 0, t21 = 0, t22 = 0, t23 = 0,
-                t24 = 0, t25 = 0, t26 = 0, t27 = 0, t28 = 0, t29 = 0, t30 = 0,
-                b0 = b[0 +boff],
-                b1 = b[1 +boff],
-                b2 = b[2 +boff],
-                b3 = b[3 +boff],
-                b4 = b[4 +boff],
-                b5 = b[5 +boff],
-                b6 = b[6 +boff],
-                b7 = b[7 +boff],
-                b8 = b[8 +boff],
-                b9 = b[9 +boff],
-                b10 = b[10 +boff],
-                b11 = b[11 +boff],
-                b12 = b[12 +boff],
-                b13 = b[13 +boff],
-                b14 = b[14 +boff],
-                b15 = b[15 +boff];
+        long v;
+        long c;
+        long t0 = 0;
+        long t1 = 0;
+        long t2 = 0;
+        long t3 = 0;
+        long t4 = 0;
+        long t5 = 0;
+        long t6 = 0;
+        long t7 = 0;
+        long t8 = 0;
+        long t9 = 0;
+        long t10 = 0;
+        long t11 = 0;
+        long t12 = 0;
+        long t13 = 0;
+        long t14 = 0;
+        long t15 = 0;
+        long t16 = 0;
+        long t17 = 0;
+        long t18 = 0;
+        long t19 = 0;
+        long t20 = 0;
+        long t21 = 0;
+        long t22 = 0;
+        long t23 = 0;
+        long t24 = 0;
+        long t25 = 0;
+        long t26 = 0;
+        long t27 = 0;
+        long t28 = 0;
+        long t29 = 0;
+        long t30 = 0;
+        final long b0 = b[0 + boff];
+        final long b1 = b[1 + boff];
+        final long b2 = b[2 + boff];
+        final long b3 = b[3 + boff];
+        final long b4 = b[4 + boff];
+        final long b5 = b[5 + boff];
+        final long b6 = b[6 + boff];
+        final long b7 = b[7 + boff];
+        final long b8 = b[8 + boff];
+        final long b9 = b[9 + boff];
+        final long b10 = b[10 + boff];
+        final long b11 = b[11 + boff];
+        final long b12 = b[12 + boff];
+        final long b13 = b[13 + boff];
+        final long b14 = b[14 + boff];
+        final long b15 = b[15 + boff];
 
         v = a[0 +aoff];
         t0 += v * b0;
@@ -2389,23 +2446,23 @@ public final class TweetNaclFast
     }
 
     private static void S(
-            long [] o,
-            long [] a)
+            final long[] o,
+            final long[] a)
     {
         S(o,0, a,0);
     }
     private static void S(
-            long [] o,final int ooff,
-            long [] a,final int aoff)
+            final long[] o, final int ooff,
+            final long[] a, final int aoff)
     {
         M(o,ooff, a,aoff, a,aoff);
     }
 
     private static void inv25519(
-            long [] o,final int ooff,
-            long [] i,final int ioff)
+            final long[] o, final int ooff,
+            final long[] i, final int ioff)
     {
-        long [] c = new long[16];
+        final long[] c = new long[16];
         int a;
         for (a = 0; a < 16; a++) c[a] = i[a+ioff];
         for (a = 253; a >= 0; a--) {
@@ -2415,9 +2472,9 @@ public final class TweetNaclFast
         for (a = 0; a < 16; a++) o[a+ooff] = c[a];
     }
 
-    private static void pow2523(long [] o,long [] i)
+    private static void pow2523(final long[] o, final long[] i)
     {
-        long [] c = new long[16];
+        final long[] c = new long[16];
         int a;
 
         for (a = 0; a < 16; a ++) c[a]=i[a];
@@ -2430,13 +2487,17 @@ public final class TweetNaclFast
         for (a = 0; a < 16; a ++) o[a]=c[a];
     }
 
-    public static int crypto_scalarmult(byte []q,byte []n,byte []p)
+    public static int crypto_scalarmult(final byte[] q, final byte[] n, final byte[] p)
     {
-        byte [] z = new byte[32];
-        long [] x = new long[80];
+        final byte[] z = new byte[32];
+        final long[] x = new long[80];
         int r, i;
-        long [] a = new long[16], b = new long[16], c = new long[16],
-                d = new long[16], e = new long[16], f = new long[16];
+        final long[] a = new long[16];
+        final long[] b = new long[16];
+        final long[] c = new long[16];
+        final long[] d = new long[16];
+        final long[] e = new long[16];
+        final long[] f = new long[16];
         for (i = 0; i < 31; i++) z[i] = n[i];
         z[31]=(byte) (((n[31]&127)|64) & 0xff);
         z[0]&=248;
@@ -2484,20 +2545,20 @@ public final class TweetNaclFast
         return 0;
     }
 
-    public static int crypto_scalarmult_base(byte []q,byte []n)
+    public static int crypto_scalarmult_base(final byte[] q, final byte[] n)
     {
         return crypto_scalarmult(q,n,_9);
     }
 
-    public static int crypto_box_keypair(byte [] y, byte [] x)
+    public static int crypto_box_keypair(final byte[] y, final byte[] x)
     {
         randombytes(x,32);
         return crypto_scalarmult_base(y,x);
     }
 
-    public static int crypto_box_beforenm(byte []k,byte []y,byte []x)
+    public static int crypto_box_beforenm(final byte[] k, final byte[] y, final byte[] x)
     {
-        byte[] s = new byte[32];
+        final byte[] s = new byte[32];
         crypto_scalarmult(s,x,y);
 
 		/*String dbgt = "";
@@ -2515,19 +2576,19 @@ public final class TweetNaclFast
         return crypto_core_hsalsa20(k, _0, s, sigma);
     }
 
-    public static int crypto_box_afternm(byte []c,byte []m,int /*long*/ d,byte []n,byte []k)
+    public static int crypto_box_afternm(final byte[] c, final byte[] m, final int /*long*/ d, final byte[] n, final byte[] k)
     {
         return crypto_secretbox(c,m,d,n,k);
     }
 
-    public static int crypto_box_open_afternm(byte []m,byte []c,int /*long*/ d,byte []n,byte []k)
+    public static int crypto_box_open_afternm(final byte[] m, final byte[] c, final int /*long*/ d, final byte[] n, final byte[] k)
     {
         return crypto_secretbox_open(m,c,d,n,k);
     }
 
-    public static int crypto_box(byte []c,byte []m,int /*long*/ d,byte []n,byte []y,byte []x)
+    public static int crypto_box(final byte[] c, final byte[] m, final int /*long*/ d, final byte[] n, final byte[] y, final byte[] x)
     {
-        byte[] k = new byte[32];
+        final byte[] k = new byte[32];
 
         ///L/og.d(TAG, "crypto_box start ...");
 
@@ -2535,9 +2596,9 @@ public final class TweetNaclFast
         return crypto_box_afternm(c,m,d,n,k);
     }
 
-    public static int crypto_box_open(byte []m,byte []c,int /*long*/ d,byte []n,byte []y,byte []x)
+    public static int crypto_box_open(final byte[] m, final byte[] c, final int /*long*/ d, final byte[] n, final byte[] y, final byte[] x)
     {
-        byte[] k = new byte[32];
+        final byte[] k = new byte[32];
         crypto_box_beforenm(k,y,x);
         return crypto_box_open_afternm(m,c,d,n,k);
     }
@@ -2565,13 +2626,14 @@ public final class TweetNaclFast
             0x4cc5d4becb3e42b6L, 0x597f299cfc657e2aL, 0x5fcb6fab3ad6faecL, 0x6c44198c4a475817L
     };
 
-    private static int crypto_hashblocks_hl(int [] hh,int [] hl, byte [] m,final int moff, int n) {
+    private static int crypto_hashblocks_hl(final int[] hh, final int[] hl, final byte[] m, final int moff, int n) {
 
         ///String dbgt = "";
         ///for (int dbg = 0; dbg < n; dbg ++) dbgt += " "+m[dbg+moff];
         ///Log.d(TAG, "crypto_hashblocks_hl m/"+n + "-> "+dbgt);
 
-        int []  wh = new int[16], wl = new int[16];
+        final int[] wh = new int[16];
+        final int[] wl = new int[16];
         int     bh0, bh1, bh2, bh3, bh4, bh5, bh6, bh7,
                 bl0, bl1, bl2, bl3, bl4, bl5, bl6, bl7,
                 th, tl, h, l, i, j, a, b, c, d;
@@ -2945,12 +3007,13 @@ public final class TweetNaclFast
 
     // TBD 64bits of n
     ///int crypto_hash(byte [] out, byte [] m, long n)
-    public static int crypto_hash(byte [] out, byte [] m,final int moff, int n)
+    public static int crypto_hash(final byte[] out, final byte[] m, final int moff, int n)
     {
-        int []  hh = new int[8],
-                hl = new int[8];
-        byte [] x = new byte[256];
-        int     i, b = n;
+        final int[] hh = new int[8];
+        final int[] hl = new int[8];
+        final byte[] x = new byte[256];
+        int i;
+        final int b = n;
         long    u;
 
         hh[0] = 0x6a09e667;
@@ -2993,34 +3056,35 @@ public final class TweetNaclFast
 
         return 0;
     }
-    public static int crypto_hash(byte [] out, byte [] m) {
+
+    public static int crypto_hash(final byte[] out, final byte[] m) {
         return crypto_hash(out, m,0, m!=null? m.length : 0);
     }
 
     // gf: long[16]
     ///private static void add(gf p[4],gf q[4])
-    private static void add(long [] p[], long [] q[])
+    private static void add(final long[][] p, final long[][] q)
     {
-        long [] a = new long[16];
-        long [] b = new long[16];
-        long [] c = new long[16];
-        long [] d = new long[16];
-        long [] t = new long[16];
-        long [] e = new long[16];
-        long [] f = new long[16];
-        long [] g = new long[16];
-        long [] h = new long[16];
+        final long[] a = new long[16];
+        final long[] b = new long[16];
+        final long[] c = new long[16];
+        final long[] d = new long[16];
+        final long[] t = new long[16];
+        final long[] e = new long[16];
+        final long[] f = new long[16];
+        final long[] g = new long[16];
+        final long[] h = new long[16];
 
 
-        long [] p0 = p[0];
-        long [] p1 = p[1];
-        long [] p2 = p[2];
-        long [] p3 = p[3];
+        final long[] p0 = p[0];
+        final long[] p1 = p[1];
+        final long[] p2 = p[2];
+        final long[] p3 = p[3];
 
-        long [] q0 = q[0];
-        long [] q1 = q[1];
-        long [] q2 = q[2];
-        long [] q3 = q[3];
+        final long[] q0 = q[0];
+        final long[] q1 = q[1];
+        final long[] q2 = q[2];
+        final long[] q3 = q[3];
 
         Z(a,0, p1,0, p0,0);
         Z(t,0, q1,0, q0,0);
@@ -3044,7 +3108,7 @@ public final class TweetNaclFast
         M(p3,0, e,0, h,0);
     }
 
-    private static void cswap(long [] p[], long [] q[], byte b)
+    private static void cswap(final long[][] p, final long[][] q, final byte b)
     {
         int i;
 
@@ -3052,11 +3116,11 @@ public final class TweetNaclFast
             sel25519(p[i],0, q[i],0, b);
     }
 
-    private static void pack(byte [] r, long [] p[])
+    private static void pack(final byte[] r, final long[][] p)
     {
-        long [] tx = new long[16];
-        long [] ty = new long[16];
-        long [] zi = new long[16];
+        final long[] tx = new long[16];
+        final long[] ty = new long[16];
+        final long[] zi = new long[16];
 
         inv25519(zi,0, p[2],0);
 
@@ -3068,7 +3132,7 @@ public final class TweetNaclFast
         r[31] ^= par25519(tx,0) << 7;
     }
 
-    private static void scalarmult(long [] p[], long [] q[], byte[] s,final int soff)
+    private static void scalarmult(final long[][] p, final long[][] q, final byte[] s, final int soff)
     {
         int i;
 
@@ -3078,7 +3142,7 @@ public final class TweetNaclFast
         set25519(p[3],gf0);
 
         for (i = 255;i >= 0;--i) {
-            byte b = (byte) ((s[i/8+soff] >>> (i&7))&1);
+            final byte b = (byte) ((s[i / 8 + soff] >>> (i & 7)) & 1);
 
             cswap(p,q,b);
             add(q,p);
@@ -3091,9 +3155,9 @@ public final class TweetNaclFast
         ///L/og.d(TAG, "scalarmult -> "+dbgt);
     }
 
-    private static void scalarbase(long [] p[], byte[] s,final int soff)
+    private static void scalarbase(final long[][] p, final byte[] s, final int soff)
     {
-        long [] [] q = new long [4] [];
+        final long[][] q = new long[4][];
 
         q[0] = new long [16];
         q[1] = new long [16];
@@ -3107,9 +3171,9 @@ public final class TweetNaclFast
         scalarmult(p,q, s,soff);
     }
 
-    public static int  crypto_sign_keypair(byte [] pk, byte [] sk, boolean seeded) {
-        byte [] d = new byte[64];
-        long [] [] p = new long [4] [];
+    public static int crypto_sign_keypair(final byte[] pk, final byte[] sk, final boolean seeded) {
+        final byte[] d = new byte[64];
+        final long[][] p = new long[4][];
 
         p[0] = new long [16];
         p[1] = new long [16];
@@ -3138,7 +3202,7 @@ public final class TweetNaclFast
             0,    0,    0,    0,    0,    0,    0,    0x10
     };
 
-    private static void modL(byte[] r,final int roff, long x[])
+    private static void modL(final byte[] r, final int roff, final long[] x)
     {
         long carry;
         int i, j;
@@ -3169,9 +3233,9 @@ public final class TweetNaclFast
         }
     }
 
-    private static void reduce(byte [] r)
+    private static void reduce(final byte[] r)
     {
-        long[] x = new long [64];
+        final long[] x = new long[64];
         int i;
 
         for (i = 0; i < 64; i ++) x[i] = (long) (r[i]&0xff);
@@ -3183,14 +3247,16 @@ public final class TweetNaclFast
 
     // TBD... 64bits of n
     ///int crypto_sign(byte [] sm, long * smlen, byte [] m, long n, byte [] sk)
-    public static int crypto_sign(byte [] sm, long dummy /* *smlen not used*/, byte [] m,final int moff, int/*long*/ n, byte [] sk)
+    public static int crypto_sign(final byte[] sm, final long dummy /* *smlen not used*/, final byte[] m, final int moff, final int/*long*/ n, final byte[] sk)
     {
-        byte[] d = new byte[64], h = new byte[64], r = new byte[64];
+        final byte[] d = new byte[64];
+        final byte[] h = new byte[64];
+        final byte[] r = new byte[64];
 
         int i, j;
-        long [] x = new long[64];
+        final long[] x = new long[64];
 
-        long [] [] p = new long [4] [];
+        final long[][] p = new long[4][];
         p[0] = new long [16];
         p[1] = new long [16];
         p[2] = new long [16];
@@ -3227,15 +3293,15 @@ public final class TweetNaclFast
         return 0;
     }
 
-    private static int unpackneg(long [] r[], byte p[])
+    private static int unpackneg(final long[][] r, final byte[] p)
     {
-        long []    t = new long [16];
-        long []  chk = new long [16];
-        long []  num = new long [16];
-        long []  den = new long [16];
-        long [] den2 = new long [16];
-        long [] den4 = new long [16];
-        long [] den6 = new long [16];
+        final long[] t = new long[16];
+        final long[] chk = new long[16];
+        final long[] num = new long[16];
+        final long[] den = new long[16];
+        final long[] den2 = new long[16];
+        final long[] den4 = new long[16];
+        final long[] den6 = new long[16];
 
         set25519(r[2], gf1);
         unpack25519(r[1], p);
@@ -3273,18 +3339,19 @@ public final class TweetNaclFast
 
     /// TBD 64bits of mlen
     ///int crypto_sign_open(byte []m,long *mlen,byte []sm,long n,byte []pk)
-    public static int crypto_sign_open(byte [] m, long dummy /* *mlen not used*/, byte [] sm,final int smoff, int/*long*/ n, byte []pk)
+    public static int crypto_sign_open(final byte[] m, final long dummy /* *mlen not used*/, final byte[] sm, final int smoff, int/*long*/ n, final byte[] pk)
     {
         int i;
-        byte[] t = new byte[32], h = new byte[64];
+        final byte[] t = new byte[32];
+        final byte[] h = new byte[64];
 
-        long [] [] p = new long [4] [];
+        final long[][] p = new long[4][];
         p[0] = new long [16];
         p[1] = new long [16];
         p[2] = new long [16];
         p[3] = new long [16];
 
-        long [] [] q = new long [4] [];
+        final long[][] q = new long[4][];
         q[0] = new long [16];
         q[1] = new long [16];
         q[2] = new long [16];
@@ -3329,17 +3396,17 @@ public final class TweetNaclFast
      * */
     private static final SecureRandom jrandom = new SecureRandom();
 
-    public static byte[] randombytes(byte [] x) {
+    public static byte[] randombytes(final byte[] x) {
         jrandom.nextBytes(x);
         return x;
     }
 
-    public static byte[] randombytes(int len) {
+    public static byte[] randombytes(final int len) {
         return randombytes(new byte[len]);
     }
 
-    public static byte[] randombytes(byte [] x, int len) {
-        byte [] b = randombytes(len);
+    public static byte[] randombytes(final byte[] x, final int len) {
+        final byte[] b = randombytes(len);
         System.arraycopy(b, 0, x, 0, len);
         return x;
     }
@@ -3376,18 +3443,18 @@ public final class TweetNaclFast
         return randombytes(SecretBox.nonceLength);
     }
 
-    public static String base64EncodeToString(byte [] b) {
+    public static String base64EncodeToString(final byte[] b) {
         return Base64.getUrlEncoder().withoutPadding().encodeToString(b);
     }
     // byte[] Base64.getUrlEncoder().withoutPadding().encode(b);
 
-    public static byte[] base64Decode(String s) {
+    public static byte[] base64Decode(final String s) {
         return Base64.getUrlDecoder().decode(s);
     }
     // byte[] Base64.getUrlDecoder().decode(byte[] b)
 
-    public static String hexEncodeToString( byte [] raw ) {
-        String HEXES = "0123456789ABCDEF";
+    public static String hexEncodeToString(final byte[] raw) {
+        final String HEXES = "0123456789ABCDEF";
         final StringBuilder hex = new StringBuilder( 2 * raw.length );
         for ( final byte b : raw ) {
             hex.append(HEXES.charAt((b & 0xF0) >> 4))
@@ -3396,8 +3463,8 @@ public final class TweetNaclFast
         return hex.toString();
     }
 
-    public static byte[] hexDecode(String s) {
-        byte[] b = new byte[s.length() / 2];
+    public static byte[] hexDecode(final String s) {
+        final byte[] b = new byte[s.length() / 2];
         for (int i = 0; i < s.length(); i += 2) {
             b[i / 2] = (byte) ((Character.digit(s.charAt(i), 16) << 4)
                     + Character.digit(s.charAt(i+1), 16));
