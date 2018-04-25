@@ -14,6 +14,7 @@ import reactor.core.scheduler.Schedulers;
 import space.npstr.magma.AudioStackLifecyclePipeline;
 import space.npstr.magma.events.audio.lifecycle.CloseWebSocketLcEvent;
 import space.npstr.magma.events.audio.ws.CloseCode;
+import space.npstr.magma.events.audio.ws.Speaking;
 import space.npstr.magma.events.audio.ws.SpeakingWsEvent;
 import space.npstr.magma.events.audio.ws.in.ClientDisconnect;
 import space.npstr.magma.events.audio.ws.in.HeartbeatAck;
@@ -21,6 +22,7 @@ import space.npstr.magma.events.audio.ws.in.Hello;
 import space.npstr.magma.events.audio.ws.in.Ignored;
 import space.npstr.magma.events.audio.ws.in.InboundWsEvent;
 import space.npstr.magma.events.audio.ws.in.Ready;
+import space.npstr.magma.events.audio.ws.in.Resumed;
 import space.npstr.magma.events.audio.ws.in.SessionDescription;
 import space.npstr.magma.events.audio.ws.in.WebSocketClosed;
 import space.npstr.magma.events.audio.ws.out.HeartbeatWsEvent;
@@ -119,6 +121,10 @@ public class ReactiveAudioWebSocket extends BaseSubscriber<InboundWsEvent> {
         } else if (inboundEvent instanceof WebSocketClosed) {
             this.handleWebSocketClosed((WebSocketClosed) inboundEvent);
         } else if (inboundEvent instanceof ClientDisconnect) {
+            // noop
+        } else if (inboundEvent instanceof Speaking) {
+            // noop
+        } else if (inboundEvent instanceof Resumed) {
             // noop
         } else if (inboundEvent instanceof Ignored) {
             log.trace("Ignored OP {} event", inboundEvent.getOpCode());
