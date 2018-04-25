@@ -59,11 +59,8 @@ Sample code:
 
 ## Todos
 
-- Implement Resuming
-
 - Rethonk the events (maybe less events, especially in the AudioConnection class and more direct calls,
 given that the event loop is running on `Schedulers.single()` anyways)
-- Fix leaks of the WebSocket class (not enough clean up happening)
 
 
 ## Dependencies:
