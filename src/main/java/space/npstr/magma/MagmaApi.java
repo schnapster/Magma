@@ -5,7 +5,7 @@ import net.dv8tion.jda.core.audio.factory.IAudioSendFactory;
 import org.xnio.OptionMap;
 import org.xnio.XnioWorker;
 
-import java.util.function.Function;
+import java.util.function.BiFunction;
 
 /**
  * Created by napster on 24.04.18.
@@ -17,7 +17,7 @@ public interface MagmaApi {
     /**
      * See full factory documentation below. Missing parameters on this factory method are optional.
      */
-    static MagmaApi of(final Function<String, IAudioSendFactory> sendFactoryProvider) {
+    static MagmaApi of(final BiFunction<String, String, IAudioSendFactory> sendFactoryProvider) {
         return of(sendFactoryProvider, OptionMap.builder().getMap());
     }
 
@@ -25,11 +25,11 @@ public interface MagmaApi {
      * Create a new Magma instance. More than one of these is not necessary.
      *
      * @param sendFactoryProvider
-     *         a provider of {@link IAudioSendFactory}s. It will have guildIds applied to it.
+     *         a provider of {@link IAudioSendFactory}s. It will have userIds and guildIds applied to it.
      * @param xnioOptions
      *         options to build the {@link XnioWorker} that will be used for the websocket connections
      */
-    static MagmaApi of(final Function<String, IAudioSendFactory> sendFactoryProvider,
+    static MagmaApi of(final BiFunction<String, String, IAudioSendFactory> sendFactoryProvider,
                        final OptionMap xnioOptions) {
         return new Magma(sendFactoryProvider, xnioOptions);
     }

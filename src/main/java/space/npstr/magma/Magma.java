@@ -38,7 +38,7 @@ import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.function.Function;
+import java.util.function.BiFunction;
 
 public class Magma implements MagmaApi {
 
@@ -49,7 +49,7 @@ public class Magma implements MagmaApi {
     /**
      * @see MagmaApi
      */
-    Magma(final Function<String, IAudioSendFactory> sendFactoryProvider, final OptionMap xnioOptions) {
+    Magma(final BiFunction<String, String, IAudioSendFactory> sendFactoryProvider, final OptionMap xnioOptions) {
         if (!init()) {
             throw new RuntimeException("Failed to load opus lib. See log output for more info.");
         }
