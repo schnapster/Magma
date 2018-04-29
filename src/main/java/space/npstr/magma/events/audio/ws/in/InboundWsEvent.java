@@ -59,6 +59,7 @@ public interface InboundWsEvent extends WsEvent {
                 final JSONObject readyD = content.getJSONObject("d");
                 return ReadyWsEvent.builder()
                         .ssrc(readyD.getInt("ssrc"))
+                        .ip(readyD.getString("ip"))
                         .port(readyD.getInt("port"))
                         .build();
             case OpCode.SESSION_DESCRIPTION:

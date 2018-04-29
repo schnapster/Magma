@@ -38,6 +38,11 @@ public abstract class Ready implements InboundWsEvent {
     public abstract int getSsrc();
 
     /**
+     * @return the ip address that we should connect our udp connection to
+     */
+    public abstract String getIp();
+
+    /**
      * @return the udp port that we should connect our udp connection to
      */
     public abstract int getPort();

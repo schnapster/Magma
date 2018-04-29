@@ -168,7 +168,7 @@ public class AudioWebSocket extends BaseSubscriber<InboundWsEvent> {
     }
 
     private void handleReady(final Ready ready) {
-        final InetSocketAddress udpTargetAddress = new InetSocketAddress(this.session.getVoiceServerUpdate().getEndpoint(), ready.getPort());
+        final InetSocketAddress udpTargetAddress = new InetSocketAddress(ready.getIp(), ready.getPort());
         this.audioConnection.handleUdpDiscovery(udpTargetAddress, ready.getSsrc())
                 .subscribeOn(Schedulers.single())
                 .subscribe(externalAddress -> this.audioWebSocketSink.next(
