@@ -32,7 +32,9 @@ Recommended implementations:
 
 
 Discord supports 1 audio connection per user and guild (also called a "member").
-This means, an audio connection is exactly identified by those two datapoints.
+This means, an audio connection is exactly identified by those two datapoints,
+and all of the methods of Magma require those to correctly identify the connection
+that you want to open/close/change something about.
 
 
 ## Get started
