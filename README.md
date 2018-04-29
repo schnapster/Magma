@@ -6,7 +6,7 @@ A voice only API for Discord, focused on delivering music at scale.
 
 
 Notable features:
-- Event based and non-blocking at its core - no [thread armageddon](https://ratelimits.are-la.me/794af4.png)
+- Event based and non-blocking at its core
 
 Not supported:
 - Audio Receiving
@@ -14,7 +14,7 @@ Not supported:
 
 Magma is a heavily modified fork of [JDA-Audio](https://github.com/DV8FromTheWorld/JDA-Audio) (Apache 2.0)
 
-Code, ideas and stuff has been reused, many thanks to the original authors and maintainers.
+Big shout-out to the to the original authors and maintainers for doing great work!
 
 Besides making use of most of the code for handling the Opus library and audio packets,
 Magma reuses some of JDAs APIs, namely:
@@ -31,14 +31,45 @@ Recommended implementations:
 - https://github.com/Shredder121/jda-async-packetprovider
 
 
-
 Discord supports 1 audio connection per user and guild (also called a "member").
 This means, an audio connection is exactly identified by those two datapoints.
 
 
 ## Get started
 
-Sample code:
+### Add Magma to your project
+
+- [JitPack](https://jitpack.io/#space.npstr/Magma) for builds straight from github code
+
+###### Gradle build.gradle
+```groovy
+    repositories {
+        maven { url 'https://jitpack.io' }
+    }
+
+    dependencies {
+        compile group: 'space.npstr', name: 'Magma', version: '0.1.0'
+    }
+```
+
+###### Maven pom.xml
+```xml
+    <repositories>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>        
+    </repositories>
+
+    <dependency>
+        <groupId>space.npstr</groupId>
+        <artifactId>Magma</artifactId>
+        <version>0.1.0</version>
+    </dependency>
+```
+
+### Sample code
+
 ```java
 
     IAudioSendFactory audioSendFactory = <your implementation here>;
@@ -69,6 +100,21 @@ Sample code:
 
 None of those calls are blocking, as they are translated into events to be processed as soon as possible.
 Currently, there is no feedback as to when and how these are processed.
+
+
+## Changelog
+
+Expect breaking changes between versions while v1 has not been released.
+
+### v0.1.0
+- Ignore more irrelevant events
+- Smol docs update
+- Licensed as Apache 2.0
+- Use IP provided by Discord instead of endpoint address for the UDP connection
+
+### v0.0.1
+- It's working, including resumes.
+
 
 ## Dependencies:
 
