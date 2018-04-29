@@ -4,7 +4,8 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import space.npstr.magma.connections.ReactiveAudioWebSocket;
+import space.npstr.magma.connections.AudioConnection;
+import space.npstr.magma.connections.AudioWebSocket;
 import space.npstr.magma.events.audio.ws.OpCode;
 import space.npstr.magma.events.audio.ws.SpeakingWsEvent;
 import space.npstr.magma.events.audio.ws.WsEvent;
@@ -47,11 +48,11 @@ public interface InboundWsEvent extends WsEvent {
             case OpCode.SESSION_DESCRIPTION:
                 final JSONObject sessionD = content.getJSONObject("d");
                 final String mode = sessionD.getString("mode");
-                if (!mode.equalsIgnoreCase(ReactiveAudioWebSocket.V3_ENCRYPTION_MODE)) {
+                if (!mode.equalsIgnoreCase(AudioWebSocket.V3_ENCRYPTION_MODE)) {
                     log.warn("Received unknown encryption mode {}", mode);
                 }
                 final JSONArray keyArray = sessionD.getJSONArray("secret_key");
-                final byte[] secretKey = new byte[ReactiveAudioWebSocket.DISCORD_SECRET_KEY_LENGTH];
+                final byte[] secretKey = new byte[AudioConnection.DISCORD_SECRET_KEY_LENGTH];
                 for (int i = 0; i < keyArray.length(); i++) {
                     secretKey[i] = (byte) keyArray.getInt(i);
                 }

@@ -8,6 +8,8 @@ import reactor.core.Disposable;
 import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.UnicastProcessor;
 import reactor.core.scheduler.Schedulers;
+import space.npstr.magma.connections.AudioConnection;
+import space.npstr.magma.connections.AudioWebSocket;
 import space.npstr.magma.events.audio.lifecycle.CloseWebSocket;
 import space.npstr.magma.events.audio.lifecycle.ConnectWebSocketLcEvent;
 import space.npstr.magma.events.audio.lifecycle.LifecycleEvent;
@@ -25,25 +27,24 @@ import java.util.logging.Level;
 /**
  * Created by napster on 22.04.18.
  * <p>
- * This class manages the lifecycles of various audiostack elements.
+ * This class manages the lifecycles of various AudioStack objects.
  * <p>
- * The AudioStack consists of:
- * - A websocket connection ( -> {@link space.npstr.magma.connections.ReactiveAudioWebSocket}
- * - A voice packet emitter ( -> {@link space.npstr.magma.connections.ReactiveAudioConnection}
- * - A send handler          ( -> {@link net.dv8tion.jda.core.audio.AudioSendHandler}, provided by user code)
- * - A (native) send system ( -> {@link net.dv8tion.jda.core.audio.factory.IAudioSendSystem}
- * - Another object that glues these things together, mostly to keep track of the association sendhandler <-> guild
+ * The {@link AudioStack} consists of:
+ * - A websocket connection ( -> {@link AudioWebSocket}
+ * - A voice packet emitter ( -> {@link AudioConnection}
+ * - A send handler         ( -> {@link net.dv8tion.jda.core.audio.AudioSendHandler}, provided by user code)
+ * - A send system          ( -> {@link net.dv8tion.jda.core.audio.factory.IAudioSendSystem} , provided by user code)
  * <p>
  * <p>
  * Lifecycle Events:
  * <p>
  * - Constructive Events:
- * -- VoiceServerUpdate telling us to join a channel
+ * -- VoiceServerUpdate telling us to connect to a voice server
  * -- Reconnects following certain close events
  * <p>
  * - Destructive Events:
- * -- VSU telling us to leave a channel (null id)
  * -- Websocket close events
+ * -- Shutdown
  * <p>
  * Neutral Events:
  * -- Setting and removing a send handler

@@ -9,7 +9,7 @@ import reactor.core.Disposable;
 import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.UnicastProcessor;
 import reactor.core.scheduler.Schedulers;
-import space.npstr.magma.connections.ReactiveAudioWebSocket;
+import space.npstr.magma.connections.AudioWebSocket;
 import space.npstr.magma.events.audio.lifecycle.CloseWebSocket;
 import space.npstr.magma.events.audio.lifecycle.ConnectWebSocket;
 import space.npstr.magma.events.audio.lifecycle.LifecycleEvent;
@@ -22,7 +22,9 @@ import javax.annotation.Nullable;
 /**
  * Created by napster on 23.04.18.
  * <p>
- * One of these per guild and magma api. Glues together the SendHandler and the Connection.
+ * One of these per user and guild. Glues together the SendHandler and the Connections (websocket + udp).
+ *
+ * @see AudioStackLifecyclePipeline
  */
 public class AudioStack {
 
@@ -37,7 +39,7 @@ public class AudioStack {
     private final Disposable lifecycleSubscription;
 
     @Nullable
-    private ReactiveAudioWebSocket webSocket;
+    private AudioWebSocket webSocket;
     @Nullable
     private AudioSendHandler sendHandler;
 
@@ -91,7 +93,7 @@ public class AudioStack {
             this.webSocket.close();
         }
 
-        this.webSocket = new ReactiveAudioWebSocket(this.sendFactory, connectWebSocket.getSessionInfo(),
+        this.webSocket = new AudioWebSocket(this.sendFactory, connectWebSocket.getSessionInfo(),
                 this.webSocketClient, this.lifecyclePipeline);
         if (this.sendHandler != null) {
             this.webSocket.getAudioConnection().updateSendHandler(

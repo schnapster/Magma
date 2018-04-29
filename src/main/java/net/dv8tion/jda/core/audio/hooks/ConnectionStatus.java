@@ -18,6 +18,9 @@ package net.dv8tion.jda.core.audio.hooks;
 
 /**
  * Represents the connection status of an audio connection.
+ *
+ * NOTE: This class is only present in Magma due to {@link net.dv8tion.jda.core.audio.factory.IPacketProvider}s
+ * dependency on it
  */
 public enum ConnectionStatus
 {

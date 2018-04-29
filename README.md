@@ -6,7 +6,7 @@ A voice only API for Discord, focused on delivering music at scale.
 
 
 Notable features:
-- Event based and reactive - no [thread armageddon](https://ratelimits.are-la.me/794af4.png)
+- Event based and non-blocking at its core - no [thread armageddon](https://ratelimits.are-la.me/794af4.png)
 
 Not supported:
 - Audio Receiving
@@ -24,10 +24,16 @@ Magma reuses some of JDAs APIs, namely:
 - AudioSendHandler
 
 Magma does not ship any implementations for IAudioSendSystem and IAudioSendFactory.
+It is important that the implementation you choose will never call any method of the packet provider but
+`IPacketProvider#getNextPacket`, because none of the others are supported by Magma.
 Recommended implementations:
 - https://github.com/sedmelluq/jda-nas
 - https://github.com/Shredder121/jda-async-packetprovider
 
+
+
+Discord supports 1 audio connection per user and guild (also called a "member").
+This means, an audio connection is exactly identified by those two datapoints.
 
 
 ## Get started
@@ -55,13 +61,14 @@ Sample code:
     magmaApi.removeSendHandler(userId, guildId);
     magmaApi.closeConnection(userId, guildId);
 
+    // on shutting down
+    
+    magmaApi.shutdown();    
+
 ```
 
-## Todos
-
-- Rethonk the events (maybe less events, especially in the AudioConnection class and more direct calls,
-given that the event loop is running on `Schedulers.single()` anyways)
-
+None of those calls are blocking, as they are translated into events to be processed as soon as possible.
+Currently, there is no feedback as to when and how these are processed.
 
 ## Dependencies:
 

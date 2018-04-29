@@ -15,16 +15,14 @@ import space.npstr.magma.events.audio.ws.in.InboundWsEvent;
 import space.npstr.magma.events.audio.ws.out.OutboundWsEvent;
 
 import javax.annotation.Nullable;
-import java.util.function.Function;
 import java.util.logging.Level;
 
 /**
  * Created by napster on 21.04.18.
  */
-public class ReactiveAudioWebSocketHandler implements WebSocketHandler {
-    private static final Logger log = LoggerFactory.getLogger(ReactiveAudioWebSocketHandler.class);
+public class AudioWebSocketSessionHandler implements WebSocketHandler {
+    private static final Logger log = LoggerFactory.getLogger(AudioWebSocketSessionHandler.class);
     private final Subscriber<InboundWsEvent> inbound;
-    private final Function<String, InboundWsEvent> inboundEventCreator;
 
     @SuppressWarnings("NullableProblems") //is never actually null
     private volatile Flux<OutboundWsEvent> intermediaryOutbound;
@@ -33,14 +31,21 @@ public class ReactiveAudioWebSocketHandler implements WebSocketHandler {
     @Nullable
     private WebSocketSession session;
 
-    public ReactiveAudioWebSocketHandler(final Flux<OutboundWsEvent> outbound, final Subscriber<InboundWsEvent> inbound,
-                                         final Function<String, InboundWsEvent> inboundEventCreator) {
+    /**
+     * @param outbound
+     *         Publisher of outbound events that shall be sent to Discord
+     * @param inbound
+     *         Subcriber to the events we will receive from Discord
+     */
+    public AudioWebSocketSessionHandler(final Flux<OutboundWsEvent> outbound, final Subscriber<InboundWsEvent> inbound) {
         this.prepareConnect();
         outbound.subscribe(this::process);
         this.inbound = inbound;
-        this.inboundEventCreator = inboundEventCreator;
     }
 
+    /**
+     * Close the session of this handler, if there is any.
+     */
     public void close() {
         if (this.session != null) {
             this.session.close()
@@ -49,16 +54,13 @@ public class ReactiveAudioWebSocketHandler implements WebSocketHandler {
         }
     }
 
-    private void process(final OutboundWsEvent event) {
-        this.intermediaryOutboundSink.next(event);
-    }
-
     /**
      * Call this when planning to reuse this handler for another session.
      * We need to replace the intermediary processor so that the new session can be subscribed to the original
      * {@code Flux<OutboundWsEvent> outbound} constructor parameter.
      * <p>
-     * Any buffered outbound events will be lost.
+     * Any outbound events buffered in the old processor will be lost upon calling this, which is ok,
+     * given that this method is expected to be called when the connection has been closed.
      */
     public void prepareConnect() {
         final UnicastProcessor<OutboundWsEvent> intermediaryProcessor = UnicastProcessor.create();
@@ -74,7 +76,7 @@ public class ReactiveAudioWebSocketHandler implements WebSocketHandler {
 //        Mono.delay(Duration.ofSeconds(30))
 //                .subscribe(tick -> {
 //                    session.close(new CloseStatus(CloseCode.VOICE_SERVER_CRASHED, "lol"));
-//                    ((ReactiveAudioWebSocket) this.inbound).hookOnNext(WebSocketClosedWsEvent.builder()
+//                    ((AudioWebSocket) this.inbound).hookOnNext(WebSocketClosedWsEvent.builder()
 //                            .code(CloseCode.VOICE_SERVER_CRASHED)
 //                            .reason("lol")
 //                            .build());
@@ -86,7 +88,7 @@ public class ReactiveAudioWebSocketHandler implements WebSocketHandler {
         session.receive()
                 .map(WebSocketMessage::getPayloadAsText)
                 .log(log.getName() + ".>>>", Level.FINEST) //FINEST = TRACE
-                .map(this.inboundEventCreator)
+                .map(InboundWsEvent::from)
                 .doOnTerminate(() -> log.trace("Receiving terminated"))
                 .subscribeOn(Schedulers.single())
                 .subscribe(this.inbound);
@@ -98,5 +100,10 @@ public class ReactiveAudioWebSocketHandler implements WebSocketHandler {
                         .map(session::textMessage)
                 )
                 .doOnTerminate(() -> log.trace("Sending terminated"));
+    }
+
+
+    private void process(final OutboundWsEvent event) {
+        this.intermediaryOutboundSink.next(event);
     }
 }

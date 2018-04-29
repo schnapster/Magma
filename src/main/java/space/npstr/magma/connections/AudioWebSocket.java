@@ -41,52 +41,52 @@ import java.util.logging.Level;
 
 /**
  * Created by napster on 19.04.18.
+ *
+ * Handle the lifecycle of the Discord voice websocket connection.
  */
-public class ReactiveAudioWebSocket extends BaseSubscriber<InboundWsEvent> {
+public class AudioWebSocket extends BaseSubscriber<InboundWsEvent> {
 
-    private static final Logger log = LoggerFactory.getLogger(ReactiveAudioWebSocket.class);
+    private static final Logger log = LoggerFactory.getLogger(AudioWebSocket.class);
 
     public static final String V3_ENCRYPTION_MODE = "xsalsa20_poly1305";
-    public static final int DISCORD_SECRET_KEY_LENGTH = 32;
 
     private final SessionInfo session;
     private final URI wssEndpoint;
-    private final ReactiveAudioConnection audioConnection;
+    private final AudioConnection audioConnection;
     private final AudioStackLifecyclePipeline lifecyclePipeline;
     private final WebSocketClient webSocketClient;
 
-    //drop events into this thing to have them sent to discord
+    //drop events into this sink to have them sent to discord
     private final FluxSink<OutboundWsEvent> audioWebSocketSink;
-    private final ReactiveAudioWebSocketHandler webSocketHandler;
+    //reusable, if prepareConnect() is called before reconnecting
+    private final AudioWebSocketSessionHandler webSocketHandler;
 
     @Nullable
     private Disposable heartbeatSubscription;
     private Disposable webSocketConnection;
 
 
-    public ReactiveAudioWebSocket(final IAudioSendFactory sendFactory, final SessionInfo session,
-                                  final WebSocketClient webSocketClient, final AudioStackLifecyclePipeline lifecyclePipeline) {
+    public AudioWebSocket(final IAudioSendFactory sendFactory, final SessionInfo session,
+                          final WebSocketClient webSocketClient, final AudioStackLifecyclePipeline lifecyclePipeline) {
         this.session = session;
         try {
             this.wssEndpoint = new URI(String.format("wss://%s/?v=3", session.getVoiceServerUpdate().getEndpoint()));
         } catch (final URISyntaxException e) {
             throw new RuntimeException("Endpoint " + session.getVoiceServerUpdate().getEndpoint() + " is not a valid URI", e);
         }
-        this.audioConnection = new ReactiveAudioConnection(this, sendFactory);
+        this.audioConnection = new AudioConnection(this, sendFactory);
         this.lifecyclePipeline = lifecyclePipeline;
         this.webSocketClient = webSocketClient;
 
 
-        // send events into this thing
-        // the UnicastProcessor is thread-safe, we can call next() on it as much and from wherever we want
         final UnicastProcessor<OutboundWsEvent> webSocketProcessor = UnicastProcessor.create();
         this.audioWebSocketSink = webSocketProcessor.sink();
 
-        this.webSocketHandler = new ReactiveAudioWebSocketHandler(webSocketProcessor, this, InboundWsEvent::from);
+        this.webSocketHandler = new AudioWebSocketSessionHandler(webSocketProcessor, this);
         this.webSocketConnection = this.connect(this.webSocketClient, this.wssEndpoint, this.webSocketHandler);
     }
 
-    public ReactiveAudioConnection getAudioConnection() {
+    public AudioConnection getAudioConnection() {
         return this.audioConnection;
     }
 
@@ -105,7 +105,7 @@ public class ReactiveAudioWebSocket extends BaseSubscriber<InboundWsEvent> {
     // ################################################################################
 
     /**
-     * This place processes the incoming events from the websocket.
+     * Process the incoming events from the websocket.
      */
     @SuppressWarnings("StatementWithEmptyBody")
     @Override
@@ -160,7 +160,7 @@ public class ReactiveAudioWebSocket extends BaseSubscriber<InboundWsEvent> {
                                 .protocol("udp")
                                 .host(externalAddress.getHostString())
                                 .port(externalAddress.getPort())
-                                .mode(ReactiveAudioWebSocket.V3_ENCRYPTION_MODE)
+                                .mode(AudioWebSocket.V3_ENCRYPTION_MODE)
                                 .build()));
     }
 

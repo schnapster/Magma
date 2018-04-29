@@ -30,20 +30,24 @@ import java.util.function.Supplier;
 
 /**
  * Created by napster on 20.04.18.
+ *
+ * Glue together the send handler and the send system.
  */
-public class ReactiveAudioConnection {
+public class AudioConnection {
 
-    private static final Logger log = LoggerFactory.getLogger(ReactiveAudioConnection.class);
+    private static final Logger log = LoggerFactory.getLogger(AudioConnection.class);
 
+    // * * * values and documentation taken from jda-audio (Apache 2.0)
+    public static final int DISCORD_SECRET_KEY_LENGTH = 32;
     public static final int OPUS_SAMPLE_RATE = 48000;   //(Hz) We want to use the highest of qualities! All the bandwidth!
     public static final int OPUS_FRAME_SIZE = 960;      //An opus frame size of 960 at 48000hz represents 20 milliseconds of audio.
-    public static final int OPUS_FRAME_TIME_AMOUNT = 20;//This is 20 milliseconds. We are only dealing with 20ms opus packets.
     public static final int OPUS_CHANNEL_COUNT = 2;     //We want to use stereo. If the audio given is mono, the encoder promotes it
     // to Left and Right mono (stereo that is the same on both sides)
+    // * * *
 
 
     private final IAudioSendFactory sendFactory;
-    private final ReactiveAudioWebSocket webSocket;
+    private final AudioWebSocket webSocket;
     private final DatagramSocket udpSocket;
     private final FluxSink<UpdateSendHandler> sendHandlerSink;
     private final Disposable audioConnectionSubscription;
@@ -66,7 +70,7 @@ public class ReactiveAudioConnection {
 
     private volatile boolean speaking = false;
 
-    public ReactiveAudioConnection(final ReactiveAudioWebSocket webSocket, final IAudioSendFactory sendFactory) {
+    public AudioConnection(final AudioWebSocket webSocket, final IAudioSendFactory sendFactory) {
         try {
             this.udpSocket = new DatagramSocket();
         } catch (final SocketException e) {
@@ -79,12 +83,12 @@ public class ReactiveAudioConnection {
         final UnicastProcessor<UpdateSendHandler> sendHandlerProcessor = UnicastProcessor.create();
 
         this.sendHandlerSink = sendHandlerProcessor.sink();
-        audioConnectionSubscription = sendHandlerProcessor
+        this.audioConnectionSubscription = sendHandlerProcessor
                 .subscribeOn(Schedulers.single())
                 .subscribe(this::handleSendHandlerUpdate);
     }
 
-    //todo eventify calls in this class
+    //todo eventify calls in this class?
 
     public void updateSecretKey(final byte[] secretKey) {
         this.secretKey = secretKey;
@@ -96,7 +100,7 @@ public class ReactiveAudioConnection {
     }
 
     void shutdown() {
-        audioConnectionSubscription.dispose();
+        this.audioConnectionSubscription.dispose();
         this.setSpeaking(false);
         if (this.sendSystem != null) {
             this.sendSystem.shutdown();
@@ -205,10 +209,10 @@ public class ReactiveAudioConnection {
         public DatagramPacket getNextPacket(final boolean changeTalking) {
             DatagramPacket nextPacket = null;
 
-            final InetSocketAddress udpTargetAddress = ReactiveAudioConnection.this.udpTargetAddress;
-            final Integer ssrc = ReactiveAudioConnection.this.ssrc;
-            final byte[] secretKey = ReactiveAudioConnection.this.secretKey;
-            final AudioSendHandler sendHandler = ReactiveAudioConnection.this.sendHandler;
+            final InetSocketAddress udpTargetAddress = AudioConnection.this.udpTargetAddress;
+            final Integer ssrc = AudioConnection.this.ssrc;
+            final byte[] secretKey = AudioConnection.this.secretKey;
+            final AudioSendHandler sendHandler = AudioConnection.this.sendHandler;
 
             try {
                 if (udpTargetAddress != null
@@ -218,15 +222,15 @@ public class ReactiveAudioConnection {
                         && sendHandler.canProvide()) {
                     byte[] rawAudio = sendHandler.provide20MsAudio();
                     if (rawAudio == null || rawAudio.length == 0) {
-                        if (ReactiveAudioConnection.this.speaking && changeTalking)
-                            ReactiveAudioConnection.this.setSpeaking(false);
+                        if (AudioConnection.this.speaking && changeTalking)
+                            AudioConnection.this.setSpeaking(false);
                     } else {
                         if (!sendHandler.isOpus()) {
-                            rawAudio = ReactiveAudioConnection.this.encodeToOpus(rawAudio);
+                            rawAudio = AudioConnection.this.encodeToOpus(rawAudio);
                         }
                         final AudioPacket packet = new AudioPacket(this.seq, this.timestamp, ssrc, rawAudio);
-                        if (!ReactiveAudioConnection.this.speaking) {
-                            ReactiveAudioConnection.this.setSpeaking(true);
+                        if (!AudioConnection.this.speaking) {
+                            AudioConnection.this.setSpeaking(true);
                         }
                         nextPacket = packet.asEncryptedUdpPacket(udpTargetAddress, secretKey);
 
@@ -236,15 +240,15 @@ public class ReactiveAudioConnection {
                             this.seq++;
                         }
                     }
-                } else if (ReactiveAudioConnection.this.speaking && changeTalking) {
-                    ReactiveAudioConnection.this.setSpeaking(false);
+                } else if (AudioConnection.this.speaking && changeTalking) {
+                    AudioConnection.this.setSpeaking(false);
                 }
             } catch (final Exception e) {
                 log.error("Failed to get next packet", e);
             }
 
             if (nextPacket != null) {
-                this.timestamp += ReactiveAudioConnection.OPUS_FRAME_SIZE;
+                this.timestamp += AudioConnection.OPUS_FRAME_SIZE;
             }
 
             return nextPacket;
