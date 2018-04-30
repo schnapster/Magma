@@ -108,6 +108,9 @@ Currently, there is no feedback as to when and how these are processed.
 
 Expect breaking changes between versions while v1 has not been released.
 
+### v0.1.1
+- Depend on opus-java through jitpack instead of a git submodule
+
 ### v0.1.0
 - Ignore more irrelevant events
 - Smol docs update
