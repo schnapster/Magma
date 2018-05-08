@@ -17,6 +17,8 @@
 package net.dv8tion.jda.core.audio;
 
 import com.iwebpp.crypto.TweetNaclFast;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.DatagramPacket;
 import java.net.InetSocketAddress;
@@ -29,6 +31,8 @@ import java.util.Arrays;
  */
 public class AudioPacket
 {
+    private static final Logger log = LoggerFactory.getLogger(AudioPacket.class);
+
     public static final int RTP_HEADER_BYTE_LENGTH = 12;
     public static final int XSALSA20_NONCE_LENGTH = 24;
 
@@ -49,11 +53,13 @@ public class AudioPacket
      */
     public static final byte RTP_PAYLOAD_TYPE = (byte) 0x78;        //Binary: 0100 1000
 
-    public static final int RTP_VERSION_PAD_EXTEND_INDEX =  0;
-    public static final int RTP_PAYLOAD_INDEX =             1;
-    public static final int SEQ_INDEX =                     2;
-    public static final int TIMESTAMP_INDEX =               4;
-    public static final int SSRC_INDEX =                    8;
+    //@formatter:off
+    public static final int RTP_VERSION_PAD_EXTEND_INDEX    =  0;
+    public static final int RTP_PAYLOAD_INDEX               =  1;
+    public static final int SEQ_INDEX                       =  2;
+    public static final int TIMESTAMP_INDEX                 =  4;
+    public static final int SSRC_INDEX                      =  8;
+    //@formatter:on
 
     private final char seq;
     private final int timestamp;
@@ -77,12 +83,12 @@ public class AudioPacket
 
         final byte versionPad = buffer.get(0);
         final byte[] data = buffer.array();
-        if ((versionPad & 0x10) != 0
-                && data[AudioPacket.RTP_HEADER_BYTE_LENGTH] == (byte) 0xBE && data[AudioPacket.RTP_HEADER_BYTE_LENGTH + 1] == (byte) 0xDE)
+        if ((versionPad & 0b0001_0000) != 0
+                && data[RTP_HEADER_BYTE_LENGTH] == (byte) 0xBE && data[RTP_HEADER_BYTE_LENGTH + 1] == (byte) 0xDE)
         {
-            final short headerLength = (short) (data[AudioPacket.RTP_HEADER_BYTE_LENGTH + 2] << 8 | data[AudioPacket.RTP_HEADER_BYTE_LENGTH + 3]);
-            int i = AudioPacket.RTP_HEADER_BYTE_LENGTH + 4;
-            for (; i < headerLength + AudioPacket.RTP_HEADER_BYTE_LENGTH + 4; i++)
+            final short headerLength = (short) (data[RTP_HEADER_BYTE_LENGTH + 2] << 8 | data[RTP_HEADER_BYTE_LENGTH + 3]);
+            int i = RTP_HEADER_BYTE_LENGTH + 4;
+            for (; i < headerLength + RTP_HEADER_BYTE_LENGTH + 4; i++)
             {
                 final byte len = (byte) ((data[i] & 0x0F) + 1);
                 i += len;
@@ -94,8 +100,8 @@ public class AudioPacket
         }
         else
         {
-            this.encodedAudio = new byte[buffer.array().length - AudioPacket.RTP_HEADER_BYTE_LENGTH];
-            System.arraycopy(buffer.array(), AudioPacket.RTP_HEADER_BYTE_LENGTH, this.encodedAudio, 0, this.encodedAudio.length);
+            this.encodedAudio = new byte[buffer.array().length - RTP_HEADER_BYTE_LENGTH];
+            System.arraycopy(buffer.array(), RTP_HEADER_BYTE_LENGTH, this.encodedAudio, 0, this.encodedAudio.length);
         }
     }
 
@@ -106,13 +112,13 @@ public class AudioPacket
         this.timestamp = timestamp;
         this.encodedAudio = encodedAudio;
 
-        final ByteBuffer buffer = ByteBuffer.allocate(AudioPacket.RTP_HEADER_BYTE_LENGTH + encodedAudio.length);
-        buffer.put(AudioPacket.RTP_VERSION_PAD_EXTEND_INDEX, AudioPacket.RTP_VERSION_PAD_EXTEND);   //0
-        buffer.put(AudioPacket.RTP_PAYLOAD_INDEX, AudioPacket.RTP_PAYLOAD_TYPE);                    //1
-        buffer.putChar(AudioPacket.SEQ_INDEX, seq);                                     //2 - 3
-        buffer.putInt(AudioPacket.TIMESTAMP_INDEX, timestamp);                          //4 - 7
-        buffer.putInt(AudioPacket.SSRC_INDEX, ssrc);                                    //8 - 11
-        System.arraycopy(encodedAudio, 0, buffer.array(), AudioPacket.RTP_HEADER_BYTE_LENGTH, encodedAudio.length);//12 - n
+        final ByteBuffer buffer = ByteBuffer.allocate(RTP_HEADER_BYTE_LENGTH + encodedAudio.length);
+        buffer.put(RTP_VERSION_PAD_EXTEND_INDEX, RTP_VERSION_PAD_EXTEND);   //0
+        buffer.put(RTP_PAYLOAD_INDEX, RTP_PAYLOAD_TYPE);                    //1
+        buffer.putChar(SEQ_INDEX, seq);                                     //2 - 3
+        buffer.putInt(TIMESTAMP_INDEX, timestamp);                          //4 - 7
+        buffer.putInt(SSRC_INDEX, ssrc);                                    //8 - 11
+        System.arraycopy(encodedAudio, 0, buffer.array(), RTP_HEADER_BYTE_LENGTH, encodedAudio.length);//12 - n
         this.rawPacket = buffer.array();
 
     }
@@ -120,7 +126,7 @@ public class AudioPacket
     public byte[] getNonce()
     {
         //The first 12 bytes are the rawPacket are the RTP Discord Nonce.
-        return Arrays.copyOf(this.rawPacket, AudioPacket.RTP_HEADER_BYTE_LENGTH);
+        return Arrays.copyOf(this.rawPacket, RTP_HEADER_BYTE_LENGTH);
     }
 
     public byte[] getRawPacket()
@@ -160,11 +166,11 @@ public class AudioPacket
         //Xsalsa20's Nonce is 24 bytes long, however RTP (and consequently Discord)'s nonce is
         // only 12 bytes long, so we need to create a 24 byte array, and copy the 12 byte nonce into it.
         // we will leave the extra bytes as nulls. (Java sets non-populated bytes as 0).
-        final byte[] extendedNonce = new byte[AudioPacket.XSALSA20_NONCE_LENGTH];
+        final byte[] extendedNonce = new byte[XSALSA20_NONCE_LENGTH];
 
         //Copy the RTP nonce into our Xsalsa20 nonce array.
         // Note, it doesn't fill the Xsalsa20 nonce array completely.
-        System.arraycopy(this.getNonce(), 0, extendedNonce, 0, AudioPacket.RTP_HEADER_BYTE_LENGTH);
+        System.arraycopy(this.getNonce(), 0, extendedNonce, 0, RTP_HEADER_BYTE_LENGTH);
 
         //Create our SecretBox encoder with the secretKey provided by Discord.
         final TweetNaclFast.SecretBox boxer = new TweetNaclFast.SecretBox(secretKey);
@@ -179,9 +185,9 @@ public class AudioPacket
     public static AudioPacket createEchoPacket(final DatagramPacket packet, final int ssrc)
     {
         final ByteBuffer buffer = ByteBuffer.wrap(Arrays.copyOf(packet.getData(), packet.getLength()));
-        buffer.put(AudioPacket.RTP_VERSION_PAD_EXTEND_INDEX, AudioPacket.RTP_VERSION_PAD_EXTEND);
-        buffer.put(AudioPacket.RTP_PAYLOAD_INDEX, AudioPacket.RTP_PAYLOAD_TYPE);
-        buffer.putInt(AudioPacket.SSRC_INDEX, ssrc);
+        buffer.put(RTP_VERSION_PAD_EXTEND_INDEX, RTP_VERSION_PAD_EXTEND);
+        buffer.put(RTP_PAYLOAD_INDEX, RTP_PAYLOAD_TYPE);
+        buffer.putInt(SSRC_INDEX, ssrc);
         return new AudioPacket(buffer.array());
     }
 
@@ -190,14 +196,18 @@ public class AudioPacket
         final TweetNaclFast.SecretBox boxer = new TweetNaclFast.SecretBox(secretKey);
         final AudioPacket encryptedPacket = new AudioPacket(packet);
 
-        final byte[] extendedNonce = new byte[AudioPacket.XSALSA20_NONCE_LENGTH];
-        System.arraycopy(encryptedPacket.getNonce(), 0, extendedNonce, 0, AudioPacket.RTP_HEADER_BYTE_LENGTH);
+        final byte[] extendedNonce = new byte[XSALSA20_NONCE_LENGTH];
+        System.arraycopy(encryptedPacket.getNonce(), 0, extendedNonce, 0, RTP_HEADER_BYTE_LENGTH);
 
         final byte[] decryptedAudio = boxer.open(encryptedPacket.getEncodedAudio(), extendedNonce);
-        final byte[] decryptedRawPacket = new byte[AudioPacket.RTP_HEADER_BYTE_LENGTH + decryptedAudio.length];
+        if (decryptedAudio == null) {
+            log.debug("Failed to decrypt audio packet");
+            return null;
+        }
+        final byte[] decryptedRawPacket = new byte[RTP_HEADER_BYTE_LENGTH + decryptedAudio.length];
 
-        System.arraycopy(encryptedPacket.getNonce(), 0, decryptedRawPacket, 0, AudioPacket.RTP_HEADER_BYTE_LENGTH);
-        System.arraycopy(decryptedAudio, 0, decryptedRawPacket, AudioPacket.RTP_HEADER_BYTE_LENGTH, decryptedAudio.length);
+        System.arraycopy(encryptedPacket.getNonce(), 0, decryptedRawPacket, 0, RTP_HEADER_BYTE_LENGTH);
+        System.arraycopy(decryptedAudio, 0, decryptedRawPacket, RTP_HEADER_BYTE_LENGTH, decryptedAudio.length);
 
         return new AudioPacket(decryptedRawPacket);
     }
