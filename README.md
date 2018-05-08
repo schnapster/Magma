@@ -1,5 +1,9 @@
 # Magma
 
+[![Release](https://img.shields.io/github/tag/napstr/Magma.svg)](https://jitpack.io/#space.npstr/Magma)
+[![Build Status Master Branch](https://travis-ci.com/napstr/Magma.svg?branch=master)](https://travis-ci.org/napstr/Magma/branches)
+[![License](https://img.shields.io/github/license/napstr/Magma.svg)]()
+
 A voice only API for Discord, focused on delivering music at scale.
 
 ![Lava? Magma?](https://i.imgur.com/8Nudc2k.png)
@@ -50,7 +54,7 @@ that you want to open/close/change something about.
     }
 
     dependencies {
-        compile group: 'space.npstr', name: 'Magma', version: '0.1.2'
+        compile group: 'space.npstr', name: 'Magma', version: '0.2.0'
     }
 ```
 
@@ -66,7 +70,7 @@ that you want to open/close/change something about.
     <dependency>
         <groupId>space.npstr</groupId>
         <artifactId>Magma</artifactId>
-        <version>0.1.2</version>
+        <version>0.2.0</version>
     </dependency>
 ```
 
@@ -107,6 +111,9 @@ Currently, there is no feedback as to when and how these are processed.
 ## Changelog
 
 Expect breaking changes between versions while v1 has not been released.
+
+### v0.2.0
+- Build with java 10
 
 ### v0.1.2
 - Implement v4 of Discords Voice API
