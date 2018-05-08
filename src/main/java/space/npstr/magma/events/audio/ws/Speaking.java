@@ -34,12 +34,12 @@ public abstract class Speaking implements InboundWsEvent, OutboundWsEvent {
         return OpCode.SPEAKING;
     }
 
-    public abstract boolean isSpeaking();
+    public abstract int getSpeakingMask();
 
     @Override
     public Object getData() {
         return new JSONObject()
-                .put("speaking", this.isSpeaking())
+                .put("speaking", this.getSpeakingMask())
                 .put("delay", 0);
     }
 }

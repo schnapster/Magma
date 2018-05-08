@@ -86,7 +86,7 @@ public class AudioWebSocket extends BaseSubscriber<InboundWsEvent> {
                           final WebSocketClient webSocketClient, final AudioStackLifecyclePipeline lifecyclePipeline) {
         this.session = session;
         try {
-            this.wssEndpoint = new URI(String.format("wss://%s/?v=3", session.getVoiceServerUpdate().getEndpoint()));
+            this.wssEndpoint = new URI(String.format("wss://%s/?v=4", session.getVoiceServerUpdate().getEndpoint()));
         } catch (final URISyntaxException e) {
             throw new RuntimeException("Endpoint " + session.getVoiceServerUpdate().getEndpoint() + " is not a valid URI", e);
         }
@@ -107,8 +107,9 @@ public class AudioWebSocket extends BaseSubscriber<InboundWsEvent> {
     }
 
     public void setSpeaking(final boolean isSpeaking) {
+        final int speakingMask = isSpeaking ? 1 : 0;
         this.send(SpeakingWsEvent.builder()
-                .isSpeaking(isSpeaking)
+                .speakingMask(speakingMask)
                 .build());
     }
 
