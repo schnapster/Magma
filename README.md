@@ -50,7 +50,7 @@ that you want to open/close/change something about.
     }
 
     dependencies {
-        compile group: 'space.npstr', name: 'Magma', version: '0.1.0'
+        compile group: 'space.npstr', name: 'Magma', version: '0.1.2'
     }
 ```
 
@@ -66,7 +66,7 @@ that you want to open/close/change something about.
     <dependency>
         <groupId>space.npstr</groupId>
         <artifactId>Magma</artifactId>
-        <version>0.1.0</version>
+        <version>0.1.2</version>
     </dependency>
 ```
 
@@ -107,6 +107,9 @@ Currently, there is no feedback as to when and how these are processed.
 ## Changelog
 
 Expect breaking changes between versions while v1 has not been released.
+
+### v0.1.2
+- Implement v4 of Discords Voice API
 
 ### v0.1.1
 - Depend on opus-java through jitpack instead of a git submodule
