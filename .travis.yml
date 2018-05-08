@@ -1,0 +1,24 @@
+language: java
+
+env:
+  global:
+    - BUILD_NUMBER: "$TRAVIS_BUILD_NUMBER"
+
+cache:
+  directories:
+    - "$HOME/.m2"
+    - "$HOME/.gradle"
+    - ".gradle/wrapper"
+    - ".gradle/caches"
+
+before_install:
+  - wget https://github.com/sormuras/bach/raw/master/install-jdk.sh
+
+matrix:
+  include:
+    - env: JDK='OpenJDK 10'
+      install: . ./install-jdk.sh -F 10 -L GPL
+
+script:
+  - java -Xmx32m -version
+  - "./gradlew build --info"
