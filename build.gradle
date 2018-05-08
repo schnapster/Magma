@@ -153,7 +153,9 @@ String getMyVersion() {
         it.commit == grgit.head()
     }
 
-    if (headTag) {
+    def clean = grgit.status().clean //uncommited changes? -> should be SNAPSHOT
+
+    if (headTag && clean) {
         headTag.getName()
     } else {
         "${grgit.head().id}-SNAPSHOT"
