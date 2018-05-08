@@ -26,8 +26,8 @@ apply plugin: 'net.ltgt.apt-idea'
 group = "space.npstr.magma"
 version = "${getMyVersion()}"
 
-sourceCompatibility = 9
-targetCompatibility = 9
+sourceCompatibility = 10
+targetCompatibility = 10
 
 repositories {
     jcenter()
