@@ -28,6 +28,7 @@ import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.UnicastProcessor;
 import reactor.core.scheduler.Schedulers;
 import space.npstr.magma.AudioStackLifecyclePipeline;
+import space.npstr.magma.EncryptionMode;
 import space.npstr.magma.events.audio.lifecycle.CloseWebSocketLcEvent;
 import space.npstr.magma.events.audio.ws.CloseCode;
 import space.npstr.magma.events.audio.ws.Speaking;
@@ -53,7 +54,10 @@ import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.Duration;
+import java.util.List;
+import java.util.Optional;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 
 /**
  * Created by napster on 19.04.18.
@@ -63,8 +67,6 @@ import java.util.logging.Level;
 public class AudioWebSocket extends BaseSubscriber<InboundWsEvent> {
 
     private static final Logger log = LoggerFactory.getLogger(AudioWebSocket.class);
-
-    public static final String V3_ENCRYPTION_MODE = "xsalsa20_poly1305";
 
     private final SessionInfo session;
     private final URI wssEndpoint;
@@ -170,6 +172,17 @@ public class AudioWebSocket extends BaseSubscriber<InboundWsEvent> {
 
     private void handleReady(final Ready ready) {
         final InetSocketAddress udpTargetAddress = new InetSocketAddress(ready.getIp(), ready.getPort());
+        final List<EncryptionMode> receivedModes = ready.getEncryptionModes();
+        final Optional<EncryptionMode> preferredModeOpt = EncryptionMode.getPreferredMode(receivedModes);
+        if (!preferredModeOpt.isPresent()) {
+            final String modes = receivedModes.isEmpty()
+                    ? "empty list"
+                    : String.join(", ", receivedModes.stream().map(Enum::name).collect(Collectors.toList()));
+            throw new RuntimeException("Failed to select encryption modes from " + modes); //todo how are exceptions handled?
+        }
+        final EncryptionMode preferredMode = preferredModeOpt.get();
+        log.debug("Selecting encryption mode {}", preferredMode);
+
         this.audioConnection.handleUdpDiscovery(udpTargetAddress, ready.getSsrc())
                 .subscribeOn(Schedulers.single())
                 .subscribe(externalAddress -> this.audioWebSocketSink.next(
@@ -177,12 +190,15 @@ public class AudioWebSocket extends BaseSubscriber<InboundWsEvent> {
                                 .protocol("udp")
                                 .host(externalAddress.getHostString())
                                 .port(externalAddress.getPort())
-                                .mode(AudioWebSocket.V3_ENCRYPTION_MODE)
+                                .encryptionMode(preferredMode)
                                 .build()));
     }
 
     private void handleSessionDescription(final SessionDescription sessionDescription) {
-        this.audioConnection.updateSecretKey(sessionDescription.getSecretKey());
+        this.audioConnection.updateSecretKeyAndEncryptionMode(
+                sessionDescription.getSecretKey(),
+                sessionDescription.getEncryptionMode()
+        );
     }
 
     private void handleWebSocketClosed(final WebSocketClosed webSocketClosed) {

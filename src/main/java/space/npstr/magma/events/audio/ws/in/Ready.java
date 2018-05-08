@@ -17,8 +17,11 @@
 package space.npstr.magma.events.audio.ws.in;
 
 import org.immutables.value.Value;
+import space.npstr.magma.EncryptionMode;
 import space.npstr.magma.events.audio.ws.OpCode;
 import space.npstr.magma.immutables.ImmutableWsEvent;
+
+import java.util.List;
 
 /**
  * Created by napster on 21.04.18.
@@ -46,4 +49,9 @@ public abstract class Ready implements InboundWsEvent {
      * @return the udp port that we should connect our udp connection to
      */
     public abstract int getPort();
+
+    /**
+     * @return the supported encryption modes
+     */
+    public abstract List<EncryptionMode> getEncryptionModes();
 }

@@ -16,6 +16,7 @@
 
 package space.npstr.magma.connections;
 
+import com.iwebpp.crypto.TweetNaclFast;
 import com.sun.jna.ptr.PointerByReference;
 import net.dv8tion.jda.core.audio.AudioPacket;
 import net.dv8tion.jda.core.audio.AudioSendHandler;
@@ -30,6 +31,7 @@ import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.UnicastProcessor;
 import reactor.core.scheduler.Schedulers;
+import space.npstr.magma.EncryptionMode;
 import space.npstr.magma.events.audio.lifecycle.UpdateSendHandler;
 import tomp2p.opuswrapper.Opus;
 
@@ -42,6 +44,7 @@ import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
 /**
@@ -61,6 +64,7 @@ public class AudioConnection {
     // to Left and Right mono (stereo that is the same on both sides)
     // * * *
 
+    public static final long MAX_UINT_32 = 4294967295L;
 
     private final IAudioSendFactory sendFactory;
     private final AudioWebSocket webSocket;
@@ -75,6 +79,8 @@ public class AudioConnection {
     private volatile Integer ssrc;
     @Nullable
     private volatile byte[] secretKey;
+    @Nullable
+    private volatile EncryptionMode encryptionMode;
 
 
     @Nullable
@@ -83,6 +89,8 @@ public class AudioConnection {
     private PointerByReference opusEncoder;
     @Nullable
     private IAudioSendSystem sendSystem;
+
+    private final AtomicLong nonce = new AtomicLong(0);
 
     private volatile boolean speaking = false;
 
@@ -106,8 +114,9 @@ public class AudioConnection {
 
     //todo eventify calls in this class?
 
-    public void updateSecretKey(final byte[] secretKey) {
+    public void updateSecretKeyAndEncryptionMode(final byte[] secretKey, final EncryptionMode encryptionMode) {
         this.secretKey = secretKey;
+        this.encryptionMode = encryptionMode;
         this.startSendSystemIfReady();
     }
 
@@ -228,12 +237,14 @@ public class AudioConnection {
             final InetSocketAddress udpTargetAddress = AudioConnection.this.udpTargetAddress;
             final Integer ssrc = AudioConnection.this.ssrc;
             final byte[] secretKey = AudioConnection.this.secretKey;
+            final EncryptionMode encryptionMode = AudioConnection.this.encryptionMode;
             final AudioSendHandler sendHandler = AudioConnection.this.sendHandler;
 
             try {
                 if (udpTargetAddress != null
                         && ssrc != null
                         && secretKey != null
+                        && encryptionMode != null
                         && sendHandler != null
                         && sendHandler.canProvide()) {
                     byte[] rawAudio = sendHandler.provide20MsAudio();
@@ -244,11 +255,10 @@ public class AudioConnection {
                         if (!sendHandler.isOpus()) {
                             rawAudio = AudioConnection.this.encodeToOpus(rawAudio);
                         }
-                        final AudioPacket packet = new AudioPacket(this.seq, this.timestamp, ssrc, rawAudio);
+                        nextPacket = this.getDatagramPacket(rawAudio, ssrc, encryptionMode);
                         if (!AudioConnection.this.speaking) {
                             AudioConnection.this.setSpeaking(true);
                         }
-                        nextPacket = packet.asEncryptedUdpPacket(udpTargetAddress, secretKey);
 
                         if (this.seq + 1 > Character.MAX_VALUE) {
                             this.seq = 0;
@@ -269,6 +279,38 @@ public class AudioConnection {
 
             return nextPacket;
         }
+
+        private DatagramPacket getDatagramPacket(final byte[] rawAudio, final int ssrc, final EncryptionMode encryptionMode) {
+            final AudioPacket packet = new AudioPacket(this.seq, this.timestamp, ssrc, rawAudio);
+
+            final byte[] nonceData;
+            switch (encryptionMode) {
+                case XSALSA20_POLY1305:
+                    nonceData = null;
+                    break;
+                case XSALSA20_POLY1305_LITE:
+                    final long nextNonce = AudioConnection.this.nonce.updateAndGet(n -> n >= MAX_UINT_32 ? 0 : n + 1);
+                    nonceData = this.getNonceBytes(nextNonce);
+                    break;
+                case XSALSA20_POLY1305_SUFFIX:
+                    nonceData = TweetNaclFast.randombytes(TweetNaclFast.SecretBox.nonceLength);
+                    break;
+                default:
+                    throw new IllegalStateException("Encryption mode [" + encryptionMode + "] is not supported!");
+            }
+            return packet.asEncryptedUdpPacket(AudioConnection.this.udpTargetAddress, AudioConnection.this.secretKey, nonceData);
+        }
+
+        //@formatter:off
+        private byte[] getNonceBytes(final long nonce) {
+            final byte[] data = new byte[4];
+            data[0] = (byte) ((nonce >>> 24) & 0xFF);
+            data[1] = (byte) ((nonce >>> 16) & 0xFF);
+            data[2] = (byte) ((nonce >>>  8) & 0xFF);
+            data[3] = (byte) ( nonce         & 0xFF);
+            return data;
+        }
+        //@formatter:on
 
         @Override
         public void onConnectionError(final ConnectionStatus status) {

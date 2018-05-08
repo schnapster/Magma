@@ -20,12 +20,14 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import space.npstr.magma.EncryptionMode;
 import space.npstr.magma.connections.AudioConnection;
-import space.npstr.magma.connections.AudioWebSocket;
 import space.npstr.magma.events.audio.ws.OpCode;
 import space.npstr.magma.events.audio.ws.SpeakingWsEvent;
 import space.npstr.magma.events.audio.ws.WsEvent;
 import space.npstr.magma.events.audio.ws.out.OutboundWsEvent;
+
+import java.util.Optional;
 
 /**
  * Created by napster on 20.04.18.
@@ -61,12 +63,14 @@ public interface InboundWsEvent extends WsEvent {
                         .ssrc(readyD.getInt("ssrc"))
                         .ip(readyD.getString("ip"))
                         .port(readyD.getInt("port"))
+                        .addAllEncryptionModes(EncryptionMode.fromJson(readyD.getJSONArray("modes")))
                         .build();
             case OpCode.SESSION_DESCRIPTION:
                 final JSONObject sessionD = content.getJSONObject("d");
                 final String mode = sessionD.getString("mode");
-                if (!mode.equalsIgnoreCase(AudioWebSocket.V3_ENCRYPTION_MODE)) {
-                    log.warn("Received unknown encryption mode {}", mode);
+                final Optional<EncryptionMode> encryptionMode = EncryptionMode.parse(mode);
+                if (!encryptionMode.isPresent()) {
+                    throw new RuntimeException("No / unknown encryption mode: " + mode); //todo how are exceptions handled? ensure json payload is logged
                 }
                 final JSONArray keyArray = sessionD.getJSONArray("secret_key");
                 final byte[] secretKey = new byte[AudioConnection.DISCORD_SECRET_KEY_LENGTH];
@@ -75,7 +79,7 @@ public interface InboundWsEvent extends WsEvent {
                 }
 
                 return SessionDescriptionWsEvent.builder()
-                        .mode(mode)
+                        .encryptionMode(encryptionMode.get())
                         .secretKey(secretKey)
                         .build();
             case OpCode.SPEAKING:
