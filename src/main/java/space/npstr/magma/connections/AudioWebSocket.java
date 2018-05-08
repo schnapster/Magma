@@ -153,7 +153,7 @@ public class AudioWebSocket extends BaseSubscriber<InboundWsEvent> {
     }
 
     private void handleHello(final Hello hello) {
-        this.heartbeatSubscription = Flux.interval(Duration.ofMillis(hello.getHeartbeatIntervalMillis() / 2)) //FIXME v4 sends correct heartbeat intervals
+        this.heartbeatSubscription = Flux.interval(Duration.ofMillis(hello.getHeartbeatIntervalMillis()))
                 .doOnNext(tick -> log.trace("Sending heartbeat {}", tick))
                 .subscribeOn(Schedulers.single())
                 .subscribe(tick -> this.audioWebSocketSink.next(HeartbeatWsEvent.builder()
