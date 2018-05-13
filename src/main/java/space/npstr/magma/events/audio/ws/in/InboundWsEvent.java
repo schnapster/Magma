@@ -18,8 +18,6 @@ package space.npstr.magma.events.audio.ws.in;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import space.npstr.magma.EncryptionMode;
 import space.npstr.magma.connections.AudioConnection;
 import space.npstr.magma.events.audio.ws.OpCode;
@@ -36,8 +34,6 @@ import java.util.Optional;
  * Counterpart to {@link OutboundWsEvent}
  */
 public interface InboundWsEvent extends WsEvent {
-
-    Logger log = LoggerFactory.getLogger(InboundWsEvent.class);
 
     /**
      * This method may throw if Discord sends us bogus json data. This is not unlikely given Discord's history api. todo figure out error handling for it
@@ -97,6 +93,7 @@ public interface InboundWsEvent extends WsEvent {
             case OpCode.OP_14:
                 return IgnoredWsEvent.builder()
                         .opCode(opCode)
+                        .payload(payload)
                         .build();
             case OpCode.CLIENT_DISCONNECT:
                 return ClientDisconnectWsEvent.builder()
@@ -107,9 +104,7 @@ public interface InboundWsEvent extends WsEvent {
                         .code(closedD.getInt("code"))
                         .reason(closedD.getString("reason"))
                         .build();
-
             default:
-                log.warn("Received unexpected op code {}, full message: {}", opCode, payload);
                 return UnknownWsEvent.builder()
                         .payload(payload)
                         .opCode(opCode)

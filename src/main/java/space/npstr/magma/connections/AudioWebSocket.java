@@ -41,6 +41,7 @@ import space.npstr.magma.events.audio.ws.in.InboundWsEvent;
 import space.npstr.magma.events.audio.ws.in.Ready;
 import space.npstr.magma.events.audio.ws.in.Resumed;
 import space.npstr.magma.events.audio.ws.in.SessionDescription;
+import space.npstr.magma.events.audio.ws.in.UnknownWsEvent;
 import space.npstr.magma.events.audio.ws.in.WebSocketClosed;
 import space.npstr.magma.events.audio.ws.out.HeartbeatWsEvent;
 import space.npstr.magma.events.audio.ws.out.IdentifyWsEvent;
@@ -146,9 +147,11 @@ public class AudioWebSocket extends BaseSubscriber<InboundWsEvent> {
         } else if (inboundEvent instanceof Resumed) {
             // noop
         } else if (inboundEvent instanceof Ignored) {
-            log.trace("Ignored OP {} event", inboundEvent.getOpCode());
+            log.trace("Ignored OP {}, payload: ", inboundEvent.getOpCode(), ((Ignored) inboundEvent).getPayload());
+        } else if (inboundEvent instanceof UnknownWsEvent) {
+            log.warn("Unknown OP {}, payload: {}", inboundEvent.getOpCode(), ((UnknownWsEvent) inboundEvent).getPayload());
         } else {
-            log.warn("WebSocket has no handler for websocket event of class {}", inboundEvent.getClass().getSimpleName());
+            log.warn("WebSocket has no handler for event of class {}", inboundEvent.getClass().getSimpleName());
         }
     }
 

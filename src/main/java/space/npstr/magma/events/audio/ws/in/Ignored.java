@@ -28,4 +28,6 @@ public abstract class Ignored implements InboundWsEvent {
 
     @Override
     public abstract int getOpCode();
+
+    public abstract String getPayload();
 }
