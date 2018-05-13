@@ -147,7 +147,7 @@ public class AudioWebSocket extends BaseSubscriber<InboundWsEvent> {
         } else if (inboundEvent instanceof Resumed) {
             // noop
         } else if (inboundEvent instanceof Ignored) {
-            log.trace("Ignored OP {}, payload: ", inboundEvent.getOpCode(), ((Ignored) inboundEvent).getPayload());
+            log.trace("Ignored OP {}, payload: {}", inboundEvent.getOpCode(), ((Ignored) inboundEvent).getPayload());
         } else if (inboundEvent instanceof UnknownWsEvent) {
             log.warn("Unknown OP {}, payload: {}", inboundEvent.getOpCode(), ((UnknownWsEvent) inboundEvent).getPayload());
         } else {
