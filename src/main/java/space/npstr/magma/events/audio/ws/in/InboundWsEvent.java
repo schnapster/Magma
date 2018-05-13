@@ -93,9 +93,10 @@ public interface InboundWsEvent extends WsEvent {
             case OpCode.RESUMED:
                 return ResumedWsEvent.builder()
                         .build();
-            case OpCode.NO_IDEA:
+            case OpCode.OP_12:
+            case OpCode.OP_14:
                 return IgnoredWsEvent.builder()
-                        .opCode(OpCode.NO_IDEA)
+                        .opCode(opCode)
                         .build();
             case OpCode.CLIENT_DISCONNECT:
                 return ClientDisconnectWsEvent.builder()

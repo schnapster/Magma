@@ -29,8 +29,9 @@ public final class OpCode {
     public static final int RESUME = 7;
     public static final int HELLO = 8;
     public static final int RESUMED = 9;
-    public static final int NO_IDEA = 12;                   //this one is not documented, but we do receive it
+    public static final int OP_12 = 12;                     //not documented, but we do receive it
     public static final int CLIENT_DISCONNECT = 13;
+    public static final int OP_14 = 14;                     //not documented, but we do receive it
 
     // Custom codes
     public static final int WEBSOCKET_CLOSE = 9001;
