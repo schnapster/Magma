@@ -108,6 +108,52 @@ None of those calls are blocking, as they are translated into events to be proce
 Currently, there is no feedback as to when and how these are processed.
 
 
+## Numbers
+_(last updated for 0.2.1)_
+
+Magma has been written with [Lavalink](https://github.com/Frederikam/Lavalink) in mind,
+numbers shown here compare vanilla Lavalink to a [Magma-based branch](https://github.com/Frederikam/Lavalink/tree/experimental/magma).
+
+Graphs by courtesy of [FredBoat](https://github.com/Frederikam/FredBoat/).
+
+#### CPU Usage
+<details><summary>Click me</summary>
+
+![CPU Usage](https://i.imgur.com/X7cvuzO.png)
+
+</details>
+
+#### Threads
+<details><summary>Click me</summary>
+
+![Threads](https://i.imgur.com/rnYgGtw.png)
+
+</details>
+
+#### Garbage Collection
+<details><summary>Click me</summary>
+
+![GC Time Spent](https://i.imgur.com/X7yC5xh.png)  
+![GC Runs](https://i.imgur.com/pLKH2hA.png)
+
+</details>
+
+#### Memory
+<details><summary>Click me</summary>
+
+![JVM Memory](https://i.imgur.com/21IdlIo.png)  
+![Process Memory](https://i.imgur.com/Pu8jwec.png)
+
+</details>
+
+#### Audio Frames
+<details><summary>Click me</summary>
+
+![Audio Frames Lost](https://i.imgur.com/wmBlup7.png)
+
+</details>
+
+
 ## Changelog
 
 Expect breaking changes between versions while v1 has not been released.
