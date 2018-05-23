@@ -224,8 +224,7 @@ public class AudioWebSocket extends BaseSubscriber<InboundWsEvent> {
         } else {
             log.info("Closing");
             this.lifecyclePipeline.next(CloseWebSocketLcEvent.builder()
-                    .userId(this.session.getUserId())
-                    .guildId(this.session.getVoiceServerUpdate().getGuildId())
+                    .member(this.session.getVoiceServerUpdate().getMember())
                     .build());
         }
     }

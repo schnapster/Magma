@@ -17,6 +17,7 @@
 package space.npstr.magma.events.audio.lifecycle;
 
 import org.immutables.value.Value;
+import space.npstr.magma.Member;
 import space.npstr.magma.immutables.ImmutableLcEvent;
 
 /**
@@ -26,13 +27,10 @@ import space.npstr.magma.immutables.ImmutableLcEvent;
 @ImmutableLcEvent
 public abstract class VoiceServerUpdate implements LifecycleEvent {
 
+    @Override
+    public abstract Member getMember();
+
     public abstract String getSessionId();
-
-    @Override
-    public abstract String getGuildId();
-
-    @Override
-    public abstract String getUserId();
 
     public abstract String getEndpoint();
 

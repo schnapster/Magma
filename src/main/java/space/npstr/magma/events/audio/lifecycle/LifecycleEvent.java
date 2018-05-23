@@ -16,6 +16,8 @@
 
 package space.npstr.magma.events.audio.lifecycle;
 
+import space.npstr.magma.Member;
+
 /**
  * Created by napster on 23.04.18.
  *
@@ -23,7 +25,13 @@ package space.npstr.magma.events.audio.lifecycle;
  */
 public interface LifecycleEvent {
 
-    String getUserId();
+    Member getMember();
 
-    String getGuildId();
+    default String getUserId() {
+        return getMember().getUserId();
+    }
+
+    default String getGuildId() {
+        return getMember().getGuildId();
+    }
 }

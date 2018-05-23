@@ -16,6 +16,8 @@
 
 package space.npstr.magma.events.audio.lifecycle;
 
+import space.npstr.magma.Member;
+
 /**
  * Created by napster on 24.04.18.
  * <p>
@@ -29,13 +31,7 @@ public class Shutdown implements LifecycleEvent {
     }
 
     @Override
-    public String getUserId() {
-        return "";
+    public Member getMember() {
+        throw new UnsupportedOperationException();
     }
-
-    @Override
-    public String getGuildId() {
-        return "";
-    }
-
 }

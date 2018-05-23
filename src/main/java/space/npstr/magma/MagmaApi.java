@@ -21,7 +21,7 @@ import net.dv8tion.jda.core.audio.factory.IAudioSendFactory;
 import org.xnio.OptionMap;
 import org.xnio.XnioWorker;
 
-import java.util.function.BiFunction;
+import java.util.function.Function;
 
 /**
  * Created by napster on 24.04.18.
@@ -33,7 +33,7 @@ public interface MagmaApi {
     /**
      * Please see full factory documentation below. Missing parameters on this factory method are optional.
      */
-    static MagmaApi of(final BiFunction<String, String, IAudioSendFactory> sendFactoryProvider) {
+    static MagmaApi of(final Function<Member, IAudioSendFactory> sendFactoryProvider) {
         return of(sendFactoryProvider, OptionMap.builder().getMap());
     }
 
@@ -46,7 +46,7 @@ public interface MagmaApi {
      * @param xnioOptions
      *         options to build the {@link XnioWorker} that will be used for the websocket connections
      */
-    static MagmaApi of(final BiFunction<String, String, IAudioSendFactory> sendFactoryProvider,
+    static MagmaApi of(final Function<Member, IAudioSendFactory> sendFactoryProvider,
                        final OptionMap xnioOptions) {
         return new Magma(sendFactoryProvider, xnioOptions);
     }
@@ -59,56 +59,51 @@ public interface MagmaApi {
     /**
      * Also see: https://discordapp.com/developers/docs/topics/voice-connections#retrieving-voice-server-information-example-voice-server-update-payload
      *
-     * @param userId
-     *         Id of the bot account that this update belongs to
-     * @param sessionId
-     *         The session id of the voice state of member (= bot account in a guild) to which this voice update belongs.
-     * @param guildId
-     *         Id of the guild whose voice server shall be updated. Can be extracted from the op 0 VOICE_SERVER_UPDATE
-     *         event that should be triggering a call to this method in the first place.
-     * @param endpoint
-     *         The endpoint to connect to. If the event you received from Discord has no endpoint, you can safely
-     *         discard it, until you received one with a valid endpoint. Can be extracted from the op 0
-     *         VOICE_SERVER_UPDATE event that should be triggering a call to this method in the first place
-     * @param token
-     *         Can be extracted from the op 0 VOICE_SERVER_UPDATE event that should be triggering a call to this method
-     *         in the first place
+     * @param member
+     *         Id of the bot account that this update belongs to composed with the id of the guild whose voice server
+     *         shall be updated. The user id is something your use code should keep track of, the guild id can be
+     *         extracted from the op 0 VOICE_SERVER_UPDATE event that should be triggering a call to this method in the
+     *         first place.
+     * @param serverUpdate
+     *         A composite of session id, endpoint and token. Most of that information can be extracted from the op 0
+     *         VOICE_SERVER_UPDATE event that should be triggering a call to this method in the first place.
+     *
+     * @see Member
+     * @see ServerUpdate
      */
-    //todo: too many string parameters. this is error prone.
-    void provideVoiceServerUpdate(final String userId, final String sessionId, final String guildId,
-                                  final String endpoint, final String token);
+    void provideVoiceServerUpdate(final Member member, final ServerUpdate serverUpdate);
 
     /**
      * Set the {@link AudioSendHandler} for a bot member.
      *
-     * @param userId
-     *         user id of the bot member for which the send handler shall be set
-     * @param guildId
-     *         guild id of the bot member for which the send handler shall be set
+     * @param member
+     *         user id + guild id of the bot member for which the send handler shall be set
      * @param sendHandler
      *         The send handler to be set. You need to implement this yourself. This is a JDA interface so if you have
      *         written voice code with JDA before you reuse your existing code.
+     *
+     * @see Member
      */
-    void setSendHandler(final String userId, final String guildId, final AudioSendHandler sendHandler);
+    void setSendHandler(final Member member, final AudioSendHandler sendHandler);
 
     /**
      * Remove the {@link AudioSendHandler} for a bot member.
      *
-     * @param userId
-     *         user id of the bot member for which the send handler shall be removed
-     * @param guildId
-     *         guild id of the bot member for which the send handler shall be removed
+     * @param member
+     *         user id + guild id of the bot member for which the send handler shall be removed
+     *
+     * @see Member
      */
-    void removeSendHandler(final String userId, final String guildId);
+    void removeSendHandler(final Member member);
 
     /**
      * Close the audio connection for a bot member.
      *
-     * @param userId
-     *         user id of the bot member for which the audio connection shall be closed
-     * @param guildId
-     *         guild id of the bot member for which the audio connection shall be closed
+     * @param member
+     *         user id + guild id of the bot member for which the audio connection shall be closed
+     *
+     * @see Member
      */
-    void closeConnection(final String userId, final String guildId);
+    void closeConnection(final Member member);
 
 }

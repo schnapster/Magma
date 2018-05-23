@@ -37,7 +37,7 @@ import space.npstr.magma.immutables.ImmutableSessionInfo;
 import javax.annotation.CheckReturnValue;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.logging.Level;
 
 /**
@@ -73,13 +73,13 @@ public class AudioStackLifecyclePipeline {
     // concurrency is handled by modifying this through a single thread eventloop only
     private final Map<String, Map<String, AudioStack>> audioStacks = new HashMap<>();
 
-    private final BiFunction<String, String, IAudioSendFactory> sendFactoryProvider;
+    private final Function<Member, IAudioSendFactory> sendFactoryProvider;
     private final WebSocketClient webSocketClient;
 
     private final FluxSink<LifecycleEvent> lifecycleEventSink;
     private final Disposable lifecycleSubscription;
 
-    public AudioStackLifecyclePipeline(final BiFunction<String, String, IAudioSendFactory> sendFactoryProvider,
+    public AudioStackLifecyclePipeline(final Function<Member, IAudioSendFactory> sendFactoryProvider,
                                        final WebSocketClient webSocketClient) {
         this.sendFactoryProvider = sendFactoryProvider;
         this.webSocketClient = webSocketClient;
@@ -111,7 +111,6 @@ public class AudioStackLifecyclePipeline {
             this.getAudioStack(event)
                     .next(ConnectWebSocketLcEvent.builder()
                             .sessionInfo(ImmutableSessionInfo.builder()
-                                    .userId(voiceServerUpdate.getUserId())
                                     .voiceServerUpdate(voiceServerUpdate)
                                     .build())
                             .build()
@@ -136,13 +135,11 @@ public class AudioStackLifecyclePipeline {
 
     @CheckReturnValue
     private AudioStack getAudioStack(final LifecycleEvent lifecycleEvent) {
-        final String userId = lifecycleEvent.getUserId();
-        final String guildId = lifecycleEvent.getGuildId();
         return this.audioStacks
-                .computeIfAbsent(userId, __ -> new HashMap<>())
-                .computeIfAbsent(guildId, __ ->
-                        new AudioStack(guildId,
-                                this.sendFactoryProvider.apply(userId, guildId),
+                .computeIfAbsent(lifecycleEvent.getUserId(), __ -> new HashMap<>())
+                .computeIfAbsent(lifecycleEvent.getGuildId(), __ ->
+                        new AudioStack(lifecycleEvent.getGuildId(),
+                                this.sendFactoryProvider.apply(lifecycleEvent.getMember()),
                                 this.webSocketClient,
                                 this));
     }

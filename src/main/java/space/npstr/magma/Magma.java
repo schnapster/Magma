@@ -36,9 +36,8 @@ import space.npstr.magma.events.audio.lifecycle.VoiceServerUpdateLcEvent;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.function.BiFunction;
+import java.util.function.Function;
 
 public class Magma implements MagmaApi {
 
@@ -49,7 +48,7 @@ public class Magma implements MagmaApi {
     /**
      * @see MagmaApi
      */
-    Magma(final BiFunction<String, String, IAudioSendFactory> sendFactoryProvider, final OptionMap xnioOptions) {
+    Magma(final Function<Member, IAudioSendFactory> sendFactoryProvider, final OptionMap xnioOptions) {
         if (!init()) {
             throw new RuntimeException("Failed to load opus lib. See log output for more info.");
         }
@@ -77,91 +76,39 @@ public class Magma implements MagmaApi {
     }
 
     @Override
-    public void provideVoiceServerUpdate(final String userId, final String sessionId, final String guildId,
-                                         final String endpoint, final String token) {
-        Objects.requireNonNull(userId, "Provided user id is null!");
-        Objects.requireNonNull(sessionId, "Provided session id is null!");
-        Objects.requireNonNull(guildId, "Provided guild id is null!");
-        Objects.requireNonNull(endpoint, "Provided endpoint is null!");
-        Objects.requireNonNull(token, "Provided token is null!");
-        if (userId.isEmpty()) {
-            throw new IllegalArgumentException("Provided user id is empty!");
-        }
-        if (sessionId.isEmpty()) {
-            throw new IllegalArgumentException("Provided session id is empty!");
-        }
-        if (guildId.isEmpty()) {
-            throw new IllegalArgumentException("Provided guild id is empty!");
-        }
-        if (endpoint.isEmpty()) {
-            throw new IllegalArgumentException("Provided endpoint is empty!");
-        }
-        if (token.isEmpty()) {
-            throw new IllegalArgumentException("Provided token is empty!");
-        }
-
+    public void provideVoiceServerUpdate(final Member member, final ServerUpdate serverUpdate) {
         this.lifecyclePipeline.next(VoiceServerUpdateLcEvent.builder()
-                .sessionId(sessionId)
-                .guildId(guildId)
-                .userId(userId)
-                .endpoint(endpoint.replace(":80", "")) //Strip the port from the endpoint.
-                .token(token)
+                .member(member)
+                .sessionId(serverUpdate.getSessionId())
+                .endpoint(serverUpdate.getEndpoint().replace(":80", "")) //Strip the port from the endpoint.
+                .token(serverUpdate.getToken())
                 .build());
     }
 
     @Override
-    public void setSendHandler(final String userId, final String guildId, final AudioSendHandler sendHandler) {
-        Objects.requireNonNull(userId, "Provided user id is null!");
-        Objects.requireNonNull(guildId, "Provided guild id is null!");
-        if (userId.isEmpty()) {
-            throw new IllegalArgumentException("Provided user id is empty!");
-        }
-        if (guildId.isEmpty()) {
-            throw new IllegalArgumentException("Provided guild id is empty!");
-        }
-        this.updateSendHandler(userId, guildId, sendHandler);
+    public void setSendHandler(final Member member, final AudioSendHandler sendHandler) {
+        this.updateSendHandler(member, sendHandler);
     }
 
     @Override
-    public void removeSendHandler(final String userId, final String guildId) {
-        Objects.requireNonNull(userId, "Provided user id is null!");
-        Objects.requireNonNull(guildId, "Provided guild id is null!");
-        if (userId.isEmpty()) {
-            throw new IllegalArgumentException("Provided user id is empty!");
-        }
-        if (guildId.isEmpty()) {
-            throw new IllegalArgumentException("Provided guild id is empty!");
-        }
-
-        this.updateSendHandler(userId, guildId, null);
+    public void removeSendHandler(final Member member) {
+        this.updateSendHandler(member, null);
     }
 
     @Override
-    public void closeConnection(final String userId, final String guildId) {
-        Objects.requireNonNull(userId, "Provided user id is null!");
-        Objects.requireNonNull(guildId, "Provided guild id is null!");
-        if (userId.isEmpty()) {
-            throw new IllegalArgumentException("Provided user id is empty!");
-        }
-        if (guildId.isEmpty()) {
-            throw new IllegalArgumentException("Provided guild id is empty!");
-        }
-
+    public void closeConnection(final Member member) {
         this.lifecyclePipeline.next(CloseWebSocketLcEvent.builder()
-                .userId(userId)
-                .guildId(guildId)
+                .member(member)
                 .build());
-
     }
 
     // ################################################################################
     // #                             Internals
     // ################################################################################
 
-    private void updateSendHandler(final String userId, final String guildId, @Nullable final AudioSendHandler sendHandler) {
+    private void updateSendHandler(final Member member, @Nullable final AudioSendHandler sendHandler) {
         this.lifecyclePipeline.next(UpdateSendHandlerLcEvent.builder()
-                .userId(userId)
-                .guildId(guildId)
+                .member(member)
                 .audioSendHandler(Optional.ofNullable(sendHandler))
                 .build());
     }

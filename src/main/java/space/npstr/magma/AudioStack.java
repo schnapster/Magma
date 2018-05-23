@@ -114,8 +114,7 @@ public class AudioStack {
         if (this.sendHandler != null) {
             this.webSocket.getAudioConnection().updateSendHandler(
                     UpdateSendHandlerLcEvent.builder()
-                            .userId(connectWebSocket.getUserId())
-                            .guildId(this.guildId)
+                            .member(connectWebSocket.getMember())
                             .audioSendHandler(this.sendHandler)
                             .build());
         }

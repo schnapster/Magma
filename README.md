@@ -35,12 +35,6 @@ Recommended implementations:
 - https://github.com/Shredder121/jda-async-packetprovider
 
 
-Discord supports one single audio connection per user and guild (also called a "member").
-This means, an audio connection is exactly identified by those two datapoints,
-and all of the methods of Magma require those to correctly identify the connection
-that you want to open/close/change something about.
-
-
 ## Get started
 
 ### Add Magma to your project
@@ -76,31 +70,67 @@ that you want to open/close/change something about.
 
 ### Sample code
 
+Discord supports one single audio connection per user and guild (also called a "member").
+This means, an audio connection is exactly identified by those two datapoints,
+and all of the methods of Magma require those to correctly identify the connection
+that you want to open/close/change something about.
+
+
+#### DSL
+
+Magma uses [immutables.org](http://immutables.org/) to ensure type and parameter safety,
+both internally and in the Api you are going to use.
+Concretely, the Api makes use of immutable `Member` and `ServerUpdate` objects.
+
+```java
+
+    Member member = MagmaMember.builder()
+        .userId("...")
+        .guildId("...")
+        .build();
+    
+    ServerUpdate = MagmaServerUpdate.builder()
+        .sessionId("...")
+        .endpoint("...")
+        .token("...")
+        .build();
+    
+```
+
+#### Api
+
+Typical usage of the methods offered by the Api:
+
 ```java
 
     IAudioSendFactory audioSendFactory = <your implementation here>;
     AudioSendHandler sendHandler = <your implementation here>;
 
     MagmaApi magmaApi = MagmaApi.of(__ -> audioSendFactory);
-    magmaApi.provideVoiceServerUpdate(userId, sessionId, guildId, endpoint, token);
-    magmaApi.setSendHandler(userId, guildId, sendHandler);
+    magmaApi.provideVoiceServerUpdate(member, serverUpdate);
+    magmaApi.setSendHandler(member, sendHandler);
 
 
     // music plays, then later:
-    
-    magmaApi.setSendHandler(userId, guildId, someOtherHandler);
-    
+
+    magmaApi.setSendHandler(member, someOtherHandler);
+
     // other handler plays music / sounds
 
-    
-    // to clean up:   
-    
-    magmaApi.removeSendHandler(userId, guildId);
-    magmaApi.closeConnection(userId, guildId);
+
+    // to clean up:
+
+    magmaApi.removeSendHandler(member);
+    magmaApi.closeConnection(member);
 
     // on shutting down
-    
-    magmaApi.shutdown();    
+
+    magmaApi.shutdown();
+
+    // Calling any other methods of a MagmaApi object after having called shutdown() 
+    // will result in undefined behaviour. Do not do this, create a new MagmaApi instead.
+    // Please note that you are strongly encouraged to use a single MagmaApi object throughout 
+    // the lifecycle of your application.
 
 ```
 
@@ -157,6 +187,9 @@ Graphs by courtesy of [FredBoat](https://github.com/Frederikam/FredBoat/).
 ## Changelog
 
 Expect breaking changes between versions while v1 has not been released.
+
+### v0.3.0
+- Type and parameter safety in the Api by introducing a simple DSL
 
 ### v0.2.1
 - Handle op 14 events

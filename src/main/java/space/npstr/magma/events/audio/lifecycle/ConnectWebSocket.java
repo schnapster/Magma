@@ -17,6 +17,7 @@
 package space.npstr.magma.events.audio.lifecycle;
 
 import org.immutables.value.Value;
+import space.npstr.magma.Member;
 import space.npstr.magma.immutables.ImmutableLcEvent;
 import space.npstr.magma.immutables.SessionInfo;
 
@@ -28,13 +29,8 @@ import space.npstr.magma.immutables.SessionInfo;
 public abstract class ConnectWebSocket implements LifecycleEvent {
 
     @Override
-    public String getUserId() {
-        return this.getSessionInfo().getUserId();
-    }
-
-    @Override
-    public String getGuildId() {
-        return this.getSessionInfo().getVoiceServerUpdate().getGuildId();
+    public Member getMember() {
+        return this.getSessionInfo().getVoiceServerUpdate().getMember();
     }
 
     public abstract SessionInfo getSessionInfo();

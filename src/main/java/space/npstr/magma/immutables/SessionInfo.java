@@ -26,7 +26,9 @@ import space.npstr.magma.events.audio.lifecycle.VoiceServerUpdate;
 @Value.Style(stagedBuilder = true)
 public abstract class SessionInfo {
 
-    public abstract String getUserId();
-
     public abstract VoiceServerUpdate getVoiceServerUpdate();
+
+    public String getUserId() {
+        return this.getVoiceServerUpdate().getUserId();
+    }
 }
