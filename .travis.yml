@@ -20,6 +20,8 @@ matrix:
       install: . ./install-jdk.sh -F 10 -L GPL
     - env: JDK='OpenJDK 11'
       install: . ./install-jdk.sh -F 11 -L GPL
+  allow_failures:
+    - env: JDK='OpenJDK 11'
 
 script:
   - java -Xmx32m -version
