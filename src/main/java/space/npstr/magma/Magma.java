@@ -16,11 +16,11 @@
 
 package space.npstr.magma;
 
+import club.minnced.opus.util.NativeUtil;
 import com.sun.jna.Platform;
 import io.undertow.protocols.ssl.UndertowXnioSsl;
 import net.dv8tion.jda.core.audio.AudioSendHandler;
 import net.dv8tion.jda.core.audio.factory.IAudioSendFactory;
-import net.dv8tion.jda.core.utils.NativeUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.reactive.socket.client.WebSocketClient;
