@@ -35,7 +35,7 @@ Recommended implementations:
 - https://github.com/Shredder121/jda-async-packetprovider
 
 
-Discord supports 1 audio connection per user and guild (also called a "member").
+Discord supports one single audio connection per user and guild (also called a "member").
 This means, an audio connection is exactly identified by those two datapoints,
 and all of the methods of Magma require those to correctly identify the connection
 that you want to open/close/change something about.
@@ -54,7 +54,7 @@ that you want to open/close/change something about.
     }
 
     dependencies {
-        compile group: 'space.npstr', name: 'Magma', version: '0.2.0'
+        compile group: 'space.npstr', name: 'Magma', version: 'x.y.z'
     }
 ```
 
@@ -70,7 +70,7 @@ that you want to open/close/change something about.
     <dependency>
         <groupId>space.npstr</groupId>
         <artifactId>Magma</artifactId>
-        <version>0.2.0</version>
+        <version>x.z.y</version>
     </dependency>
 ```
 
@@ -111,6 +111,9 @@ Currently, there is no feedback as to when and how these are processed.
 ## Changelog
 
 Expect breaking changes between versions while v1 has not been released.
+
+### v0.2.1
+- Handle op 14 events
 
 ### v0.2.0
 - Build with java 10
