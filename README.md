@@ -188,6 +188,10 @@ Graphs by courtesy of [FredBoat](https://github.com/Frederikam/FredBoat/).
 
 Expect breaking changes between versions while v1 has not been released.
 
+### v0.3.1
+- Dependency updates 
+- Additional experimental build against Java 11
+
 ### v0.3.0
 - Type and parameter safety in the Api by introducing a simple DSL
 
