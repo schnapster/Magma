@@ -42,7 +42,7 @@ public interface MagmaApi {
      * several bot accounts. A single instance of this scales automatically according to your needs and hardware.
      *
      * @param sendFactoryProvider
-     *         a provider of {@link IAudioSendFactory}s. It will have userIds and guildIds applied to it.
+     *         a provider of {@link IAudioSendFactory}s. It will have members applied to it.
      * @param xnioOptions
      *         options to build the {@link XnioWorker} that will be used for the websocket connections
      */

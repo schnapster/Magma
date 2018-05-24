@@ -41,6 +41,8 @@ Recommended implementations:
 
 - [JitPack](https://jitpack.io/#space.npstr/Magma) for builds straight from github code
 
+Replace `x.y.z` in the snippets below with the desired version. Latest: [![Release](https://img.shields.io/github/tag/napstr/Magma.svg)](https://jitpack.io/#space.npstr/Magma)
+
 ###### Gradle build.gradle
 ```groovy
     repositories {
@@ -80,7 +82,8 @@ that you want to open/close/change something about.
 
 Magma uses [immutables.org](http://immutables.org/) to ensure type and parameter safety,
 both internally and in the Api you are going to use.
-Concretely, the Api makes use of immutable `Member` and `ServerUpdate` objects.
+Concretely, the Api makes use of immutable [Member](https://github.com/napstr/Magma/blob/master/src/main/java/space/npstr/magma/Member.java)
+and [ServerUpdate](https://github.com/napstr/Magma/blob/master/src/main/java/space/npstr/magma/ServerUpdate.java) objects.
 
 ```java
 
@@ -99,7 +102,7 @@ Concretely, the Api makes use of immutable `Member` and `ServerUpdate` objects.
 
 #### Api
 
-Typical usage of the methods offered by the Api:
+Typical usage of the methods offered by the [MagmaApi](https://github.com/napstr/Magma/blob/master/src/main/java/space/npstr/magma/MagmaApi.java):
 
 ```java
 
