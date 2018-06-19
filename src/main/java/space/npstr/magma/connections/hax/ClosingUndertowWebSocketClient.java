@@ -1,5 +1,7 @@
 package space.npstr.magma.connections.hax;
 
+import io.undertow.connector.ByteBufferPool;
+import io.undertow.server.DefaultByteBufferPool;
 import io.undertow.websockets.client.WebSocketClient;
 import io.undertow.websockets.client.WebSocketClientNegotiation;
 import io.undertow.websockets.core.WebSocketChannel;
@@ -28,15 +30,29 @@ import java.util.function.Consumer;
 /**
  * Created by napster on 22.04.18.
  * <p>
- * Plugs in our custom {@link ClosingUndertowWebSocketHandlerAdapter}, look below for the one changed line.
+ * Plugs in our custom {@link ClosingUndertowWebSocketHandlerAdapter}, as well as uses a shared bufferpool to avoid
+ * leaks. Leaks happen due to the {@link DefaultByteBufferPool} using a threadlocal variable that holds a reference to
+ * an instance of an inner class of the pool preventing it from being GCed. Since pools can be shared, we opt for the
+ * easy solution of using a single pool in Magma.
+ *
  * Rest of the file is copypasta of the superclass(es) that is necessary to make that work.
  */
 public class ClosingUndertowWebSocketClient extends UndertowWebSocketClient {
 
+    private static final int DEFAULT_POOL_BUFFER_SIZE = 16384; //recommended 16kb buffer.
     private final DataBufferFactory bufferFactory = new DefaultDataBufferFactory();
+    private final ByteBufferPool bufferPool;
 
-    public ClosingUndertowWebSocketClient(final XnioWorker worker, final Consumer<WebSocketClient.ConnectionBuilder> builderConsumer) {
+    public ClosingUndertowWebSocketClient(final XnioWorker worker,
+                                          final Consumer<WebSocketClient.ConnectionBuilder> builderConsumer) {
+        this(worker, builderConsumer, DEFAULT_POOL_BUFFER_SIZE);
+    }
+
+    public ClosingUndertowWebSocketClient(final XnioWorker worker,
+                                          final Consumer<WebSocketClient.ConnectionBuilder> builderConsumer,
+                                          final int bufferPoolSize) {
         super(worker, builderConsumer);
+        this.bufferPool = new DefaultByteBufferPool(false, bufferPoolSize);
     }
 
     @Override
@@ -67,6 +83,28 @@ public class ClosingUndertowWebSocketClient extends UndertowWebSocketClient {
                 })
                 .then(completion);
     }
+
+    // * * * * *
+    // plug in a shared buffer pool
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected WebSocketClient.ConnectionBuilder createConnectionBuilder(final URI url) {
+        final WebSocketClient.ConnectionBuilder builder = io.undertow.websockets.client.WebSocketClient
+                .connectionBuilder(this.getXnioWorker(), this.bufferPool, url);
+        this.getConnectionBuilderConsumer().accept(builder);
+        return builder;
+    }
+
+    @Override
+    public void setPoolBufferSize(final int poolBufferSize) {
+        throw new UnsupportedOperationException("The pool buffer size can only be set through the constructor," +
+                "because this implementation uses a shared pool that is only created once.");
+    }
+
+    // * * * * *
 
     private void handleChannel(final URI url, final WebSocketHandler handler, final MonoProcessor<Void> completion,
                                final DefaultNegotiation negotiation, final WebSocketChannel channel) {
