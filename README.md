@@ -189,7 +189,11 @@ Graphs by courtesy of [FredBoat](https://github.com/Frederikam/FredBoat/).
 
 ## Changelog
 
-Expect breaking changes between versions while v1 has not been released.
+Expect breaking changes between minor versions while v1 has not been released.
+
+### v0.3.2
+- Log endpoint to which the connection has been closed along with the reason
+- Share a BufferPool between all connections to avoid memory leak
 
 ### v0.3.1
 - Dependency updates 
