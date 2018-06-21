@@ -1,6 +1,6 @@
 buildscript {
     ext {
-        grgitVersion = '2.1.2'
+        grgitVersion = '2.2.1'
         aptPluginVersion = '0.15'
     }
     repositories {
