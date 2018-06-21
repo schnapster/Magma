@@ -35,7 +35,7 @@ repositories {
 
 ext {
     //@formatter:off
-    gradleVersion              = '4.7'
+    gradleVersion              = '4.8.1'
 
     opusJavaVersion             = '1.0.0'
     orgJsonVersion              = '20180130'
@@ -86,7 +86,7 @@ compileJava {
     compileJava.options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
 }
 
-task wrapper(type: Wrapper) {
+wrapper {
     gradleVersion = project.ext.gradleVersion
     //noinspection UnnecessaryQualifiedReference
     distributionType = Wrapper.DistributionType.ALL
@@ -115,46 +115,37 @@ task install {
 }
 task sourceJar(type: Jar) {
     from sourceSets.main.allJava
+    classifier 'sources'
 }
-
-def pomConfig = {
-    licenses {
-        license {
-            //noinspection GroovyAssignabilityCheck
-            name 'Apache License 2.0'
-            url 'https://choosealicense.com/licenses/apache-2.0/'
-            distribution 'repo'
-        }
-    }
-    developers {
-        developer {
-            //noinspection GroovyAssignabilityCheck
-            name 'Napster'
-            email 'napster@npstr.space'
-        }
-    }
-    scm {
-        url 'https://github.com/napstr/Magma'
-    }
-}
-
 
 publishing {
     publications {
         mavenJava(MavenPublication) {
             from components.java
-            artifact sourceJar {
-                classifier 'sources'
-            }
+            artifact sourceJar
             groupId project.group
             artifactId project.name
             version project.version
-            pom.withXml {
-                def root = asNode()
-                root.appendNode('description', 'A voice only API for Discord, focused on delivering music at scale.')
-                root.appendNode('name', 'Magma')
-                root.appendNode('url', 'https://github.com/napstr/Magma')
-                root.children().last() + pomConfig
+            pom {
+                name = 'Magma'
+                description = 'A voice only API for Discord, focused on delivering music at scale.'
+                url = 'https://github.com/napstr/Magma'
+                licenses {
+                    license {
+                        name = 'Apache License 2.0'
+                        url = 'https://choosealicense.com/licenses/apache-2.0/'
+                        distribution = 'repo'
+                    }
+                }
+                developers {
+                    developer {
+                        name = 'Napster'
+                        email = 'napster@npstr.space'
+                    }
+                }
+                scm {
+                    url = 'https://github.com/napstr/Magma'
+                }
             }
         }
     }
