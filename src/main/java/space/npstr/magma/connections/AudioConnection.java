@@ -26,13 +26,20 @@ import net.dv8tion.jda.core.audio.factory.IPacketProvider;
 import net.dv8tion.jda.core.audio.hooks.ConnectionStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import reactor.core.Disposable;
+import reactor.core.publisher.BaseSubscriber;
 import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.UnicastProcessor;
 import reactor.core.scheduler.Schedulers;
 import space.npstr.magma.EncryptionMode;
-import space.npstr.magma.events.audio.lifecycle.UpdateSendHandler;
+import space.npstr.magma.events.audio.conn.ConnectionEvent;
+import space.npstr.magma.events.audio.conn.SetEncryptionMode;
+import space.npstr.magma.events.audio.conn.SetSecretKey;
+import space.npstr.magma.events.audio.conn.SetSsrc;
+import space.npstr.magma.events.audio.conn.SetTargetAddress;
+import space.npstr.magma.events.audio.conn.Shutdown;
+import space.npstr.magma.events.audio.conn.UpdateSendHandler;
+import space.npstr.magma.events.audio.conn.UpdateSpeaking;
 import tomp2p.opuswrapper.Opus;
 
 import javax.annotation.Nullable;
@@ -49,10 +56,11 @@ import java.util.function.Supplier;
 
 /**
  * Created by napster on 20.04.18.
- *
- * Glue together the send handler and the send system.
+ * <p>
+ * Glue together the send handler and the send system, as well as all udp and related stateful information of the
+ * connection.
  */
-public class AudioConnection {
+public class AudioConnection extends BaseSubscriber<ConnectionEvent> {
 
     private static final Logger log = LoggerFactory.getLogger(AudioConnection.class);
 
@@ -69,30 +77,30 @@ public class AudioConnection {
     private final IAudioSendFactory sendFactory;
     private final AudioWebSocket webSocket;
     private final DatagramSocket udpSocket;
-    private final FluxSink<UpdateSendHandler> sendHandlerSink;
-    private final Disposable audioConnectionSubscription;
+    private final FluxSink<ConnectionEvent> audioConnectionEventSink;
 
-    //udp connection info
+    // udp connection info
     @Nullable
-    private volatile InetSocketAddress udpTargetAddress;
+    private EncryptionMode encryptionMode;
     @Nullable
-    private volatile Integer ssrc;
+    private byte[] secretKey;
     @Nullable
-    private volatile byte[] secretKey;
+    private Integer ssrc;
     @Nullable
-    private volatile EncryptionMode encryptionMode;
+    private InetSocketAddress udpTargetAddress;
 
 
-    @Nullable
-    private volatile AudioSendHandler sendHandler;
+    // audio processing/sending components
     @Nullable
     private PointerByReference opusEncoder;
     @Nullable
+    private AudioSendHandler sendHandler;
+    @Nullable
     private IAudioSendSystem sendSystem;
 
+    // stateful information of an ongoing connection
     private final AtomicLong nonce = new AtomicLong(0);
-
-    private volatile boolean speaking = false;
+    private boolean speaking = false;
 
     public AudioConnection(final AudioWebSocket webSocket, final IAudioSendFactory sendFactory) {
         try {
@@ -104,54 +112,118 @@ public class AudioConnection {
         this.webSocket = webSocket;
         this.sendFactory = sendFactory;
 
-        final UnicastProcessor<UpdateSendHandler> sendHandlerProcessor = UnicastProcessor.create();
+        final UnicastProcessor<ConnectionEvent> audioConnectionProcessor = UnicastProcessor.create();
 
-        this.sendHandlerSink = sendHandlerProcessor.sink();
-        this.audioConnectionSubscription = sendHandlerProcessor
+        this.audioConnectionEventSink = audioConnectionProcessor.sink();
+        audioConnectionProcessor
                 .subscribeOn(Schedulers.single())
-                .subscribe(this::handleSendHandlerUpdate);
+                .subscribe(this);
     }
 
-    //todo eventify calls in this class?
 
-    public void updateSecretKeyAndEncryptionMode(final byte[] secretKey, final EncryptionMode encryptionMode) {
-        this.secretKey = secretKey;
-        this.encryptionMode = encryptionMode;
-        this.startSendSystemIfReady();
+    // ################################################################################
+    // #                            API of this class
+    // ################################################################################
+
+    public void setEncryptionMode(final EncryptionMode value) {
+        this.audioConnectionEventSink.next(((SetEncryptionMode) () -> value));
     }
 
-    public void updateSendHandler(final UpdateSendHandler updateSendHandler) {
-        this.sendHandlerSink.next(updateSendHandler);
+    public void setSecretKey(final byte[] value) {
+        this.audioConnectionEventSink.next(((SetSecretKey) () -> value));
     }
 
-    void shutdown() {
-        this.audioConnectionSubscription.dispose();
-        this.setSpeaking(false);
-        if (this.sendSystem != null) {
-            this.sendSystem.shutdown();
-            this.sendSystem = null;
+    public void setSsrc(final int ssrc) {
+        this.audioConnectionEventSink.next(((SetSsrc) () -> ssrc));
+    }
+
+    public void setTargetAddress(final InetSocketAddress targetAddress) {
+        this.audioConnectionEventSink.next(((SetTargetAddress) () -> targetAddress));
+    }
+
+    public void updateSendHandler(@Nullable final AudioSendHandler sendHandler) {
+        this.audioConnectionEventSink.next(((UpdateSendHandler) () -> Optional.ofNullable(sendHandler)));
+    }
+
+    /**
+     * This may be repeatedly called, but will only result in an event sent when the requested speaking state actually
+     * differs from the speaking state at the time this event is processed by the connection.
+     */
+    public void updateSpeaking(final boolean shouldSpeak) {
+        this.audioConnectionEventSink.next(shouldSpeak ? UpdateSpeaking.TRUE : UpdateSpeaking.FALSE);
+    }
+
+    public void shutdown() {
+        this.audioConnectionEventSink.next(Shutdown.INSTANCE);
+    }
+
+
+    // ################################################################################
+    // #                            Event handling
+    // ################################################################################
+
+    @Override
+    protected void hookOnNext(final ConnectionEvent event) {
+        if (event instanceof SetEncryptionMode) {
+            this.encryptionMode = ((SetEncryptionMode) event).getEncryptionMode();
+            this.startSendSystemIfReady();
+        } else if (event instanceof SetSecretKey) {
+            this.secretKey = ((SetSecretKey) event).getSecretKey();
+            this.startSendSystemIfReady();
+        } else if (event instanceof SetSsrc) {
+            this.ssrc = ((SetSsrc) event).getSsrc();
+            this.startSendSystemIfReady();
+        } else if (event instanceof SetTargetAddress) {
+            this.udpTargetAddress = ((SetTargetAddress) event).getTargetAddress();
+            this.startSendSystemIfReady();
+        } else if (event instanceof UpdateSendHandler) {
+            this.handleSendHandlerUpdate((UpdateSendHandler) event);
+        } else if (event instanceof UpdateSpeaking) {
+            this.handleSpeakingUpdate((UpdateSpeaking) event);
+        } else if (event instanceof Shutdown) {
+            this.handleShutdown();
+        } else {
+            log.warn("AudioConnection has no handler for event of class {}", event.getClass().getSimpleName());
         }
-        if (this.opusEncoder != null) {
-            Opus.INSTANCE.opus_encoder_destroy(this.opusEncoder);
-            this.opusEncoder = null;
-        }
-
-        this.udpTargetAddress = null;
-        this.ssrc = null;
-        this.secretKey = null;
-        this.sendHandler = null;
     }
 
     private void handleSendHandlerUpdate(final UpdateSendHandler event) {
         final Optional<AudioSendHandler> audioSendHandler = event.getAudioSendHandler();
         if (audioSendHandler.isPresent()) {
-            this.setupSendSystem(audioSendHandler.get());
+            this.setupSendComponents(audioSendHandler.get());
+            this.startSendSystemIfReady();
         } else {
-            this.tearDownSendSystem();
+            this.tearDownSendComponents();
         }
     }
 
-    private void tearDownSendSystem() {
+    private void handleSpeakingUpdate(final UpdateSpeaking event) {
+        if (this.speaking != event.shouldSpeak()) {
+            this.setSpeaking(event.shouldSpeak());
+        }
+    }
+
+    private void setSpeaking(final boolean speaking) {
+        this.speaking = speaking;
+        this.webSocket.setSpeaking(speaking);
+    }
+
+    private void handleShutdown() {
+        this.setSpeaking(false);
+        this.tearDownSendComponents();
+        this.sendHandler = null;
+
+        this.encryptionMode = null;
+        this.secretKey = null;
+        this.ssrc = null;
+        this.udpTargetAddress = null;
+
+        this.dispose();
+    }
+
+
+    private void tearDownSendComponents() {
+        log.trace("Thread {} is tearing down audio components", Thread.currentThread().getName());
         if (this.sendSystem != null) {
             this.sendSystem.shutdown();
             this.sendSystem = null;
@@ -163,8 +235,8 @@ public class AudioConnection {
         }
     }
 
-
-    private void setupSendSystem(final AudioSendHandler sendHandler) {
+    private void setupSendComponents(final AudioSendHandler sendHandler) {
+        log.trace("Thread {} is setting up audio components", Thread.currentThread().getName());
         this.sendHandler = sendHandler;
         if (this.sendSystem == null) {
             final IntBuffer error = IntBuffer.allocate(4);
@@ -175,36 +247,40 @@ public class AudioConnection {
 
             this.sendSystem = this.sendFactory.createSendSystem(new PacketProvider());
         }
-        this.startSendSystemIfReady();
     }
 
     private void startSendSystemIfReady() {
-        final IAudioSendSystem sendSystem = this.sendSystem;
-        if (this.sendHandler == null) {
-            log.trace("Not ready cause no send handler");
-            return;
-        } else if (this.udpTargetAddress == null) {
-            log.trace("Not ready cause no udp target address");
-            return;
-        } else if (this.ssrc == null) {
-            log.trace("Not ready cause no ssrc");
+        //check udp connection info
+        if (this.encryptionMode == null) {
+            log.trace("Not ready cause no encryption mode");
             return;
         } else if (this.secretKey == null) {
             log.trace("Not ready cause no secret key");
             return;
-        } else if (sendSystem == null) {
+        } else if (this.ssrc == null) {
+            log.trace("Not ready cause no ssrc");
+            return;
+        } else if (this.udpTargetAddress == null) {
+            log.trace("Not ready cause no udp target address");
+            return;
+        }
+
+        //check audio processing/sending components
+        if (this.opusEncoder == null) {
+            log.trace("Not ready cause no opus encoder");
+            return;
+        } else if (this.sendHandler == null) {
+            log.trace("Not ready cause no send handler");
+            return;
+        } else if (this.sendSystem == null) {
             log.trace("Not ready cause no send system");
             return;
         }
 
         log.trace("Ready, starting send system");
-        sendSystem.start();
+        this.sendSystem.start();
     }
 
-    private void setSpeaking(final boolean isSpeaking) {
-        this.speaking = isSpeaking;
-        this.webSocket.setSpeaking(isSpeaking);
-    }
 
     private class PacketProvider implements IPacketProvider {
         char seq = 0;           //Sequence of audio packets. Used to determine the order of the packets.
@@ -228,7 +304,7 @@ public class AudioConnection {
             throw new UnsupportedOperationException("This information is not available");
         }
 
-        //realistially, this is the only thing that is ever called by the NativeAudioSystem
+        //realistically, this is the only thing that is ever called by the NativeAudioSystem
         @Nullable
         @Override
         public DatagramPacket getNextPacket(final boolean changeTalking) {
@@ -250,14 +326,14 @@ public class AudioConnection {
                     byte[] rawAudio = sendHandler.provide20MsAudio();
                     if (rawAudio == null || rawAudio.length == 0) {
                         if (AudioConnection.this.speaking && changeTalking)
-                            AudioConnection.this.setSpeaking(false);
+                            AudioConnection.this.updateSpeaking(false);
                     } else {
                         if (!sendHandler.isOpus()) {
                             rawAudio = AudioConnection.this.encodeToOpus(rawAudio);
                         }
                         nextPacket = this.getDatagramPacket(rawAudio, ssrc, encryptionMode);
                         if (!AudioConnection.this.speaking) {
-                            AudioConnection.this.setSpeaking(true);
+                            AudioConnection.this.updateSpeaking(true);
                         }
 
                         if (this.seq + 1 > Character.MAX_VALUE) {
@@ -267,7 +343,7 @@ public class AudioConnection {
                         }
                     }
                 } else if (AudioConnection.this.speaking && changeTalking) {
-                    AudioConnection.this.setSpeaking(false);
+                    AudioConnection.this.updateSpeaking(false);
                 }
             } catch (final Exception e) {
                 log.error("Failed to get next packet", e);
@@ -379,9 +455,8 @@ public class AudioConnection {
             }
 
             log.trace("Udp discovered: {}", externalAddress);
-            this.udpTargetAddress = targetAddress;
-            this.ssrc = ssrc;
-            this.startSendSystemIfReady();
+            this.setTargetAddress(targetAddress);
+            this.setSsrc(ssrc);
             return externalAddress;
         };
 

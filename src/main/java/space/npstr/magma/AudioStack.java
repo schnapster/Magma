@@ -113,19 +113,16 @@ public class AudioStack {
         this.webSocket = new AudioWebSocket(this.sendFactory, connectWebSocket.getSessionInfo(),
                 this.webSocketClient, this.lifecyclePipeline);
         if (this.sendHandler != null) {
-            this.webSocket.getAudioConnection().updateSendHandler(
-                    UpdateSendHandlerLcEvent.builder()
-                            .member(connectWebSocket.getMember())
-                            .audioSendHandler(this.sendHandler)
-                            .build());
+            this.webSocket.getAudioConnection().updateSendHandler(this.sendHandler);
         }
     }
 
     private void handleUpdateSendHandler(final UpdateSendHandler updateSendHandler) {
-        this.sendHandler = updateSendHandler.getAudioSendHandler().orElse(null);
+        final AudioSendHandler sendHandlerInstance = updateSendHandler.getAudioSendHandler().orElse(null);
+        this.sendHandler = sendHandlerInstance;
 
         if (this.webSocket != null) {
-            this.webSocket.getAudioConnection().updateSendHandler(updateSendHandler);
+            this.webSocket.getAudioConnection().updateSendHandler(sendHandlerInstance);
         }
     }
 
