@@ -2,6 +2,7 @@ buildscript {
     ext {
         grgitVersion = '2.2.1'
         aptPluginVersion = '0.15'
+        sonarqubeVersion = '2.6.2'
     }
     repositories {
         maven { url 'https://plugins.gradle.org/m2/' }
@@ -10,6 +11,7 @@ buildscript {
     dependencies {
         classpath "org.ajoberstar:grgit:${grgitVersion}"
         classpath "net.ltgt.gradle:gradle-apt-plugin:${aptPluginVersion}"
+        classpath "org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:${sonarqubeVersion}"
     }
 }
 
@@ -19,6 +21,8 @@ apply plugin: 'java-library'
 apply plugin: 'maven-publish'
 apply plugin: 'org.ajoberstar.grgit'
 apply plugin: 'net.ltgt.apt-idea'
+apply plugin: 'jacoco'
+apply plugin: 'org.sonarqube'
 
 
 group = "space.npstr.magma"
@@ -101,6 +105,15 @@ build {
 
 test {
     useJUnitPlatform()
+    jacoco {
+        includes['space.npstr.magma.*']
+    }
+}
+
+sonarqube {
+    properties {
+        property "sonar.inclusions", "src/main/java/space/npstr/magma/**/*"
+    }
 }
 
 jar.mustRunAfter clean

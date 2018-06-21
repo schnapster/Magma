@@ -3,6 +3,7 @@
 [![Release](https://img.shields.io/github/tag/napstr/Magma.svg)](https://jitpack.io/#space.npstr/Magma)
 [![Build Status Master Branch](https://travis-ci.com/napstr/Magma.svg?branch=master)](https://travis-ci.org/napstr/Magma/branches)
 [![License](https://img.shields.io/github/license/napstr/Magma.svg)]()
+[![SonarCloud](https://sonarcloud.io/api/project_badges/measure?project=space.npstr.magma%3Amagma&metric=sqale_rating)](https://sonarcloud.io/dashboard?id=space.npstr.magma%3Amagma)
 
 A voice only API for Discord, focused on delivering music at scale.
 
