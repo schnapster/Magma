@@ -22,7 +22,7 @@ apply plugin: 'net.ltgt.apt-idea'
 
 
 group = "space.npstr.magma"
-version = "${getMyVersion()}"
+version = "${versionFromTag()}"
 
 sourceCompatibility = 10
 targetCompatibility = 10
@@ -33,29 +33,51 @@ repositories {
     maven { url 'https://jitpack.io' }
 }
 
+ext {
+    //@formatter:off
+    gradleVersion              = '4.7'
+
+    opusJavaVersion             = '1.0.0'
+    orgJsonVersion              = '20180130'
+    slf4jVersion                = '1.7.25'
+
+    springVersion               = '5.0.6.RELEASE'
+    undertowVersion             = '2.0.7.Final'
+
+    spotbugsVersion             = '3.1.3'
+    annotationsVersion          = '0.0.1'
+
+    immutablesVersion           = '2.6.0'
+
+    junitVersion                = '5.2.0'
+    logbackVersion              = '1.2.3'
+
+    //@formatter:on
+}
+
 dependencies {
-    compile group: 'club.minnced', name: 'opus-java', version: '1.0.0'
-    compile group: 'org.json', name: 'json', version: '20180130'
-    compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.25'
+    //@formatter:off
+    compile             group: 'club.minnced',          name: 'opus-java',              version: opusJavaVersion
+    compile             group: 'org.json',              name: 'json',                   version: orgJsonVersion
+    compile             group: 'org.slf4j',             name: 'slf4j-api',              version: slf4jVersion
 
     // project reactor & reactive websocket client
-    compile group: 'org.springframework', name: 'spring-webflux', version: '5.0.6.RELEASE'
-    compile group: 'io.undertow', name: 'undertow-core', version: '2.0.7.Final'
+    compile             group: 'org.springframework',   name: 'spring-webflux',         version: springVersion
+    compile             group: 'io.undertow',           name: 'undertow-core',          version: undertowVersion
 
     // annotations
-    compileOnly group: 'com.github.spotbugs', name: 'spotbugs-annotations', version: '3.1.3'
-    compileOnly group: 'space.npstr', name: 'annotations', version: '0.0.1'
+    compileOnly         group: 'com.github.spotbugs',   name: 'spotbugs-annotations',   version: spotbugsVersion
+    compileOnly         group: 'space.npstr',           name: 'annotations',            version: annotationsVersion
 
     // immutable objects, to pass values around
-    annotationProcessor group: 'org.immutables', name: 'value', version: '2.6.0'
-    compileOnly group: 'org.immutables', name: 'value', version: '2.6.0', classifier: 'annotations'
+    annotationProcessor group: 'org.immutables',        name: 'value',                  version: immutablesVersion
+    compileOnly         group: 'org.immutables',        name: 'value',                  version: immutablesVersion, classifier: 'annotations'
 
     // testing
-    testCompile group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: '5.2.0'
-    testRuntime group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.3'
-    testRuntime group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: '5.2.0'
-    // To avoid compiler warnings about @API annotations in JUnit code.
-    testCompileOnly group: 'org.apiguardian', name: 'apiguardian-api', version: '1.0.0'
+    testCompile         group: 'org.junit.jupiter',     name: 'junit-jupiter-api',      version: junitVersion
+    testRuntime         group: 'ch.qos.logback',        name: 'logback-classic',        version: logbackVersion
+    testRuntime         group: 'org.junit.jupiter',     name: 'junit-jupiter-engine',   version: junitVersion
+    //@formatter:on
 }
 
 compileJava {
@@ -65,14 +87,16 @@ compileJava {
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '4.7'
+    gradleVersion = project.ext.gradleVersion
     //noinspection UnnecessaryQualifiedReference
     distributionType = Wrapper.DistributionType.ALL
 }
 
 
-build.doLast {
-    println 'Version: ' + version
+build {
+    doLast {
+        println 'Version: ' + version
+    }
 }
 
 test {
@@ -153,7 +177,7 @@ idea {
 
 //returns either a git tag if there is one on this commit, or the commit hash, to be used as a version
 @SuppressWarnings("GrMethodMayBeStatic")
-String getMyVersion() {
+String versionFromTag() {
 
     def headTag = grgit.tag.list().find {
         it.commit == grgit.head()
