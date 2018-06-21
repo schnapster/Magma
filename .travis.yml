@@ -3,8 +3,6 @@ language: java
 addons:
   sonarcloud:
     organization: "napstr-github"
-    token:
-      secure: "c+8wTAtkdRE1stJJKpnIysAzcHGyU5lQ79CMDD1HXB5enpoOIbqDn4rvm179lNQOKJbCiFu972meTCyW8KYcadsIt8oCAmchxAC82TTnTcHcms4phdtbVix8/+Jfg1gjE6a7WZtOFWLzv1Ru3yguHWLsu34NuIWWibzDAh/mVUuz838KpNHCqhnNWt6L5fI8vI1pSR6fdrq+mk0jjltF6ignC17MjSX7/I4IT6H0vgOda+IDl6BfztJZ79zNjqXi0Mfifv9NSZGQ8AwEkO9yKyf8YCwoc1yBejPnE9SiBItlhwHF1WzvwAS6gmL4xLDygoEnjw407nhDAkqfKBpvzEmqBfpfu2gEUPwjr1y1WAXLkblLLx6v2/gp8hVXBz5wl5NXfrHkbc4iNBvNuIE7cqnIsFAqsWou8mWQRvKTE+N9vtvXAqTsvJy1Kfw2sW3LsH00M3EYKyeOC2gj+lEY1YILThLL0eKTFSqqmGn2hi/dgNOW1u8j7S8Mr2MSrw/Vnum0rMIz22SfizpUjIrRCuULdvgEr74IWi87JecSPRN6f4+dhuItnAtlJ19yyQO/wBqZmDG55P6h0siyTEs3pMRvw94nehJXgqULXbC7t7JG7TC7cow+Z/MYcb5p8diw2SszTufkQwKmJ8b57zyY+lPuGInsnKvtpu3i+K8gDZs="
 
 env:
   global:
@@ -18,32 +16,44 @@ cache:
     - ".gradle/caches"
     - "$HOME/.sonar/cache"
 
-before_install:
-  - wget https://github.com/sormuras/bach/raw/master/install-jdk.sh
-
-matrix:
-  include:
-    - env: JDK='OpenJDK 10'
-      install: . ./install-jdk.sh -F 10 -L GPL
-    - env: JDK='OpenJDK 11'
-      install: . ./install-jdk.sh -F 11 -L GPL
-  allow_failures:
-    - env: JDK='OpenJDK 11'
+stages:
+  - build & test
+  - sonar
 
 jobs:
+  fast_finish: true
+  allow_failures:
+    - jdk: openjdk-ea
+    - jdk: oraclejdk-ea
   include:
-    - stage: build
+    - stage: build & test
+      jdk: openjdk10
       script:
-        - java -Xmx32m -version
+        - "java -Xmx32m -version"
         - "./gradlew build --info"
+
+    - stage: build & test
+      jdk: oraclejdk10
+      script:
+        - "java -Xmx32m -version"
+        - "./gradlew build --info"
+
+    - stage: build & test
+      jdk: openjdk-ea
+      script:
+        - "java -Xmx32m -version"
+        - "./gradlew build -x test --info" #tests skipped due to jacoco incompatibility, watch https://github.com/jacoco/jacoco/issues/663
+
+    - stage: build & test
+      jdk: oraclejdk-ea
+      script:
+        - "java -Xmx32m -version"
+        - "./gradlew build -x test --info" #tests skipped due to jacoco incompatibility, watch https://github.com/jacoco/jacoco/issues/663
+
     - stage: sonar
-      env: JDK='OpenJDK 10'
+      jdk: openjdk10
       before_script:
-      #for full sonar cloud blame information
+        #for full sonar cloud blame information
         - "git fetch --unshallow"
       script:
       - "./gradlew sonarqube"
-
-stages:
-  - build
-  - sonar
