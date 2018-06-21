@@ -205,7 +205,7 @@ public class AudioWebSocket extends BaseSubscriber<InboundWsEvent> {
     private void handleWebSocketClosed(final WebSocketClosed webSocketClosed) {
         final int code = webSocketClosed.getCode();
         log.info("Websocket to {} closed with code {} and reason {}",
-                this.wssEndpoint.toASCIIString(), code, webSocketClosed.getReason());
+                this.wssEndpoint, code, webSocketClosed.getReason());
 
         final boolean resume = (code == CloseCode.DISCONNECTED // according to discord docs
                 || code == CloseCode.VOICE_SERVER_CRASHED);    // according to discord docs

@@ -19,11 +19,19 @@ package space.npstr.magma.events.audio.conn;
 /**
  * Created by napster on 21.06.18.
  */
-public interface UpdateSpeaking extends ConnectionEvent {
+public enum UpdateSpeaking implements ConnectionEvent {
 
-    UpdateSpeaking TRUE = () -> true;
-    UpdateSpeaking FALSE = () -> false;
+    TRUE(true),
+    FALSE(false);
 
-    boolean shouldSpeak();
+    private final boolean shouldSpeak;
+
+    UpdateSpeaking(final boolean shouldSpeak) {
+        this.shouldSpeak = shouldSpeak;
+    }
+
+    public boolean shouldSpeak() {
+        return this.shouldSpeak;
+    }
 
 }

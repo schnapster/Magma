@@ -31,7 +31,6 @@ import space.npstr.magma.events.audio.lifecycle.ConnectWebSocket;
 import space.npstr.magma.events.audio.lifecycle.LifecycleEvent;
 import space.npstr.magma.events.audio.lifecycle.Shutdown;
 import space.npstr.magma.events.audio.lifecycle.UpdateSendHandler;
-import space.npstr.magma.events.audio.lifecycle.UpdateSendHandlerLcEvent;
 
 import javax.annotation.Nullable;
 

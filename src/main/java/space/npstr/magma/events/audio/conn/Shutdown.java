@@ -23,4 +23,5 @@ public class Shutdown implements ConnectionEvent {
 
     public static final Shutdown INSTANCE = new Shutdown();
 
+    private Shutdown() {}
 }
