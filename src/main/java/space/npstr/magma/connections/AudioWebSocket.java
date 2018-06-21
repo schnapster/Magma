@@ -20,7 +20,6 @@ import net.dv8tion.jda.core.audio.factory.IAudioSendFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.reactive.socket.WebSocketHandler;
-import org.springframework.web.reactive.socket.client.WebSocketClient;
 import reactor.core.Disposable;
 import reactor.core.publisher.BaseSubscriber;
 import reactor.core.publisher.Flux;
@@ -29,6 +28,7 @@ import reactor.core.publisher.UnicastProcessor;
 import reactor.core.scheduler.Schedulers;
 import space.npstr.magma.AudioStackLifecyclePipeline;
 import space.npstr.magma.EncryptionMode;
+import space.npstr.magma.connections.hax.ClosingWebSocketClient;
 import space.npstr.magma.events.audio.lifecycle.CloseWebSocketLcEvent;
 import space.npstr.magma.events.audio.ws.CloseCode;
 import space.npstr.magma.events.audio.ws.Speaking;
@@ -73,7 +73,7 @@ public class AudioWebSocket extends BaseSubscriber<InboundWsEvent> {
     private final URI wssEndpoint;
     private final AudioConnection audioConnection;
     private final AudioStackLifecyclePipeline lifecyclePipeline;
-    private final WebSocketClient webSocketClient;
+    private final ClosingWebSocketClient webSocketClient;
 
     //drop events into this sink to have them sent to discord
     private final FluxSink<OutboundWsEvent> audioWebSocketSink;
@@ -86,7 +86,7 @@ public class AudioWebSocket extends BaseSubscriber<InboundWsEvent> {
 
 
     public AudioWebSocket(final IAudioSendFactory sendFactory, final SessionInfo session,
-                          final WebSocketClient webSocketClient, final AudioStackLifecyclePipeline lifecyclePipeline) {
+                          final ClosingWebSocketClient webSocketClient, final AudioStackLifecyclePipeline lifecyclePipeline) {
         this.session = session;
         try {
             this.wssEndpoint = new URI(String.format("wss://%s/?v=4", session.getVoiceServerUpdate().getEndpoint()));
@@ -234,7 +234,7 @@ public class AudioWebSocket extends BaseSubscriber<InboundWsEvent> {
     // #                                Internals
     // ################################################################################
 
-    private Disposable connect(final WebSocketClient client, final URI endpoint, final WebSocketHandler handler) {
+    private Disposable connect(final ClosingWebSocketClient client, final URI endpoint, final WebSocketHandler handler) {
         return client.execute(endpoint, handler)
                 .log(log.getName() + ".WebSocketConnection", Level.FINEST) //FINEST = TRACE
                 .doOnError(t -> {

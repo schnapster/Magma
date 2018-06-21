@@ -23,12 +23,12 @@ import net.dv8tion.jda.core.audio.AudioSendHandler;
 import net.dv8tion.jda.core.audio.factory.IAudioSendFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.web.reactive.socket.client.WebSocketClient;
 import org.xnio.OptionMap;
 import org.xnio.Xnio;
 import org.xnio.XnioWorker;
 import org.xnio.ssl.XnioSsl;
 import space.npstr.magma.connections.hax.ClosingUndertowWebSocketClient;
+import space.npstr.magma.connections.hax.ClosingWebSocketClient;
 import space.npstr.magma.events.audio.lifecycle.CloseWebSocketLcEvent;
 import space.npstr.magma.events.audio.lifecycle.Shutdown;
 import space.npstr.magma.events.audio.lifecycle.UpdateSendHandlerLcEvent;
@@ -53,7 +53,7 @@ public class Magma implements MagmaApi {
             throw new RuntimeException("Failed to load opus lib. See log output for more info.");
         }
 
-        final WebSocketClient webSocketClient;
+        final ClosingWebSocketClient webSocketClient;
         try {
             final XnioWorker xnioWorker = Xnio.getInstance().createWorker(xnioOptions);
             final XnioSsl xnioSsl = new UndertowXnioSsl(Xnio.getInstance(), OptionMap.EMPTY);

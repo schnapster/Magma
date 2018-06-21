@@ -19,13 +19,13 @@ package space.npstr.magma;
 import net.dv8tion.jda.core.audio.factory.IAudioSendFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.web.reactive.socket.client.WebSocketClient;
 import reactor.core.Disposable;
 import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.UnicastProcessor;
 import reactor.core.scheduler.Schedulers;
 import space.npstr.magma.connections.AudioConnection;
 import space.npstr.magma.connections.AudioWebSocket;
+import space.npstr.magma.connections.hax.ClosingWebSocketClient;
 import space.npstr.magma.events.audio.lifecycle.CloseWebSocket;
 import space.npstr.magma.events.audio.lifecycle.ConnectWebSocketLcEvent;
 import space.npstr.magma.events.audio.lifecycle.LifecycleEvent;
@@ -74,13 +74,13 @@ public class AudioStackLifecyclePipeline {
     private final Map<String, Map<String, AudioStack>> audioStacks = new HashMap<>();
 
     private final Function<Member, IAudioSendFactory> sendFactoryProvider;
-    private final WebSocketClient webSocketClient;
+    private final ClosingWebSocketClient webSocketClient;
 
     private final FluxSink<LifecycleEvent> lifecycleEventSink;
     private final Disposable lifecycleSubscription;
 
     public AudioStackLifecyclePipeline(final Function<Member, IAudioSendFactory> sendFactoryProvider,
-                                       final WebSocketClient webSocketClient) {
+                                       final ClosingWebSocketClient webSocketClient) {
         this.sendFactoryProvider = sendFactoryProvider;
         this.webSocketClient = webSocketClient;
 

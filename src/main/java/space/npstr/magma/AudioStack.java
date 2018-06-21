@@ -20,12 +20,12 @@ import net.dv8tion.jda.core.audio.AudioSendHandler;
 import net.dv8tion.jda.core.audio.factory.IAudioSendFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.web.reactive.socket.client.WebSocketClient;
 import reactor.core.Disposable;
 import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.UnicastProcessor;
 import reactor.core.scheduler.Schedulers;
 import space.npstr.magma.connections.AudioWebSocket;
+import space.npstr.magma.connections.hax.ClosingWebSocketClient;
 import space.npstr.magma.events.audio.lifecycle.CloseWebSocket;
 import space.npstr.magma.events.audio.lifecycle.ConnectWebSocket;
 import space.npstr.magma.events.audio.lifecycle.LifecycleEvent;
@@ -48,7 +48,7 @@ public class AudioStack {
 
     private final String guildId;
     private final IAudioSendFactory sendFactory;
-    private final WebSocketClient webSocketClient;
+    private final ClosingWebSocketClient webSocketClient;
     private final AudioStackLifecyclePipeline lifecyclePipeline;
 
     private final FluxSink<LifecycleEvent> lifecycleSink;
@@ -60,7 +60,8 @@ public class AudioStack {
     private AudioSendHandler sendHandler;
 
 
-    public AudioStack(final String guildId, final IAudioSendFactory sendFactory, final WebSocketClient webSocketClient,
+    public AudioStack(final String guildId, final IAudioSendFactory sendFactory,
+                      final ClosingWebSocketClient webSocketClient,
                       final AudioStackLifecyclePipeline lifecyclePipeline) {
         this.guildId = guildId;
         this.sendFactory = sendFactory;

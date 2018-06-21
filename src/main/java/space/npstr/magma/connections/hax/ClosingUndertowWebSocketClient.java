@@ -37,7 +37,7 @@ import java.util.function.Consumer;
  *
  * Rest of the file is copypasta of the superclass(es) that is necessary to make that work.
  */
-public class ClosingUndertowWebSocketClient extends UndertowWebSocketClient {
+public class ClosingUndertowWebSocketClient extends UndertowWebSocketClient implements ClosingWebSocketClient {
 
     private static final int DEFAULT_POOL_BUFFER_SIZE = 16384; //recommended 16kb buffer.
     private final DataBufferFactory bufferFactory = new DefaultDataBufferFactory();
