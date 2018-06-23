@@ -33,4 +33,5 @@ public final class CloseCode {
     public static final int VOICE_SERVER_CRASHED = 4015;
     public static final int UNKNOWN_ENCRYPTION_MODE = 4016;
 
+    private CloseCode() {}
 }
