@@ -158,7 +158,7 @@ public class AudioWebSocket extends BaseSubscriber<InboundWsEvent> {
     private void handleHello(final Hello hello) {
         this.heartbeatSubscription = Flux.interval(Duration.ofMillis(hello.getHeartbeatIntervalMillis()))
                 .doOnNext(tick -> log.trace("Sending heartbeat {}", tick))
-                .subscribeOn(Schedulers.single())
+                .publishOn(Schedulers.parallel())
                 .subscribe(tick -> this.audioWebSocketSink.next(HeartbeatWsEvent.builder()
                         .nonce(tick.intValue())
                         .build())
@@ -187,7 +187,7 @@ public class AudioWebSocket extends BaseSubscriber<InboundWsEvent> {
         log.debug("Selecting encryption mode {}", preferredMode);
 
         this.audioConnection.handleUdpDiscovery(udpTargetAddress, ready.getSsrc())
-                .subscribeOn(Schedulers.single())
+                .publishOn(Schedulers.parallel())
                 .subscribe(externalAddress -> this.audioWebSocketSink.next(
                         SelectProtocolWsEvent.builder()
                                 .protocol("udp")
@@ -239,7 +239,7 @@ public class AudioWebSocket extends BaseSubscriber<InboundWsEvent> {
                     log.error("Exception in websocket connection, closing", t);
                     this.closeEverything();
                 })
-                .subscribeOn(Schedulers.single())
+                .publishOn(Schedulers.parallel())
                 .subscribe();
     }
 

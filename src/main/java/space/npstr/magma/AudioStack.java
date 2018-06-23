@@ -70,7 +70,7 @@ public class AudioStack {
         final UnicastProcessor<LifecycleEvent> lifecycleProcessor = UnicastProcessor.create();
         this.lifecycleSink = lifecycleProcessor.sink();
         this.lifecycleSubscription = lifecycleProcessor
-                .subscribeOn(Schedulers.single())
+                .publishOn(Schedulers.parallel())
                 .subscribe(this::onNext);
     }
 

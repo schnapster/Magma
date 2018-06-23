@@ -116,7 +116,7 @@ public class AudioConnection extends BaseSubscriber<ConnectionEvent> {
 
         this.audioConnectionEventSink = audioConnectionProcessor.sink();
         audioConnectionProcessor
-                .subscribeOn(Schedulers.single())
+                .publishOn(Schedulers.parallel())
                 .subscribe(this);
     }
 
@@ -435,6 +435,10 @@ public class AudioConnection extends BaseSubscriber<ConnectionEvent> {
     public Mono<InetSocketAddress> handleUdpDiscovery(final InetSocketAddress targetAddress, final int ssrc) {
 
         final Supplier<InetSocketAddress> externalUdpAddressSupplier = () -> {
+            log.trace("Discovering udp on thread {}", Thread.currentThread().getName());
+            if (Schedulers.isInNonBlockingThread()) {
+                log.warn("Blocking udp discovery running in non-blocking thread {}.", Thread.currentThread().getName());
+            }
             InetSocketAddress externalAddress;
             int attempt = 0;
             do {
@@ -461,7 +465,7 @@ public class AudioConnection extends BaseSubscriber<ConnectionEvent> {
         };
 
         return Mono.fromSupplier(externalUdpAddressSupplier)
-                .subscribeOn(Schedulers.elastic());//elastic scheduler is the correct choice for legacy blocking calls
+                .publishOn(Schedulers.elastic());//elastic scheduler is the correct choice for legacy blocking calls
     }
 
     /**
