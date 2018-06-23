@@ -80,7 +80,16 @@ public class PacketProvider implements IPacketProvider {
     @Nullable
     @Override
     public DatagramPacket getNextPacket(final boolean changeTalking) {
-        DatagramPacket nextPacket = null;
+        try {
+            return this.buildNextPacket(changeTalking);
+        } catch (final Exception e) {
+            log.error("Failed to get next packet", e);
+            return null;
+        }
+    }
+
+    @Nullable
+    private DatagramPacket buildNextPacket(final boolean changeTalking) {
 
         final EncryptionMode encryptionMode = this.audioConnection.getEncryptionMode();
         final byte[] secretKey = this.audioConnection.getSecretKey();
@@ -89,44 +98,49 @@ public class PacketProvider implements IPacketProvider {
         final PointerByReference opusEncoder = this.audioConnection.getOpusEncoder();
         final AudioSendHandler sendHandler = this.audioConnection.getSendHandler();
 
-        try {
-            if (encryptionMode != null
-                    && secretKey != null
-                    && ssrc != null
-                    && udpTargetAddress != null
-                    && opusEncoder != null
-                    && sendHandler != null
-                    && sendHandler.canProvide()) {
-                byte[] rawAudio = sendHandler.provide20MsAudio();
-                if (rawAudio == null || rawAudio.length == 0) {
-                    if (this.audioConnection.isSpeaking() && changeTalking)
-                        this.audioConnection.updateSpeaking(false);
-                } else {
-                    if (!sendHandler.isOpus()) {
-                        rawAudio = PacketUtil.encodeToOpus(rawAudio, opusEncoder);
-                    }
-                    nextPacket = new AudioPacket(this.seq, this.timestamp, ssrc, rawAudio)
-                            .asEncryptedUdpPacket(udpTargetAddress, secretKey,
-                                    PacketUtil.getNonceData(encryptionMode, this.nonceSupplier));
-                    if (!this.audioConnection.isSpeaking()) {
-                        this.audioConnection.updateSpeaking(true);
-                    }
-                    if (this.seq + 1 > Character.MAX_VALUE) {
-                        this.seq = 0;
-                    } else {
-                        this.seq++;
-                    }
-                }
-            } else if (this.audioConnection.isSpeaking() && changeTalking) {
+        //preconditions fulfilled?
+        if (encryptionMode == null
+                || secretKey == null
+                || ssrc == null
+                || udpTargetAddress == null
+                || opusEncoder == null
+                || sendHandler == null
+                || !sendHandler.canProvide()) {
+            if (this.audioConnection.isSpeaking() && changeTalking) {
                 this.audioConnection.updateSpeaking(false);
             }
-        } catch (final Exception e) {
-            log.error("Failed to get next packet", e);
+            return null;
         }
 
-        if (nextPacket != null) {
-            this.timestamp += AudioConnection.OPUS_FRAME_SIZE;
+        //audio data provided?
+        byte[] rawAudio = sendHandler.provide20MsAudio();
+        if (rawAudio == null || rawAudio.length == 0) {
+            if (this.audioConnection.isSpeaking() && changeTalking) {
+                this.audioConnection.updateSpeaking(false);
+            }
+            return null;
         }
+
+        if (!sendHandler.isOpus()) {
+            rawAudio = PacketUtil.encodeToOpus(rawAudio, opusEncoder);
+        }
+
+        final DatagramPacket nextPacket = new AudioPacket(this.seq, this.timestamp, ssrc, rawAudio)
+                .asEncryptedUdpPacket(udpTargetAddress, secretKey,
+                        PacketUtil.getNonceData(encryptionMode, this.nonceSupplier));
+
+
+        if (!this.audioConnection.isSpeaking()) {
+            this.audioConnection.updateSpeaking(true);
+        }
+
+        if (this.seq + 1 > Character.MAX_VALUE) {
+            this.seq = 0;
+        } else {
+            this.seq++;
+        }
+
+        this.timestamp += AudioConnection.OPUS_FRAME_SIZE;
 
         return nextPacket;
     }
