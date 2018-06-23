@@ -100,7 +100,7 @@ public class AudioWebSocketSessionHandler implements WebSocketHandler {
         // * * *
 
         this.session = session;
-        log.trace(session.getHandshakeInfo().toString());
+        log.trace("Handshake: {}", session.getHandshakeInfo());
         session.receive()
                 .map(WebSocketMessage::getPayloadAsText)
                 .log(log.getName() + ".>>>", Level.FINEST) //FINEST = TRACE
