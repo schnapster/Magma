@@ -94,9 +94,9 @@ public class AudioStack {
         } else if (event instanceof UpdateSendHandler) {
             this.handleUpdateSendHandler((UpdateSendHandler) event);
         } else if (event instanceof CloseWebSocket) {
-            this.handleCloseWebSocket((CloseWebSocket) event);
+            this.handleCloseWebSocket();
         } else if (event instanceof Shutdown) {
-            this.handleShutdown((Shutdown) event);
+            this.handleShutdown();
         } else {
             log.warn("Audiostack has no handler for lifecycle event of class {}", event.getClass().getSimpleName());
         }
@@ -125,14 +125,14 @@ public class AudioStack {
         }
     }
 
-    private void handleCloseWebSocket(final CloseWebSocket closeWebSocket) {
+    private void handleCloseWebSocket() {
         if (this.webSocket != null) {
             this.webSocket.close();
             this.webSocket = null;
         }
     }
 
-    private void handleShutdown(final Shutdown shutdown) {
+    private void handleShutdown() {
         this.lifecycleSubscription.dispose();
         if (this.webSocket != null) {
             this.webSocket.close();
