@@ -57,10 +57,10 @@ public class ClosingUndertowWebSocketClient extends UndertowWebSocketClient impl
 
     @Override
     public Mono<Void> execute(final URI url, final HttpHeaders headers, final WebSocketHandler handler) {
-        return this.executeInternal(url, headers, handler);
+        return this.executeInternalPatched(url, headers, handler);
     }
 
-    private Mono<Void> executeInternal(final URI url, final HttpHeaders headers, final WebSocketHandler handler) {
+    private Mono<Void> executeInternalPatched(final URI url, final HttpHeaders headers, final WebSocketHandler handler) {
         final MonoProcessor<Void> completion = MonoProcessor.create();
         return Mono.fromCallable(
                 () -> {
@@ -72,7 +72,7 @@ public class ClosingUndertowWebSocketClient extends UndertowWebSocketClient impl
                             new IoFuture.HandlingNotifier<>() {
                                 @Override
                                 public void handleDone(final WebSocketChannel channel, final Object attachment) {
-                                    ClosingUndertowWebSocketClient.this.handleChannel(url, handler, completion, negotiation, channel);
+                                    handleChannelPatched(url, handler, completion, negotiation, channel);
                                 }
 
                                 @Override
@@ -106,8 +106,8 @@ public class ClosingUndertowWebSocketClient extends UndertowWebSocketClient impl
 
     // * * * * *
 
-    private void handleChannel(final URI url, final WebSocketHandler handler, final MonoProcessor<Void> completion,
-                               final DefaultNegotiation negotiation, final WebSocketChannel channel) {
+    private void handleChannelPatched(final URI url, final WebSocketHandler handler, final MonoProcessor<Void> completion,
+                                      final DefaultNegotiation negotiation, final WebSocketChannel channel) {
 
         final HandshakeInfo info = this.afterHandshake(url, negotiation.getResponseHeaders());
         final UndertowWebSocketSession session = new UndertowWebSocketSession(channel, info, this.bufferFactory, completion);
