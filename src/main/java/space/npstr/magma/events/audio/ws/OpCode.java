@@ -35,4 +35,6 @@ public final class OpCode {
 
     // Custom codes
     public static final int WEBSOCKET_CLOSE = 9001;
+
+    private OpCode() {}
 }
