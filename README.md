@@ -196,6 +196,10 @@ Graphs by courtesy of [FredBoat](https://github.com/Frederikam/FredBoat/).
 
 Expect breaking changes between minor versions while v1 has not been released.
 
+### v0.4.0
+- Opus conversion removed. Send handlers are expect to provide opus packets.
+- Fix for a possible leak of send handlers
+
 ### v0.3.3
 - Fully event based AudioConnection
 - Correct Schedulers used for event processing
