@@ -92,7 +92,7 @@ public class AudioStackLifecyclePipeline {
 
         this.lifecycleSubscription = processor
                 .log(log.getName() + ".Inbound", Level.FINEST) //FINEST = TRACE
-                .subscribeOn(Schedulers.single())
+                .publishOn(Schedulers.parallel())
                 .subscribe(this::onEvent);
     }
 

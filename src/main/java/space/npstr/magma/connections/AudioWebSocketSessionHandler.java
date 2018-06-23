@@ -65,7 +65,7 @@ public class AudioWebSocketSessionHandler implements WebSocketHandler {
     public void close() {
         if (this.session != null) {
             this.session.close()
-                    .subscribeOn(Schedulers.single())
+                    .publishOn(Schedulers.parallel())
                     .subscribe();
         }
     }
@@ -106,7 +106,7 @@ public class AudioWebSocketSessionHandler implements WebSocketHandler {
                 .log(log.getName() + ".>>>", Level.FINEST) //FINEST = TRACE
                 .map(InboundWsEvent::from)
                 .doOnTerminate(() -> log.trace("Receiving terminated"))
-                .subscribeOn(Schedulers.single())
+                .publishOn(Schedulers.parallel())
                 .subscribe(this.inbound);
 
         return session
