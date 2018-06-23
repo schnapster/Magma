@@ -120,12 +120,12 @@ public class Magma implements MagmaApi {
     //The code below has been taken mostly as-is from jda-audio, Apache 2.0
 
     private static boolean initialized = false;
-    private static boolean AUDIO_POSSIBLE = false;
+    private static boolean audioPossible = false;
 
     //Load the Opus library.
     private static synchronized boolean init() {
         if (initialized) {
-            return AUDIO_POSSIBLE;
+            return audioPossible;
         }
         initialized = true;
 
@@ -162,14 +162,14 @@ public class Magma implements MagmaApi {
             nativesRoot = null;
         }
 
-        AUDIO_POSSIBLE = nativesRoot != null;
-        System.setProperty("opus.lib", AUDIO_POSSIBLE ? String.format(nativesRoot, "libopus") : "");
+        audioPossible = nativesRoot != null;
+        System.setProperty("opus.lib", audioPossible ? String.format(nativesRoot, "libopus") : "");
 
-        if (AUDIO_POSSIBLE) {
+        if (audioPossible) {
             log.info("Audio System successfully setup!");
         } else {
             log.info("Audio System encountered problems while loading, thus, is disabled.");
         }
-        return AUDIO_POSSIBLE;
+        return audioPossible;
     }
 }
