@@ -41,7 +41,6 @@ ext {
     //@formatter:off
     gradleVersion              = '4.8.1'
 
-    opusJavaVersion             = '1.0.0'
     orgJsonVersion              = '20180130'
     slf4jVersion                = '1.7.25'
 
@@ -61,7 +60,6 @@ ext {
 
 dependencies {
     //@formatter:off
-    compile             group: 'club.minnced',          name: 'opus-java',              version: opusJavaVersion
     compile             group: 'org.json',              name: 'json',                   version: orgJsonVersion
     compile             group: 'org.slf4j',             name: 'slf4j-api',              version: slf4jVersion
 

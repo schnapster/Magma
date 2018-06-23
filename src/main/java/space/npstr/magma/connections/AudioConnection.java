@@ -16,7 +16,6 @@
 
 package space.npstr.magma.connections;
 
-import com.sun.jna.ptr.PointerByReference;
 import net.dv8tion.jda.core.audio.AudioSendHandler;
 import net.dv8tion.jda.core.audio.factory.IAudioSendFactory;
 import net.dv8tion.jda.core.audio.factory.IAudioSendSystem;
@@ -37,7 +36,6 @@ import space.npstr.magma.events.audio.conn.Shutdown;
 import space.npstr.magma.events.audio.conn.UpdateSendHandler;
 import space.npstr.magma.events.audio.conn.UpdateSpeaking;
 import space.npstr.magma.processing.PacketProvider;
-import tomp2p.opuswrapper.Opus;
 
 import javax.annotation.Nullable;
 import java.net.DatagramPacket;
@@ -45,7 +43,6 @@ import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.nio.ByteBuffer;
-import java.nio.IntBuffer;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
@@ -87,8 +84,6 @@ public class AudioConnection extends BaseSubscriber<ConnectionEvent> {
 
 
     // audio processing/sending components
-    @Nullable
-    private PointerByReference opusEncoder;
     @Nullable
     private AudioSendHandler sendHandler;
     @Nullable
@@ -143,11 +138,6 @@ public class AudioConnection extends BaseSubscriber<ConnectionEvent> {
     @Nullable
     public InetSocketAddress getUdpTargetAddress() {
         return this.udpTargetAddress;
-    }
-
-    @Nullable
-    public PointerByReference getOpusEncoder() {
-        return this.opusEncoder;
     }
 
     @Nullable
@@ -262,29 +252,16 @@ public class AudioConnection extends BaseSubscriber<ConnectionEvent> {
             this.sendSystem.shutdown();
             this.sendSystem = null;
         }
-
-        if (this.opusEncoder != null) {
-            Opus.INSTANCE.opus_encoder_destroy(this.opusEncoder);
-            this.opusEncoder = null;
-        }
     }
 
     private void setupSendComponents(final AudioSendHandler sendHandler) {
         log.trace("Thread {} is setting up audio components", Thread.currentThread().getName());
+        if (!sendHandler.isOpus()) {
+            throw new IllegalArgumentException("Magma does not support non-opus audio providers. Please use lavaplayer.");
+        }
         this.sendHandler = sendHandler;
         if (this.sendSystem == null) {
-            final IntBuffer error = IntBuffer.allocate(4);
-            if (this.opusEncoder != null) {
-                Opus.INSTANCE.opus_encoder_destroy(this.opusEncoder);
-            }
-            this.opusEncoder = Opus.INSTANCE.opus_encoder_create(
-                    OPUS_SAMPLE_RATE,
-                    OPUS_CHANNEL_COUNT,
-                    Opus.OPUS_APPLICATION_AUDIO,
-                    error
-            );
-
-            PacketProvider packetProvider = new PacketProvider(this, this.nonceSupplier);
+            final PacketProvider packetProvider = new PacketProvider(this, this.nonceSupplier);
             this.sendSystem = this.sendFactory.createSendSystem(packetProvider);
         }
     }
@@ -306,10 +283,7 @@ public class AudioConnection extends BaseSubscriber<ConnectionEvent> {
         }
 
         //check audio processing/sending components
-        if (this.opusEncoder == null) {
-            log.trace("Not ready cause no opus encoder");
-            return;
-        } else if (this.sendHandler == null) {
+        if (this.sendHandler == null) {
             log.trace("Not ready cause no send handler");
             return;
         } else if (this.sendSystem == null) {

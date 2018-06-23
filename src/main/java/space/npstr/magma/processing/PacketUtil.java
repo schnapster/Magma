@@ -17,14 +17,9 @@
 package space.npstr.magma.processing;
 
 import com.iwebpp.crypto.TweetNaclFast;
-import com.sun.jna.ptr.PointerByReference;
 import space.npstr.magma.EncryptionMode;
-import space.npstr.magma.connections.AudioConnection;
-import tomp2p.opuswrapper.Opus;
 
 import javax.annotation.Nullable;
-import java.nio.ByteBuffer;
-import java.nio.ShortBuffer;
 import java.util.function.Supplier;
 
 /**
@@ -33,38 +28,6 @@ import java.util.function.Supplier;
 public class PacketUtil {
 
     private PacketUtil() {
-    }
-
-    /**
-     * The code of this method has been copied almost fully from the AudioConnection class of JDA-Audio
-     */
-    public static byte[] encodeToOpus(final byte[] rawAudio, final PointerByReference opusEncoder) {
-        final ShortBuffer nonEncodedBuffer = ShortBuffer.allocate(rawAudio.length / 2);
-        final ByteBuffer encoded = ByteBuffer.allocate(4096);
-        for (int i = 0; i < rawAudio.length; i += 2) {
-            final int firstByte = (0x000000FF & rawAudio[i]);      //Promotes to int and handles the fact that it was unsigned.
-            final int secondByte = (0x000000FF & rawAudio[i + 1]);  //
-
-            //Combines the 2 bytes into a short. Opus deals with unsigned shorts, not bytes.
-            final short toShort = (short) ((firstByte << 8) | secondByte);
-
-            nonEncodedBuffer.put(toShort);
-        }
-        nonEncodedBuffer.flip();
-
-        //TODO: check for 0 / negative value for error.
-        final int result = Opus.INSTANCE.opus_encode(opusEncoder,
-                nonEncodedBuffer,
-                AudioConnection.OPUS_FRAME_SIZE,
-                encoded,
-                encoded.capacity()
-        );
-
-        //ENCODING STOPS HERE
-
-        final byte[] audio = new byte[result];
-        encoded.get(audio);
-        return audio;
     }
 
     @Nullable

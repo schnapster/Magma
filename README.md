@@ -21,7 +21,7 @@ Magma is a heavily modified fork of [JDA-Audio](https://github.com/DV8FromTheWor
 
 Big shout-out to the to the original authors and maintainers for doing great work!
 
-Besides making use of most of the code for handling the Opus library and audio packets,
+Besides making use of most of the code for handling audio packets,
 Magma reuses some of JDAs APIs, namely:
 - IAudioSendSystem
 - IAudioSendFactory
@@ -34,6 +34,10 @@ It is important that the implementation you choose will never call any method of
 Recommended implementations:
 - https://github.com/sedmelluq/jda-nas
 - https://github.com/Shredder121/jda-async-packetprovider
+
+Only `AudioSendHandler`s that provide packets in the opus format are supported.
+Recommended providers:
+- https://github.com/sedmelluq/lavaplayer
 
 
 ## Get started
@@ -232,10 +236,6 @@ Expect breaking changes between minor versions while v1 has not been released.
 
 
 ## Dependencies:
-
-- **Opus Java**:
-  - [Source Code](https://github.com/discord-java/opus-java)
-  - [Apache 2.0](https://github.com/discord-java/opus-java/blob/634c74a76c311252a6b5c91b1533d2baa7990406/src/main/java/net/dv8tion/jda/core/utils/NativeUtil.java)
 
 - **JSON In Java**:
   - [Website](http://json.org/)
