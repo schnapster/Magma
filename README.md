@@ -192,6 +192,12 @@ Graphs by courtesy of [FredBoat](https://github.com/Frederikam/FredBoat/).
 
 Expect breaking changes between minor versions while v1 has not been released.
 
+### v0.3.3
+- Fully event based AudioConnection
+- Correct Schedulers used for event processing
+- Dependency updates
+- Code quality improvements via SonarCloud
+
 ### v0.3.2
 - Log endpoint to which the connection has been closed along with the reason
 - Share a BufferPool between all connections to avoid memory leak
