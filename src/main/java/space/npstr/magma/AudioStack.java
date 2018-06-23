@@ -20,7 +20,7 @@ import net.dv8tion.jda.core.audio.AudioSendHandler;
 import net.dv8tion.jda.core.audio.factory.IAudioSendFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import reactor.core.Disposable;
+import reactor.core.publisher.BaseSubscriber;
 import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.UnicastProcessor;
 import reactor.core.scheduler.Schedulers;
@@ -41,7 +41,7 @@ import javax.annotation.Nullable;
  *
  * @see AudioStackLifecyclePipeline
  */
-public class AudioStack {
+public class AudioStack extends BaseSubscriber<LifecycleEvent> {
 
     private static final Logger log = LoggerFactory.getLogger(AudioStack.class);
 
@@ -51,7 +51,6 @@ public class AudioStack {
     private final AudioStackLifecyclePipeline lifecyclePipeline;
 
     private final FluxSink<LifecycleEvent> lifecycleSink;
-    private final Disposable lifecycleSubscription;
 
     @Nullable
     private AudioWebSocket webSocket;
@@ -69,9 +68,9 @@ public class AudioStack {
 
         final UnicastProcessor<LifecycleEvent> lifecycleProcessor = UnicastProcessor.create();
         this.lifecycleSink = lifecycleProcessor.sink();
-        this.lifecycleSubscription = lifecycleProcessor
+        lifecycleProcessor
                 .publishOn(Schedulers.parallel())
-                .subscribe(this::onNext);
+                .subscribe(this);
     }
 
 
@@ -85,10 +84,8 @@ public class AudioStack {
         this.lifecycleSink.next(event);
     }
 
-
-    //distribute events to the handler methods below
-    private void onNext(final LifecycleEvent event) {
-
+    @Override
+    protected void hookOnNext(final LifecycleEvent event) {
         if (event instanceof ConnectWebSocket) {
             this.handleConnectWebSocket((ConnectWebSocket) event);
         } else if (event instanceof UpdateSendHandler) {
@@ -133,7 +130,7 @@ public class AudioStack {
     }
 
     private void handleShutdown() {
-        this.lifecycleSubscription.dispose();
+        this.dispose();
         if (this.webSocket != null) {
             this.webSocket.close();
             this.webSocket = null;
