@@ -16,14 +16,10 @@
 
 package space.npstr.magma.connections;
 
-import com.iwebpp.crypto.TweetNaclFast;
 import com.sun.jna.ptr.PointerByReference;
-import net.dv8tion.jda.core.audio.AudioPacket;
 import net.dv8tion.jda.core.audio.AudioSendHandler;
 import net.dv8tion.jda.core.audio.factory.IAudioSendFactory;
 import net.dv8tion.jda.core.audio.factory.IAudioSendSystem;
-import net.dv8tion.jda.core.audio.factory.IPacketProvider;
-import net.dv8tion.jda.core.audio.hooks.ConnectionStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.BaseSubscriber;
@@ -40,6 +36,7 @@ import space.npstr.magma.events.audio.conn.SetTargetAddress;
 import space.npstr.magma.events.audio.conn.Shutdown;
 import space.npstr.magma.events.audio.conn.UpdateSendHandler;
 import space.npstr.magma.events.audio.conn.UpdateSpeaking;
+import space.npstr.magma.processing.PacketProvider;
 import tomp2p.opuswrapper.Opus;
 
 import javax.annotation.Nullable;
@@ -49,7 +46,6 @@ import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
-import java.nio.ShortBuffer;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
@@ -100,6 +96,7 @@ public class AudioConnection extends BaseSubscriber<ConnectionEvent> {
 
     // stateful information of an ongoing connection
     private final AtomicLong nonce = new AtomicLong(0);
+    private final Supplier<Long> nonceSupplier;
     private boolean speaking = false;
 
     public AudioConnection(final AudioWebSocket webSocket, final IAudioSendFactory sendFactory) {
@@ -113,8 +110,10 @@ public class AudioConnection extends BaseSubscriber<ConnectionEvent> {
         this.sendFactory = sendFactory;
 
         final UnicastProcessor<ConnectionEvent> audioConnectionProcessor = UnicastProcessor.create();
-
         this.audioConnectionEventSink = audioConnectionProcessor.sink();
+
+        this.nonceSupplier = () -> this.nonce.updateAndGet(n -> n >= AudioConnection.MAX_UINT_32 ? 0 : n + 1);
+
         audioConnectionProcessor
                 .publishOn(Schedulers.parallel())
                 .subscribe(this);
@@ -124,6 +123,41 @@ public class AudioConnection extends BaseSubscriber<ConnectionEvent> {
     // ################################################################################
     // #                            API of this class
     // ################################################################################
+
+
+    @Nullable
+    public EncryptionMode getEncryptionMode() {
+        return this.encryptionMode;
+    }
+
+    @Nullable
+    public byte[] getSecretKey() {
+        return this.secretKey;
+    }
+
+    @Nullable
+    public Integer getSsrc() {
+        return this.ssrc;
+    }
+
+    @Nullable
+    public InetSocketAddress getUdpTargetAddress() {
+        return this.udpTargetAddress;
+    }
+
+    @Nullable
+    public PointerByReference getOpusEncoder() {
+        return this.opusEncoder;
+    }
+
+    @Nullable
+    public AudioSendHandler getSendHandler() {
+        return this.sendHandler;
+    }
+
+    public boolean isSpeaking() {
+        return this.speaking;
+    }
 
     public void setEncryptionMode(final EncryptionMode value) {
         this.audioConnectionEventSink.next(((SetEncryptionMode) () -> value));
@@ -243,9 +277,15 @@ public class AudioConnection extends BaseSubscriber<ConnectionEvent> {
             if (this.opusEncoder != null) {
                 Opus.INSTANCE.opus_encoder_destroy(this.opusEncoder);
             }
-            this.opusEncoder = Opus.INSTANCE.opus_encoder_create(OPUS_SAMPLE_RATE, OPUS_CHANNEL_COUNT, Opus.OPUS_APPLICATION_AUDIO, error);
+            this.opusEncoder = Opus.INSTANCE.opus_encoder_create(
+                    OPUS_SAMPLE_RATE,
+                    OPUS_CHANNEL_COUNT,
+                    Opus.OPUS_APPLICATION_AUDIO,
+                    error
+            );
 
-            this.sendSystem = this.sendFactory.createSendSystem(new PacketProvider());
+            PacketProvider packetProvider = new PacketProvider(this, this.nonceSupplier);
+            this.sendSystem = this.sendFactory.createSendSystem(packetProvider);
         }
     }
 
@@ -279,152 +319,6 @@ public class AudioConnection extends BaseSubscriber<ConnectionEvent> {
 
         log.trace("Ready, starting send system");
         this.sendSystem.start();
-    }
-
-
-    private class PacketProvider implements IPacketProvider {
-        char seq = 0;           //Sequence of audio packets. Used to determine the order of the packets.
-        int timestamp = 0;      //Used to sync up our packets within the same timeframe of other people talking.
-
-        public PacketProvider() {
-        }
-
-        @Override
-        public String getIdentifier() {
-            throw new UnsupportedOperationException("This information is not available");
-        }
-
-        @Override
-        public String getConnectedChannel() {
-            throw new UnsupportedOperationException("This information is not available");
-        }
-
-        @Override
-        public DatagramSocket getUdpSocket() {
-            throw new UnsupportedOperationException("This information is not available");
-        }
-
-        //realistically, this is the only thing that is ever called by the NativeAudioSystem
-        @Nullable
-        @Override
-        public DatagramPacket getNextPacket(final boolean changeTalking) {
-            DatagramPacket nextPacket = null;
-
-            final InetSocketAddress udpTargetAddress = AudioConnection.this.udpTargetAddress;
-            final Integer ssrc = AudioConnection.this.ssrc;
-            final byte[] secretKey = AudioConnection.this.secretKey;
-            final EncryptionMode encryptionMode = AudioConnection.this.encryptionMode;
-            final AudioSendHandler sendHandler = AudioConnection.this.sendHandler;
-
-            try {
-                if (udpTargetAddress != null
-                        && ssrc != null
-                        && secretKey != null
-                        && encryptionMode != null
-                        && sendHandler != null
-                        && sendHandler.canProvide()) {
-                    byte[] rawAudio = sendHandler.provide20MsAudio();
-                    if (rawAudio == null || rawAudio.length == 0) {
-                        if (AudioConnection.this.speaking && changeTalking)
-                            AudioConnection.this.updateSpeaking(false);
-                    } else {
-                        if (!sendHandler.isOpus()) {
-                            rawAudio = AudioConnection.this.encodeToOpus(rawAudio);
-                        }
-                        nextPacket = this.getDatagramPacket(rawAudio, ssrc, encryptionMode);
-                        if (!AudioConnection.this.speaking) {
-                            AudioConnection.this.updateSpeaking(true);
-                        }
-
-                        if (this.seq + 1 > Character.MAX_VALUE) {
-                            this.seq = 0;
-                        } else {
-                            this.seq++;
-                        }
-                    }
-                } else if (AudioConnection.this.speaking && changeTalking) {
-                    AudioConnection.this.updateSpeaking(false);
-                }
-            } catch (final Exception e) {
-                log.error("Failed to get next packet", e);
-            }
-
-            if (nextPacket != null) {
-                this.timestamp += AudioConnection.OPUS_FRAME_SIZE;
-            }
-
-            return nextPacket;
-        }
-
-        private DatagramPacket getDatagramPacket(final byte[] rawAudio, final int ssrc, final EncryptionMode encryptionMode) {
-            final AudioPacket packet = new AudioPacket(this.seq, this.timestamp, ssrc, rawAudio);
-
-            final byte[] nonceData;
-            switch (encryptionMode) {
-                case XSALSA20_POLY1305:
-                    nonceData = null;
-                    break;
-                case XSALSA20_POLY1305_LITE:
-                    final long nextNonce = AudioConnection.this.nonce.updateAndGet(n -> n >= MAX_UINT_32 ? 0 : n + 1);
-                    nonceData = this.getNonceBytes(nextNonce);
-                    break;
-                case XSALSA20_POLY1305_SUFFIX:
-                    nonceData = TweetNaclFast.randombytes(TweetNaclFast.SecretBox.nonceLength);
-                    break;
-                default:
-                    throw new IllegalStateException("Encryption mode [" + encryptionMode + "] is not supported!");
-            }
-            return packet.asEncryptedUdpPacket(AudioConnection.this.udpTargetAddress, AudioConnection.this.secretKey, nonceData);
-        }
-
-        //@formatter:off
-        private byte[] getNonceBytes(final long nonce) {
-            final byte[] data = new byte[4];
-            data[0] = (byte) ((nonce >>> 24) & 0xFF);
-            data[1] = (byte) ((nonce >>> 16) & 0xFF);
-            data[2] = (byte) ((nonce >>>  8) & 0xFF);
-            data[3] = (byte) ( nonce         & 0xFF);
-            return data;
-        }
-        //@formatter:on
-
-        @Override
-        public void onConnectionError(final ConnectionStatus status) {
-            throw new UnsupportedOperationException("Connection error, on a udp connection...that's not a real thing.");
-        }
-
-        @Override
-        public void onConnectionLost() {
-            throw new UnsupportedOperationException("Connection lost, on a udp connection...that's not a real thing.");
-        }
-    }
-
-
-    /**
-     * The code of this method has been copied almost fully from the AudioConnection class of JDA-Audio
-     */
-    private byte[] encodeToOpus(final byte[] rawAudio) {
-        final ShortBuffer nonEncodedBuffer = ShortBuffer.allocate(rawAudio.length / 2);
-        final ByteBuffer encoded = ByteBuffer.allocate(4096);
-        for (int i = 0; i < rawAudio.length; i += 2) {
-            final int firstByte = (0x000000FF & rawAudio[i]);      //Promotes to int and handles the fact that it was unsigned.
-            final int secondByte = (0x000000FF & rawAudio[i + 1]);  //
-
-            //Combines the 2 bytes into a short. Opus deals with unsigned shorts, not bytes.
-            final short toShort = (short) ((firstByte << 8) | secondByte);
-
-            nonEncodedBuffer.put(toShort);
-        }
-        nonEncodedBuffer.flip();
-
-        //TODO: check for 0 / negative value for error.
-        final int result = Opus.INSTANCE.opus_encode(this.opusEncoder, nonEncodedBuffer, OPUS_FRAME_SIZE, encoded, encoded.capacity());
-
-        //ENCODING STOPS HERE
-
-        final byte[] audio = new byte[result];
-        encoded.get(audio);
-        return audio;
     }
 
 
