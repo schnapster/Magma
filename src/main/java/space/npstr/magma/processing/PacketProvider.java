@@ -16,7 +16,6 @@
 
 package space.npstr.magma.processing;
 
-import com.sun.jna.ptr.PointerByReference;
 import net.dv8tion.jda.core.audio.AudioPacket;
 import net.dv8tion.jda.core.audio.AudioSendHandler;
 import net.dv8tion.jda.core.audio.factory.IPacketProvider;
@@ -95,7 +94,6 @@ public class PacketProvider implements IPacketProvider {
         final byte[] secretKey = this.audioConnection.getSecretKey();
         final Integer ssrc = this.audioConnection.getSsrc();
         final InetSocketAddress udpTargetAddress = this.audioConnection.getUdpTargetAddress();
-        final PointerByReference opusEncoder = this.audioConnection.getOpusEncoder();
         final AudioSendHandler sendHandler = this.audioConnection.getSendHandler();
 
         //preconditions fulfilled?
@@ -103,7 +101,6 @@ public class PacketProvider implements IPacketProvider {
                 || secretKey == null
                 || ssrc == null
                 || udpTargetAddress == null
-                || opusEncoder == null
                 || sendHandler == null
                 || !sendHandler.canProvide()) {
             if (this.audioConnection.isSpeaking() && changeTalking) {
@@ -113,16 +110,12 @@ public class PacketProvider implements IPacketProvider {
         }
 
         //audio data provided?
-        byte[] rawAudio = sendHandler.provide20MsAudio();
+        final byte[] rawAudio = sendHandler.provide20MsAudio();
         if (rawAudio == null || rawAudio.length == 0) {
             if (this.audioConnection.isSpeaking() && changeTalking) {
                 this.audioConnection.updateSpeaking(false);
             }
             return null;
-        }
-
-        if (!sendHandler.isOpus()) {
-            rawAudio = PacketUtil.encodeToOpus(rawAudio, opusEncoder);
         }
 
         final DatagramPacket nextPacket = new AudioPacket(this.seq, this.timestamp, ssrc, rawAudio)
