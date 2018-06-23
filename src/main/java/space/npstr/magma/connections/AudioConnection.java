@@ -235,7 +235,6 @@ public class AudioConnection extends BaseSubscriber<ConnectionEvent> {
     private void handleShutdown() {
         this.setSpeaking(false);
         this.tearDownSendComponents();
-        this.sendHandler = null;
 
         this.encryptionMode = null;
         this.secretKey = null;
@@ -248,6 +247,7 @@ public class AudioConnection extends BaseSubscriber<ConnectionEvent> {
 
     private void tearDownSendComponents() {
         log.trace("Thread {} is tearing down audio components", Thread.currentThread().getName());
+        this.sendHandler = null;
         if (this.sendSystem != null) {
             this.sendSystem.shutdown();
             this.sendSystem = null;
