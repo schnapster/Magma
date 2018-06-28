@@ -41,7 +41,7 @@ public interface InboundWsEvent extends WsEvent {
      * @param payload
      *         the payload of the websocket message as a string
      *
-     * @return a parsed WsEvent that we understand
+     * @return a parsed {@link InboundWsEvent}
      */
     static InboundWsEvent from(final String payload) {
         final JSONObject content = new JSONObject(payload);
