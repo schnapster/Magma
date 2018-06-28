@@ -19,13 +19,20 @@ package space.npstr.magma;
 import io.undertow.protocols.ssl.UndertowXnioSsl;
 import net.dv8tion.jda.core.audio.AudioSendHandler;
 import net.dv8tion.jda.core.audio.factory.IAudioSendFactory;
+import org.reactivestreams.Subscriber;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xnio.OptionMap;
 import org.xnio.Xnio;
 import org.xnio.XnioWorker;
 import org.xnio.ssl.XnioSsl;
+import reactor.core.publisher.FluxSink;
+import reactor.core.publisher.UnicastProcessor;
+import reactor.core.scheduler.Schedulers;
 import space.npstr.magma.connections.hax.ClosingUndertowWebSocketClient;
 import space.npstr.magma.connections.hax.ClosingWebSocketClient;
 import space.npstr.magma.events.audio.lifecycle.CloseWebSocketLcEvent;
+import space.npstr.magma.events.audio.lifecycle.LifecycleEvent;
 import space.npstr.magma.events.audio.lifecycle.Shutdown;
 import space.npstr.magma.events.audio.lifecycle.UpdateSendHandlerLcEvent;
 import space.npstr.magma.events.audio.lifecycle.VoiceServerUpdateLcEvent;
@@ -33,10 +40,13 @@ import space.npstr.magma.events.audio.lifecycle.VoiceServerUpdateLcEvent;
 import javax.annotation.Nullable;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.logging.Level;
 
 public class Magma implements MagmaApi {
 
-    private final AudioStackLifecyclePipeline lifecyclePipeline;
+    private static final Logger log = LoggerFactory.getLogger(Magma.class);
+
+    private final FluxSink<LifecycleEvent> lifecycleSink;
 
     /**
      * @see MagmaApi
@@ -51,7 +61,14 @@ public class Magma implements MagmaApi {
             throw new RuntimeException("Failed to set up websocket client", e);
         }
 
-        this.lifecyclePipeline = new AudioStackLifecyclePipeline(sendFactoryProvider, webSocketClient);
+        final Subscriber<LifecycleEvent> lifecyclePipeline = new AudioStackLifecyclePipeline(sendFactoryProvider, webSocketClient);
+
+        final UnicastProcessor<LifecycleEvent> processor = UnicastProcessor.create();
+        this.lifecycleSink = processor.sink();
+        processor
+                .log(log.getName(), Level.FINEST) //FINEST = TRACE
+                .publishOn(Schedulers.parallel())
+                .subscribe(lifecyclePipeline);
     }
 
     // ################################################################################
@@ -61,12 +78,12 @@ public class Magma implements MagmaApi {
 
     @Override
     public void shutdown() {
-        this.lifecyclePipeline.next(Shutdown.INSTANCE);
+        this.lifecycleSink.next(Shutdown.INSTANCE);
     }
 
     @Override
     public void provideVoiceServerUpdate(final Member member, final ServerUpdate serverUpdate) {
-        this.lifecyclePipeline.next(VoiceServerUpdateLcEvent.builder()
+        this.lifecycleSink.next(VoiceServerUpdateLcEvent.builder()
                 .member(member)
                 .sessionId(serverUpdate.getSessionId())
                 .endpoint(serverUpdate.getEndpoint().replace(":80", "")) //Strip the port from the endpoint.
@@ -86,7 +103,7 @@ public class Magma implements MagmaApi {
 
     @Override
     public void closeConnection(final Member member) {
-        this.lifecyclePipeline.next(CloseWebSocketLcEvent.builder()
+        this.lifecycleSink.next(CloseWebSocketLcEvent.builder()
                 .member(member)
                 .build());
     }
@@ -96,7 +113,7 @@ public class Magma implements MagmaApi {
     // ################################################################################
 
     private void updateSendHandler(final Member member, @Nullable final AudioSendHandler sendHandler) {
-        this.lifecyclePipeline.next(UpdateSendHandlerLcEvent.builder()
+        this.lifecycleSink.next(UpdateSendHandlerLcEvent.builder()
                 .member(member)
                 .audioSendHandler(Optional.ofNullable(sendHandler))
                 .build());

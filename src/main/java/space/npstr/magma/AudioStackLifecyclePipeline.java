@@ -19,10 +19,7 @@ package space.npstr.magma;
 import net.dv8tion.jda.core.audio.factory.IAudioSendFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import reactor.core.Disposable;
-import reactor.core.publisher.FluxSink;
-import reactor.core.publisher.UnicastProcessor;
-import reactor.core.scheduler.Schedulers;
+import reactor.core.publisher.BaseSubscriber;
 import space.npstr.magma.connections.AudioConnection;
 import space.npstr.magma.connections.AudioWebSocket;
 import space.npstr.magma.connections.hax.ClosingWebSocketClient;
@@ -38,7 +35,6 @@ import javax.annotation.CheckReturnValue;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
-import java.util.logging.Level;
 
 /**
  * Created by napster on 22.04.18.
@@ -65,7 +61,7 @@ import java.util.logging.Level;
  * Neutral Events:
  * -- Setting and removing a send handler
  */
-public class AudioStackLifecyclePipeline {
+public class AudioStackLifecyclePipeline extends BaseSubscriber<LifecycleEvent> {
 
     private static final Logger log = LoggerFactory.getLogger(AudioStackLifecyclePipeline.class);
 
@@ -76,36 +72,14 @@ public class AudioStackLifecyclePipeline {
     private final Function<Member, IAudioSendFactory> sendFactoryProvider;
     private final ClosingWebSocketClient webSocketClient;
 
-    private final FluxSink<LifecycleEvent> lifecycleEventSink;
-    private final Disposable lifecycleSubscription;
-
     public AudioStackLifecyclePipeline(final Function<Member, IAudioSendFactory> sendFactoryProvider,
                                        final ClosingWebSocketClient webSocketClient) {
         this.sendFactoryProvider = sendFactoryProvider;
         this.webSocketClient = webSocketClient;
-
-
-        final UnicastProcessor<LifecycleEvent> processor = UnicastProcessor.create();
-
-        this.lifecycleEventSink = processor.sink();
-
-
-        this.lifecycleSubscription = processor
-                .log(log.getName() + ".Inbound", Level.FINEST) //FINEST = TRACE
-                .publishOn(Schedulers.parallel())
-                .subscribe(this::onEvent);
     }
 
-    /**
-     * Call this to drop lifecycle events into this thing for processing
-     */
-    public void next(final LifecycleEvent lifecycleEvent) {
-        this.lifecycleEventSink.next(lifecycleEvent);
-    }
-
-
-    private void onEvent(final LifecycleEvent event) {
-
+    @Override
+    protected void hookOnNext(final LifecycleEvent event) {
         if (event instanceof VoiceServerUpdate) {
             final VoiceServerUpdate voiceServerUpdate = (VoiceServerUpdate) event;
             this.getAudioStack(event)
@@ -123,7 +97,7 @@ public class AudioStackLifecyclePipeline {
             this.getAudioStack(event)
                     .next(event);
         } else if (event instanceof Shutdown) {
-            this.lifecycleSubscription.dispose();
+            this.dispose();
 
             this.audioStacks.values().stream().flatMap(map -> map.values().stream()).forEach(
                     audioStack -> audioStack.next(event)
