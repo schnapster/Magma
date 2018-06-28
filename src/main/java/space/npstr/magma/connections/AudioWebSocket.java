@@ -41,7 +41,7 @@ import space.npstr.magma.events.audio.ws.in.InboundWsEvent;
 import space.npstr.magma.events.audio.ws.in.Ready;
 import space.npstr.magma.events.audio.ws.in.Resumed;
 import space.npstr.magma.events.audio.ws.in.SessionDescription;
-import space.npstr.magma.events.audio.ws.in.UnknownWsEvent;
+import space.npstr.magma.events.audio.ws.in.Unknown;
 import space.npstr.magma.events.audio.ws.in.WebSocketClosed;
 import space.npstr.magma.events.audio.ws.out.HeartbeatWsEvent;
 import space.npstr.magma.events.audio.ws.out.IdentifyWsEvent;
@@ -101,7 +101,8 @@ public class AudioWebSocket extends BaseSubscriber<InboundWsEvent> {
         final UnicastProcessor<OutboundWsEvent> webSocketProcessor = UnicastProcessor.create();
         this.audioWebSocketSink = webSocketProcessor.sink();
 
-        this.webSocketHandler = new AudioWebSocketSessionHandler(webSocketProcessor, this);
+        this.webSocketHandler = new AudioWebSocketSessionHandler(this);
+        webSocketProcessor.subscribe(this.webSocketHandler);
         this.webSocketConnection = this.connect(this.webSocketClient, this.wssEndpoint, this.webSocketHandler);
     }
 

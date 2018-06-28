@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.web.reactive.socket.WebSocketHandler;
 import org.springframework.web.reactive.socket.WebSocketMessage;
 import org.springframework.web.reactive.socket.WebSocketSession;
+import reactor.core.publisher.BaseSubscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
@@ -36,7 +37,7 @@ import java.util.logging.Level;
 /**
  * Created by napster on 21.04.18.
  */
-public class AudioWebSocketSessionHandler implements WebSocketHandler {
+public class AudioWebSocketSessionHandler extends BaseSubscriber<OutboundWsEvent> implements WebSocketHandler {
     private static final Logger log = LoggerFactory.getLogger(AudioWebSocketSessionHandler.class);
     private final Subscriber<InboundWsEvent> inbound;
 
@@ -48,14 +49,11 @@ public class AudioWebSocketSessionHandler implements WebSocketHandler {
     private WebSocketSession session;
 
     /**
-     * @param outbound
-     *         Publisher of outbound events that shall be sent to Discord
      * @param inbound
      *         Subcriber to the events we will receive from Discord
      */
-    public AudioWebSocketSessionHandler(final Flux<OutboundWsEvent> outbound, final Subscriber<InboundWsEvent> inbound) {
+    public AudioWebSocketSessionHandler(final Subscriber<InboundWsEvent> inbound) {
         this.prepareConnect();
-        outbound.subscribe(this::process);
         this.inbound = inbound;
     }
 
@@ -118,8 +116,8 @@ public class AudioWebSocketSessionHandler implements WebSocketHandler {
                 .doOnTerminate(() -> log.trace("Sending terminated"));
     }
 
-
-    private void process(final OutboundWsEvent event) {
+    @Override
+    protected void hookOnNext(final OutboundWsEvent event) {
         this.intermediaryOutboundSink.next(event);
     }
 }
