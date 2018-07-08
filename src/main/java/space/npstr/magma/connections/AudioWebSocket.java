@@ -223,7 +223,7 @@ public class AudioWebSocket extends BaseSubscriber<InboundWsEvent> {
                     .build());
         } else {
             log.info("Closing");
-            this.lifecyclePipeline.next(CloseWebSocketLcEvent.builder()
+            this.lifecyclePipeline.onNext(CloseWebSocketLcEvent.builder()
                     .member(this.session.getVoiceServerUpdate().getMember())
                     .build());
         }
