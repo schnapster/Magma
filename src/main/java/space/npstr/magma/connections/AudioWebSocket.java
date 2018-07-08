@@ -75,10 +75,12 @@ public class AudioWebSocket extends BaseSubscriber<InboundWsEvent> {
     private final AudioStackLifecyclePipeline lifecyclePipeline;
     private final ClosingWebSocketClient webSocketClient;
 
-    //drop events into this sink to have them sent to discord
-    private final FluxSink<OutboundWsEvent> audioWebSocketSink;
-    //reusable, if prepareConnect() is called before reconnecting
+    private final UnicastProcessor<OutboundWsEvent> webSocketProcessor;
+    private final FluxSink<OutboundWsEvent> webSocketSink;
+    private final UnicastProcessor<OutboundWsEvent> readyWebsocketProcessor;
+    private final FluxSink<OutboundWsEvent> readyWebsocketSink;
     private final AudioWebSocketSessionHandler webSocketHandler;
+
 
     @Nullable
     private Disposable heartbeatSubscription;
@@ -98,11 +100,14 @@ public class AudioWebSocket extends BaseSubscriber<InboundWsEvent> {
         this.webSocketClient = webSocketClient;
 
 
-        final UnicastProcessor<OutboundWsEvent> webSocketProcessor = UnicastProcessor.create();
-        this.audioWebSocketSink = webSocketProcessor.sink();
+        this.webSocketProcessor = UnicastProcessor.create();
+        this.webSocketSink = this.webSocketProcessor.sink();
+
+        this.readyWebsocketProcessor = UnicastProcessor.create();
+        this.readyWebsocketSink = this.readyWebsocketProcessor.sink();
 
         this.webSocketHandler = new AudioWebSocketSessionHandler(this);
-        webSocketProcessor.subscribe(this.webSocketHandler);
+        this.webSocketProcessor.subscribe(this.webSocketHandler);
         this.webSocketConnection = this.connect(this.webSocketClient, this.wssEndpoint, this.webSocketHandler);
     }
 
@@ -112,7 +117,7 @@ public class AudioWebSocket extends BaseSubscriber<InboundWsEvent> {
 
     public void setSpeaking(final boolean isSpeaking) {
         final int speakingMask = isSpeaking ? 1 : 0;
-        this.send(SpeakingWsEvent.builder()
+        sendWhenReady(SpeakingWsEvent.builder()
                 .speakingMask(speakingMask)
                 .build());
     }
@@ -160,12 +165,12 @@ public class AudioWebSocket extends BaseSubscriber<InboundWsEvent> {
         this.heartbeatSubscription = Flux.interval(Duration.ofMillis(hello.getHeartbeatIntervalMillis()))
                 .doOnNext(tick -> log.trace("Sending heartbeat {}", tick))
                 .publishOn(Schedulers.parallel())
-                .subscribe(tick -> this.audioWebSocketSink.next(HeartbeatWsEvent.builder()
+                .subscribe(tick -> send(HeartbeatWsEvent.builder()
                         .nonce(tick.intValue())
                         .build())
                 );
 
-        this.audioWebSocketSink.next(IdentifyWsEvent.builder()
+        send(IdentifyWsEvent.builder()
                 .userId(this.session.getUserId())
                 .guildId(this.session.getVoiceServerUpdate().getGuildId())
                 .sessionId(this.session.getVoiceServerUpdate().getSessionId())
@@ -187,9 +192,12 @@ public class AudioWebSocket extends BaseSubscriber<InboundWsEvent> {
         final EncryptionMode preferredMode = preferredModeOpt.get();
         log.debug("Selecting encryption mode {}", preferredMode);
 
+        //attach ready event sink to the full event sink
+        this.readyWebsocketProcessor.subscribe(this.webSocketProcessor);
+
         this.audioConnection.handleUdpDiscovery(udpTargetAddress, ready.getSsrc())
                 .publishOn(Schedulers.parallel())
-                .subscribe(externalAddress -> this.audioWebSocketSink.next(
+                .subscribe(externalAddress -> sendWhenReady(
                         SelectProtocolWsEvent.builder()
                                 .protocol("udp")
                                 .host(externalAddress.getHostString())
@@ -216,7 +224,7 @@ public class AudioWebSocket extends BaseSubscriber<InboundWsEvent> {
             this.webSocketConnection.dispose();
             this.webSocketHandler.prepareConnect();
             this.webSocketConnection = this.connect(this.webSocketClient, this.wssEndpoint, this.webSocketHandler);
-            this.audioWebSocketSink.next(ResumeWsEvent.builder()
+            send(ResumeWsEvent.builder()
                     .guildId(this.session.getVoiceServerUpdate().getGuildId())
                     .sessionId(this.session.getVoiceServerUpdate().getSessionId())
                     .token(this.session.getVoiceServerUpdate().getToken())
@@ -245,7 +253,12 @@ public class AudioWebSocket extends BaseSubscriber<InboundWsEvent> {
     }
 
     private void send(final OutboundWsEvent outboundWsEvent) {
-        this.audioWebSocketSink.next(outboundWsEvent);
+        this.webSocketSink.next(outboundWsEvent);
+    }
+
+    //use for events that should only happen after we have identified (=after we receive the ready event) to avoid 4003s
+    private void sendWhenReady(final OutboundWsEvent outboundWsEvent) {
+        this.readyWebsocketSink.next(outboundWsEvent);
     }
 
     private void closeEverything() {
