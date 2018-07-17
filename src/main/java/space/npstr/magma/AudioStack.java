@@ -107,7 +107,7 @@ public class AudioStack extends BaseSubscriber<LifecycleEvent> {
         }
 
         this.webSocket = new AudioWebSocket(this.sendFactory, connectWebSocket.getSessionInfo(),
-                this.webSocketClient, this.lifecyclePipeline);
+                this.webSocketClient, this::next);
         if (this.sendHandler != null) {
             this.webSocket.getAudioConnection().updateSendHandler(this.sendHandler);
         }

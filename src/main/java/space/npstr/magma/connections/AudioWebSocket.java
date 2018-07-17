@@ -26,9 +26,9 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.UnicastProcessor;
 import reactor.core.scheduler.Schedulers;
-import space.npstr.magma.AudioStackLifecyclePipeline;
 import space.npstr.magma.EncryptionMode;
 import space.npstr.magma.connections.hax.ClosingWebSocketClient;
+import space.npstr.magma.events.audio.lifecycle.CloseWebSocket;
 import space.npstr.magma.events.audio.lifecycle.CloseWebSocketLcEvent;
 import space.npstr.magma.events.audio.ws.CloseCode;
 import space.npstr.magma.events.audio.ws.Speaking;
@@ -57,12 +57,13 @@ import java.net.URISyntaxException;
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 /**
  * Created by napster on 19.04.18.
- *
+ * <p>
  * Handle the lifecycle of the Discord voice websocket connection.
  */
 public class AudioWebSocket extends BaseSubscriber<InboundWsEvent> {
@@ -72,7 +73,7 @@ public class AudioWebSocket extends BaseSubscriber<InboundWsEvent> {
     private final SessionInfo session;
     private final URI wssEndpoint;
     private final AudioConnection audioConnection;
-    private final AudioStackLifecyclePipeline lifecyclePipeline;
+    private final Consumer<CloseWebSocket> closeCallback;
     private final ClosingWebSocketClient webSocketClient;
 
     private final UnicastProcessor<OutboundWsEvent> webSocketProcessor;
@@ -88,7 +89,7 @@ public class AudioWebSocket extends BaseSubscriber<InboundWsEvent> {
 
 
     public AudioWebSocket(final IAudioSendFactory sendFactory, final SessionInfo session,
-                          final ClosingWebSocketClient webSocketClient, final AudioStackLifecyclePipeline lifecyclePipeline) {
+                          final ClosingWebSocketClient webSocketClient, final Consumer<CloseWebSocket> closeCallback) {
         this.session = session;
         try {
             this.wssEndpoint = new URI(String.format("wss://%s/?v=4", session.getVoiceServerUpdate().getEndpoint()));
@@ -96,7 +97,7 @@ public class AudioWebSocket extends BaseSubscriber<InboundWsEvent> {
             throw new RuntimeException("Endpoint " + session.getVoiceServerUpdate().getEndpoint() + " is not a valid URI", e);
         }
         this.audioConnection = new AudioConnection(this, sendFactory);
-        this.lifecyclePipeline = lifecyclePipeline;
+        this.closeCallback = closeCallback;
         this.webSocketClient = webSocketClient;
 
 
@@ -232,7 +233,7 @@ public class AudioWebSocket extends BaseSubscriber<InboundWsEvent> {
                     .build());
         } else {
             log.info("Closing");
-            this.lifecyclePipeline.onNext(CloseWebSocketLcEvent.builder()
+            this.closeCallback.accept(CloseWebSocketLcEvent.builder()
                     .member(this.session.getVoiceServerUpdate().getMember())
                     .build());
         }
