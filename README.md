@@ -192,6 +192,25 @@ Graphs by courtesy of [FredBoat](https://github.com/Frederikam/FredBoat/).
 </details>
 
 
+## Debugging
+
+Enabling TRACE/DEBUG logs can help with pinpointing and reporting issues.
+To get the most out of these log levels, make sure your chosen logger implementation and configuration 
+prints additional MDC information. The MDC keys that Magma uses can be found in the `MdcKeys` class.
+
+If you are running Magma in a Spring Boot application with logback as the logger implementation
+(Lavalink does this), adding these following lines to your Spring Application's `application.yaml`
+will show the MDC information:
+
+```yaml
+logging:
+  pattern:
+    level: "[%mdc] %5p"
+  level:
+    space.npstr.magma: TRACE 
+```
+
+
 ## Changelog
 
 Expect breaking changes between minor versions while v1 has not been released.
