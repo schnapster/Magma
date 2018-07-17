@@ -38,12 +38,18 @@ public class PacketProvider implements IPacketProvider {
 
     private static final Logger log = LoggerFactory.getLogger(PacketProvider.class);
     private static final String INFORMATION_NOT_AVAILABLE = "This information is not available";
+    private static final byte[] SILENCE_BYTES = new byte[]{(byte) 0xF8, (byte) 0xFF, (byte) 0xFE};
+    private static final int EMPTY_FRAMES_COUNT = 5;
 
     private final AudioConnection audioConnection;
     private final Supplier<Long> nonceSupplier;
 
     private char seq = 0;           //Sequence of audio packets. Used to determine the order of the packets.
     private int timestamp = 0;      //Used to sync up our packets within the same timeframe of other people talking.
+
+    // opus interpolation handling
+    // https://discordapp.com/developers/docs/topics/voice-connections#voice-data-interpolation
+    private int sendSilentFrames = EMPTY_FRAMES_COUNT;
 
     public PacketProvider(final AudioConnection audioConnection, final Supplier<Long> nonceSupplier) {
         this.audioConnection = audioConnection;
@@ -106,22 +112,31 @@ public class PacketProvider implements IPacketProvider {
             if (this.audioConnection.isSpeaking() && changeTalking) {
                 this.audioConnection.updateSpeaking(false);
             }
+            this.sendSilentFrames = EMPTY_FRAMES_COUNT;
             return null;
         }
 
-        //audio data provided?
-        final byte[] rawAudio = sendHandler.provide20MsAudio();
-        if (rawAudio == null || rawAudio.length == 0) {
-            if (this.audioConnection.isSpeaking() && changeTalking) {
-                this.audioConnection.updateSpeaking(false);
+        final AudioPacket nextAudioPacket;
+        if (this.sendSilentFrames <= 0) {
+            //audio data provided?
+            final byte[] rawAudio = sendHandler.provide20MsAudio();
+            if (rawAudio == null || rawAudio.length == 0) {
+                if (this.audioConnection.isSpeaking() && changeTalking) {
+                    this.audioConnection.updateSpeaking(false);
+                }
+                this.sendSilentFrames = EMPTY_FRAMES_COUNT;
+                return null;
             }
-            return null;
+            nextAudioPacket = new AudioPacket(this.seq, this.timestamp, ssrc, rawAudio);
+        } else {
+            nextAudioPacket = new AudioPacket(this.seq, this.timestamp, ssrc, SILENCE_BYTES);
+            this.sendSilentFrames--;
+            log.trace("Sending silent frame, silent frames left {}", this.sendSilentFrames);
         }
 
-        final DatagramPacket nextPacket = new AudioPacket(this.seq, this.timestamp, ssrc, rawAudio)
+        final DatagramPacket nextPacket = nextAudioPacket
                 .asEncryptedUdpPacket(udpTargetAddress, secretKey,
                         PacketUtil.getNonceData(encryptionMode, this.nonceSupplier));
-
 
         if (!this.audioConnection.isSpeaking()) {
             this.audioConnection.updateSpeaking(true);
