@@ -20,6 +20,7 @@ import net.dv8tion.jda.core.audio.AudioSendHandler;
 import net.dv8tion.jda.core.audio.factory.IAudioSendFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import reactor.core.publisher.BaseSubscriber;
 import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.UnicastProcessor;
@@ -45,7 +46,7 @@ public class AudioStack extends BaseSubscriber<LifecycleEvent> {
 
     private static final Logger log = LoggerFactory.getLogger(AudioStack.class);
 
-    private final String guildId;
+    private final Member member;
     private final IAudioSendFactory sendFactory;
     private final ClosingWebSocketClient webSocketClient;
     private final AudioStackLifecyclePipeline lifecyclePipeline;
@@ -58,10 +59,10 @@ public class AudioStack extends BaseSubscriber<LifecycleEvent> {
     private AudioSendHandler sendHandler;
 
 
-    public AudioStack(final String guildId, final IAudioSendFactory sendFactory,
+    public AudioStack(final Member member, final IAudioSendFactory sendFactory,
                       final ClosingWebSocketClient webSocketClient,
                       final AudioStackLifecyclePipeline lifecyclePipeline) {
-        this.guildId = guildId;
+        this.member = member;
         this.sendFactory = sendFactory;
         this.webSocketClient = webSocketClient;
         this.lifecyclePipeline = lifecyclePipeline;
@@ -76,9 +77,9 @@ public class AudioStack extends BaseSubscriber<LifecycleEvent> {
 
     public void next(final LifecycleEvent event) {
         if (!(event instanceof Shutdown)
-                && !event.getGuildId().equals(this.guildId)) {
+                && !event.getGuildId().equals(this.member.getGuildId())) {
             throw new IllegalArgumentException(String.format("Passed a lifecycle event for guild %s to the audio stack of guild %s",
-                    event.getGuildId(), this.guildId));
+                    event.getGuildId(), this.member.getGuildId()));
         }
 
         this.lifecycleSink.next(event);
@@ -86,22 +87,28 @@ public class AudioStack extends BaseSubscriber<LifecycleEvent> {
 
     @Override
     protected void hookOnNext(final LifecycleEvent event) {
-        if (event instanceof ConnectWebSocket) {
-            this.handleConnectWebSocket((ConnectWebSocket) event);
-        } else if (event instanceof UpdateSendHandler) {
-            this.handleUpdateSendHandler((UpdateSendHandler) event);
-        } else if (event instanceof CloseWebSocket) {
-            this.handleCloseWebSocket();
-        } else if (event instanceof Shutdown) {
-            this.handleShutdown();
-        } else {
-            log.warn("Audiostack has no handler for lifecycle event of class {}", event.getClass().getSimpleName());
+        try (
+                final MDC.MDCCloseable ignored = MDC.putCloseable(MdcKey.GUILD, this.member.getGuildId());
+                final MDC.MDCCloseable ignored2 = MDC.putCloseable(MdcKey.BOT, this.member.getUserId())
+        ) {
+            if (event instanceof ConnectWebSocket) {
+                this.handleConnectWebSocket((ConnectWebSocket) event);
+            } else if (event instanceof UpdateSendHandler) {
+                this.handleUpdateSendHandler((UpdateSendHandler) event);
+            } else if (event instanceof CloseWebSocket) {
+                this.handleCloseWebSocket();
+            } else if (event instanceof Shutdown) {
+                this.handleShutdown();
+            } else {
+                log.warn("Audiostack has no handler for lifecycle event of class {}", event.getClass().getSimpleName());
+            }
         }
 
     }
 
 
     private void handleConnectWebSocket(final ConnectWebSocket connectWebSocket) {
+        log.trace("Connecting");
         if (this.webSocket != null) {
             this.webSocket.close();
         }
@@ -114,6 +121,7 @@ public class AudioStack extends BaseSubscriber<LifecycleEvent> {
     }
 
     private void handleUpdateSendHandler(final UpdateSendHandler updateSendHandler) {
+        log.trace("Updating send handler");
         final AudioSendHandler sendHandlerInstance = updateSendHandler.getAudioSendHandler().orElse(null);
         this.sendHandler = sendHandlerInstance;
 
@@ -123,6 +131,7 @@ public class AudioStack extends BaseSubscriber<LifecycleEvent> {
     }
 
     private void handleCloseWebSocket() {
+        log.trace("Closing websocket");
         if (this.webSocket != null) {
             this.webSocket.close();
             this.webSocket = null;
@@ -130,6 +139,7 @@ public class AudioStack extends BaseSubscriber<LifecycleEvent> {
     }
 
     private void handleShutdown() {
+        log.trace("Shutting down");
         this.dispose();
         if (this.webSocket != null) {
             this.webSocket.close();

@@ -21,12 +21,14 @@ import net.dv8tion.jda.core.audio.factory.IAudioSendFactory;
 import net.dv8tion.jda.core.audio.factory.IAudioSendSystem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import reactor.core.publisher.BaseSubscriber;
 import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.UnicastProcessor;
 import reactor.core.scheduler.Schedulers;
 import space.npstr.magma.EncryptionMode;
+import space.npstr.magma.MdcKey;
 import space.npstr.magma.events.audio.conn.ConnectionEvent;
 import space.npstr.magma.events.audio.conn.SetEncryptionMode;
 import space.npstr.magma.events.audio.conn.SetSecretKey;
@@ -188,26 +190,31 @@ public class AudioConnection extends BaseSubscriber<ConnectionEvent> {
 
     @Override
     protected void hookOnNext(final ConnectionEvent event) {
-        if (event instanceof SetEncryptionMode) {
-            this.encryptionMode = ((SetEncryptionMode) event).getEncryptionMode();
-            this.startSendSystemIfReady();
-        } else if (event instanceof SetSecretKey) {
-            this.secretKey = ((SetSecretKey) event).getSecretKey();
-            this.startSendSystemIfReady();
-        } else if (event instanceof SetSsrc) {
-            this.ssrc = ((SetSsrc) event).getSsrc();
-            this.startSendSystemIfReady();
-        } else if (event instanceof SetTargetAddress) {
-            this.udpTargetAddress = ((SetTargetAddress) event).getTargetAddress();
-            this.startSendSystemIfReady();
-        } else if (event instanceof UpdateSendHandler) {
-            this.handleSendHandlerUpdate((UpdateSendHandler) event);
-        } else if (event instanceof UpdateSpeaking) {
-            this.handleSpeakingUpdate((UpdateSpeaking) event);
-        } else if (event instanceof Shutdown) {
-            this.handleShutdown();
-        } else {
-            log.warn("AudioConnection has no handler for event of class {}", event.getClass().getSimpleName());
+        try (
+                final MDC.MDCCloseable ignored = MDC.putCloseable(MdcKey.GUILD, this.webSocket.getSession().getVoiceServerUpdate().getGuildId());
+                final MDC.MDCCloseable ignored2 = MDC.putCloseable(MdcKey.BOT, this.webSocket.getSession().getUserId())
+        ) {
+            if (event instanceof SetEncryptionMode) {
+                this.encryptionMode = ((SetEncryptionMode) event).getEncryptionMode();
+                this.startSendSystemIfReady();
+            } else if (event instanceof SetSecretKey) {
+                this.secretKey = ((SetSecretKey) event).getSecretKey();
+                this.startSendSystemIfReady();
+            } else if (event instanceof SetSsrc) {
+                this.ssrc = ((SetSsrc) event).getSsrc();
+                this.startSendSystemIfReady();
+            } else if (event instanceof SetTargetAddress) {
+                this.udpTargetAddress = ((SetTargetAddress) event).getTargetAddress();
+                this.startSendSystemIfReady();
+            } else if (event instanceof UpdateSendHandler) {
+                this.handleSendHandlerUpdate((UpdateSendHandler) event);
+            } else if (event instanceof UpdateSpeaking) {
+                this.handleSpeakingUpdate((UpdateSpeaking) event);
+            } else if (event instanceof Shutdown) {
+                this.handleShutdown();
+            } else {
+                log.warn("AudioConnection has no handler for event of class {}", event.getClass().getSimpleName());
+            }
         }
     }
 
@@ -229,12 +236,16 @@ public class AudioConnection extends BaseSubscriber<ConnectionEvent> {
 
     private void setSpeaking(final boolean speaking) {
         if (this.ssrc != null) {
+            log.trace("Setting speaking to {}", speaking);
             this.speaking = speaking;
             this.webSocket.setSpeaking(speaking, this.ssrc);
+        } else {
+            log.trace("Not setting speaking to {} due to missing ssrc", speaking);
         }
     }
 
     private void handleShutdown() {
+        log.trace("Shutting down");
         this.setSpeaking(false);
         this.tearDownSendComponents();
 

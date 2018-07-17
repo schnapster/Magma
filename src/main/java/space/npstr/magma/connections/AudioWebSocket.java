@@ -19,6 +19,7 @@ package space.npstr.magma.connections;
 import net.dv8tion.jda.core.audio.factory.IAudioSendFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.web.reactive.socket.WebSocketHandler;
 import reactor.core.Disposable;
 import reactor.core.publisher.BaseSubscriber;
@@ -27,6 +28,7 @@ import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.UnicastProcessor;
 import reactor.core.scheduler.Schedulers;
 import space.npstr.magma.EncryptionMode;
+import space.npstr.magma.MdcKey;
 import space.npstr.magma.connections.hax.ClosingWebSocketClient;
 import space.npstr.magma.events.audio.lifecycle.CloseWebSocket;
 import space.npstr.magma.events.audio.lifecycle.CloseWebSocketLcEvent;
@@ -124,6 +126,10 @@ public class AudioWebSocket extends BaseSubscriber<InboundWsEvent> {
                 .build());
     }
 
+    public SessionInfo getSession() {
+        return this.session;
+    }
+
     public void close() {
         this.closeEverything();
     }
@@ -138,34 +144,47 @@ public class AudioWebSocket extends BaseSubscriber<InboundWsEvent> {
     @SuppressWarnings("StatementWithEmptyBody")
     @Override
     protected void hookOnNext(final InboundWsEvent inboundEvent) {
-        if (inboundEvent instanceof Hello) {
-            this.handleHello((Hello) inboundEvent);
-        } else if (inboundEvent instanceof Ready) {
-            this.handleReady((Ready) inboundEvent);
-        } else if (inboundEvent instanceof SessionDescription) {
-            this.handleSessionDescription((SessionDescription) inboundEvent);
-        } else if (inboundEvent instanceof HeartbeatAck) {
-            // noop
-        } else if (inboundEvent instanceof WebSocketClosed) {
-            this.handleWebSocketClosed((WebSocketClosed) inboundEvent);
-        } else if (inboundEvent instanceof ClientDisconnect) {
-            // noop
-        } else if (inboundEvent instanceof Speaking) {
-            // noop
-        } else if (inboundEvent instanceof Resumed) {
-            // noop
-        } else if (inboundEvent instanceof Ignored) {
-            log.trace("Ignored OP {}, payload: {}", inboundEvent.getOpCode(), ((Ignored) inboundEvent).getPayload());
-        } else if (inboundEvent instanceof Unknown) {
-            log.warn("Unknown OP {}, payload: {}", inboundEvent.getOpCode(), ((Unknown) inboundEvent).getPayload());
-        } else {
-            log.warn("WebSocket has no handler for event of class {}", inboundEvent.getClass().getSimpleName());
+        try (
+                final MDC.MDCCloseable ignored = MDC.putCloseable(MdcKey.GUILD, this.session.getVoiceServerUpdate().getGuildId());
+                final MDC.MDCCloseable ignored2 = MDC.putCloseable(MdcKey.BOT, this.session.getUserId())
+        ) {
+            if (inboundEvent instanceof Hello) {
+                this.handleHello((Hello) inboundEvent);
+            } else if (inboundEvent instanceof Ready) {
+                this.handleReady((Ready) inboundEvent);
+            } else if (inboundEvent instanceof SessionDescription) {
+                this.handleSessionDescription((SessionDescription) inboundEvent);
+            } else if (inboundEvent instanceof HeartbeatAck) {
+                // noop
+            } else if (inboundEvent instanceof WebSocketClosed) {
+                this.handleWebSocketClosed((WebSocketClosed) inboundEvent);
+            } else if (inboundEvent instanceof ClientDisconnect) {
+                // noop
+            } else if (inboundEvent instanceof Speaking) {
+                // noop
+            } else if (inboundEvent instanceof Resumed) {
+                // noop
+            } else if (inboundEvent instanceof Ignored) {
+                log.trace("Ignored OP {}, payload: {}", inboundEvent.getOpCode(), ((Ignored) inboundEvent).getPayload());
+            } else if (inboundEvent instanceof Unknown) {
+                log.warn("Unknown OP {}, payload: {}", inboundEvent.getOpCode(), ((Unknown) inboundEvent).getPayload());
+            } else {
+                log.warn("WebSocket has no handler for event of class {}", inboundEvent.getClass().getSimpleName());
+            }
         }
     }
 
     private void handleHello(final Hello hello) {
+        log.trace("Hello");
         this.heartbeatSubscription = Flux.interval(Duration.ofMillis(hello.getHeartbeatIntervalMillis()))
-                .doOnNext(tick -> log.trace("Sending heartbeat {}", tick))
+                .doOnNext(tick -> {
+                    try (
+                            final MDC.MDCCloseable ignored = MDC.putCloseable(MdcKey.GUILD, this.session.getVoiceServerUpdate().getGuildId());
+                            final MDC.MDCCloseable ignored2 = MDC.putCloseable(MdcKey.BOT, this.session.getUserId())
+                    ) {
+                        log.trace("Sending heartbeat {}", tick);
+                    }
+                })
                 .publishOn(Schedulers.parallel())
                 .subscribe(tick -> send(HeartbeatWsEvent.builder()
                         .nonce(tick.intValue())
@@ -182,6 +201,7 @@ public class AudioWebSocket extends BaseSubscriber<InboundWsEvent> {
     }
 
     private void handleReady(final Ready ready) {
+        log.trace("Ready");
         final InetSocketAddress udpTargetAddress = new InetSocketAddress(ready.getIp(), ready.getPort());
         final List<EncryptionMode> receivedModes = ready.getEncryptionModes();
         final Optional<EncryptionMode> preferredModeOpt = EncryptionMode.getPreferredMode(receivedModes);
@@ -209,6 +229,7 @@ public class AudioWebSocket extends BaseSubscriber<InboundWsEvent> {
     }
 
     private void handleSessionDescription(final SessionDescription sessionDescription) {
+        log.trace("Session description");
         this.audioConnection.setSecretKey(sessionDescription.getSecretKey());
         this.audioConnection.setEncryptionMode(sessionDescription.getEncryptionMode());
     }

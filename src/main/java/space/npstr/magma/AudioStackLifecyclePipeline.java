@@ -112,7 +112,7 @@ public class AudioStackLifecyclePipeline extends BaseSubscriber<LifecycleEvent> 
         return this.audioStacks
                 .computeIfAbsent(lifecycleEvent.getUserId(), __ -> new HashMap<>())
                 .computeIfAbsent(lifecycleEvent.getGuildId(), __ ->
-                        new AudioStack(lifecycleEvent.getGuildId(),
+                        new AudioStack(lifecycleEvent.getMember(),
                                 this.sendFactoryProvider.apply(lifecycleEvent.getMember()),
                                 this.webSocketClient,
                                 this));
