@@ -196,6 +196,12 @@ Graphs by courtesy of [FredBoat](https://github.com/Frederikam/FredBoat/).
 
 Expect breaking changes between minor versions while v1 has not been released.
 
+### v0.4.4
+- Send our SSRC along with OP 5 Speaking updates
+- Add MDC and more trace logs to enable better reporting of issues
+- Update close code handling for expected 1xxx codes and warnings on suspicious closes
+- Deal with Opus interpolation 
+
 ### v0.4.3
 - Fix 4003s closes due to sending events before identifying 
 
