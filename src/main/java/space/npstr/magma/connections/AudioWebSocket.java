@@ -236,11 +236,28 @@ public class AudioWebSocket extends BaseSubscriber<InboundWsEvent> {
 
     private void handleWebSocketClosed(final WebSocketClosed webSocketClosed) {
         final int code = webSocketClosed.getCode();
+        final String reason = webSocketClosed.getReason();
         log.info("Websocket to {} closed with code {} and reason {}",
-                this.wssEndpoint, code, webSocketClosed.getReason());
+                this.wssEndpoint, code, reason);
 
-        final boolean resume = (code == CloseCode.DISCONNECTED // according to discord docs
-                || code == CloseCode.VOICE_SERVER_CRASHED);    // according to discord docs
+        final Optional<CloseCode> closeCodeOpt = CloseCode.parse(code);
+        final boolean resume;
+        if (closeCodeOpt.isPresent()) {
+            final CloseCode closeCode = closeCodeOpt.get();
+            resume = closeCode.shouldResume();
+            if (closeCode.shouldWarn()) {
+                if (closeCode == CloseCode.BROKEN) {
+                    log.warn("Connection closed due to internet issues?");
+                } else {
+                    log.warn("Connection closed due to {} {}. This could indicate an issue with the magma library or "
+                                    + "your usage of it. Please get in touch. https://github.com/napstr/Magma/issues",
+                            closeCode, reason);
+                }
+            }
+        } else {
+            log.error("Received unknown close code {} with reason {}", code, reason);
+            resume = false;
+        }
 
         if (resume) {
             log.info("Resuming");

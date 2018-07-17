@@ -16,22 +16,67 @@
 
 package space.npstr.magma.events.audio.ws;
 
-public final class CloseCode {
+import java.util.Optional;
 
-    public static final int HEARTBEAT_TIMEOUT = 1000; //according to jda-audio
+/**
+ * Sources:
+ * https://s.gus.host/flowchart.svg
+ * https://discordapp.com/developers/docs/topics/opcodes-and-status-codes#voice-voice-close-event-codes
+ */
+public enum CloseCode {
+    //@formatter:off                   warn     resume
+    HEARTBEAT_TIMEOUT           (1000, true,    true),
+    CLOUDFLARE                  (1001, false,   true),
+    BROKEN                      (1006, true,    true),
 
-    // https://discordapp.com/developers/docs/topics/opcodes-and-status-codes#voice-voice-close-event-codes
-    public static final int UNKNOWN_OP_CODE = 4001;
-    public static final int NOT_AUTHENTICATED = 4003;
-    public static final int AUTHENTICATION_FAILED = 4004;
-    public static final int ALREADY_AUTHENTICATED = 4005;
-    public static final int SESSION_NO_LONGER_VALID = 4006;
-    public static final int SESSION_TIMEOUT = 4009;
-    public static final int SERVER_NOT_FOUND = 4011;
-    public static final int UNKNOWN_PROTOCOL = 4012;
-    public static final int DISCONNECTED = 4014;
-    public static final int VOICE_SERVER_CRASHED = 4015;
-    public static final int UNKNOWN_ENCRYPTION_MODE = 4016;
+    UNKNOWN_OP_CODE             (4001, true,    false),
+    NOT_AUTHENTICATED           (4003, true,    false),
+    AUTHENTICATION_FAILED       (4004, true,    false),
+    ALREADY_AUTHENTICATED       (4005, true,    false),
+    SESSION_NO_LONGER_VALID     (4006, true,    false),
+    SESSION_TIMEOUT             (4009, true,    false),
+    SERVER_NOT_FOUND            (4011, true,    false),
+    UNKNOWN_PROTOCOL            (4012, true,    false),
+    DISCONNECTED                (4014, false,   true),
+    VOICE_SERVER_CRASHED        (4015, false,   true),
+    UNKNOWN_ENCRYPTION_MODE     (4016, true,    false),
+    //@formatter:on
+    ;
 
-    private CloseCode() {}
+    public static Optional<CloseCode> parse(final int code) {
+        for (final CloseCode closeCode : CloseCode.values()) {
+            if (closeCode.code == code) {
+                return Optional.of(closeCode);
+            }
+        }
+        return Optional.empty();
+    }
+
+    private final int code;
+    private final boolean shouldWarn;
+    private final boolean shouldResume;
+
+    CloseCode(final int code, final boolean shouldWarn, final boolean shouldResume) {
+        this.code = code;
+        this.shouldWarn = shouldWarn;
+        this.shouldResume = shouldResume;
+    }
+
+    public int getCode() {
+        return this.code;
+    }
+
+    public boolean shouldWarn() {
+        return this.shouldWarn;
+    }
+
+    public boolean shouldResume() {
+        return this.shouldResume;
+    }
+
+
+    @Override
+    public String toString() {
+        return "[" + this.code + " " + this.name() + "]";
+    }
 }
