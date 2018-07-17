@@ -228,8 +228,10 @@ public class AudioConnection extends BaseSubscriber<ConnectionEvent> {
     }
 
     private void setSpeaking(final boolean speaking) {
-        this.speaking = speaking;
-        this.webSocket.setSpeaking(speaking);
+        if (this.ssrc != null) {
+            this.speaking = speaking;
+            this.webSocket.setSpeaking(speaking, this.ssrc);
+        }
     }
 
     private void handleShutdown() {

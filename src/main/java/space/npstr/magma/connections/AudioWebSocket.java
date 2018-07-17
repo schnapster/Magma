@@ -115,10 +115,11 @@ public class AudioWebSocket extends BaseSubscriber<InboundWsEvent> {
         return this.audioConnection;
     }
 
-    public void setSpeaking(final boolean isSpeaking) {
+    public void setSpeaking(final boolean isSpeaking, final int ssrc) {
         final int speakingMask = isSpeaking ? 1 : 0;
         sendWhenReady(SpeakingWsEvent.builder()
                 .speakingMask(speakingMask)
+                .ssrc(ssrc)
                 .build());
     }
 

@@ -82,6 +82,7 @@ public interface InboundWsEvent extends WsEvent {
                 final JSONObject speakingD = content.getJSONObject("d");
                 return SpeakingWsEvent.builder()
                         .speakingMask(speakingD.getInt("speaking"))
+                        .ssrc(speakingD.getInt("ssrc"))
                         .build();
             case OpCode.HEARTBEAT_ACK:
                 return HeartbeatAckWsEvent.builder()
