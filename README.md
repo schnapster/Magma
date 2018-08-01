@@ -215,6 +215,9 @@ logging:
 
 Expect breaking changes between minor versions while v1 has not been released.
 
+### v0.4.5
+- Use direct buffers (off heap)
+
 ### v0.4.4
 - Send our SSRC along with OP 5 Speaking updates
 - Add MDC and more trace logs to enable better reporting of issues
