@@ -17,9 +17,11 @@
 package space.npstr.magma.processing;
 
 import com.iwebpp.crypto.TweetNaclFast;
+import net.dv8tion.jda.core.audio.AudioPacket;
 import space.npstr.magma.EncryptionMode;
 
-import javax.annotation.Nullable;
+import java.nio.ByteBuffer;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Supplier;
 
 /**
@@ -30,28 +32,37 @@ public class PacketUtil {
     private PacketUtil() {
     }
 
-    @Nullable
-    public static byte[] getNonceData(final EncryptionMode encryptionMode, final Supplier<Long> nonceSupplier) {
+    //this may reallocate the passed bytebuffer if it is too small
+    public static ByteBuffer encryptPacket(final AudioPacket audioPacket, final ByteBuffer packetBuffer,
+                                           final EncryptionMode encryptionMode, final byte[] secretKey,
+                                           final Supplier<Long> nonceSupplier, final byte[] nonceBuffer) {
+
+        final int nonceLength;
         switch (encryptionMode) {
             case XSALSA20_POLY1305:
-                return null;
+                nonceLength = 0;
+                break;
             case XSALSA20_POLY1305_LITE:
-                return getNonceBytes(nonceSupplier.get());
+                PacketUtil.writeNonce(nonceSupplier.get(), nonceBuffer);
+                nonceLength = 4;
+                break;
             case XSALSA20_POLY1305_SUFFIX:
-                return TweetNaclFast.randombytes(TweetNaclFast.SecretBox.nonceLength);
+                ThreadLocalRandom.current().nextBytes(nonceBuffer);
+                nonceLength = TweetNaclFast.SecretBox.nonceLength;
+                break;
             default:
                 throw new IllegalStateException("Encryption mode [" + encryptionMode + "] is not supported!");
         }
+
+        return audioPacket.asEncryptedPacket(packetBuffer, secretKey, nonceBuffer, nonceLength);
     }
 
     //@formatter:off
-    public static byte[] getNonceBytes(final long nonce) {
-        final byte[] data = new byte[4];
-        data[0] = (byte) ((nonce >>> 24) & 0xFF);
-        data[1] = (byte) ((nonce >>> 16) & 0xFF);
-        data[2] = (byte) ((nonce >>>  8) & 0xFF);
-        data[3] = (byte) ( nonce         & 0xFF);
-        return data;
+    public static void writeNonce(final long nonce, final byte[] nonceBuffer) {
+        nonceBuffer[0] = (byte) ((nonce >>> 24) & 0xFF);
+        nonceBuffer[1] = (byte) ((nonce >>> 16) & 0xFF);
+        nonceBuffer[2] = (byte) ((nonce >>>  8) & 0xFF);
+        nonceBuffer[3] = (byte) ( nonce         & 0xFF);
     }
     //@formatter:on
 }

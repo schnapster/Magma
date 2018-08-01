@@ -16,6 +16,7 @@
 
 package space.npstr.magma.processing;
 
+import com.iwebpp.crypto.TweetNaclFast;
 import net.dv8tion.jda.core.audio.AudioPacket;
 import net.dv8tion.jda.core.audio.AudioSendHandler;
 import net.dv8tion.jda.core.audio.factory.IPacketProvider;
@@ -29,6 +30,7 @@ import javax.annotation.Nullable;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
 import java.util.function.Supplier;
 
 /**
@@ -43,6 +45,8 @@ public class PacketProvider implements IPacketProvider {
 
     private final AudioConnection audioConnection;
     private final Supplier<Long> nonceSupplier;
+    private ByteBuffer packetBuffer = ByteBuffer.allocate(512); //packets usually take up about 400-500 bytes
+    private final byte[] nonceBuffer = new byte[TweetNaclFast.SecretBox.nonceLength];
 
     private char seq = 0;           //Sequence of audio packets. Used to determine the order of the packets.
     private int timestamp = 0;      //Used to sync up our packets within the same timeframe of other people talking.
@@ -68,7 +72,13 @@ public class PacketProvider implements IPacketProvider {
 
     @Override
     public DatagramSocket getUdpSocket() {
-        throw new UnsupportedOperationException(INFORMATION_NOT_AVAILABLE);
+        return this.audioConnection.getUdpSocket();
+    }
+
+    @Nullable
+    @Override
+    public InetSocketAddress getSocketAddress() {
+        return this.audioConnection.getUdpTargetAddress();
     }
 
     @Override
@@ -85,6 +95,17 @@ public class PacketProvider implements IPacketProvider {
     @Nullable
     @Override
     public DatagramPacket getNextPacket(final boolean changeTalking) {
+        final InetSocketAddress targetAddress = this.audioConnection.getUdpTargetAddress();
+        if (targetAddress == null) {
+            return null;
+        }
+        final ByteBuffer nextPacket = getNextPacketRaw(changeTalking);
+        return nextPacket == null ? null : asDatagramPacket(nextPacket, targetAddress);
+    }
+
+    @Nullable
+    @Override
+    public ByteBuffer getNextPacketRaw(final boolean changeTalking) {
         try {
             return this.buildNextPacket(changeTalking);
         } catch (final Exception e) {
@@ -94,19 +115,17 @@ public class PacketProvider implements IPacketProvider {
     }
 
     @Nullable
-    private DatagramPacket buildNextPacket(final boolean changeTalking) {
+    private ByteBuffer buildNextPacket(final boolean changeTalking) {
 
         final EncryptionMode encryptionMode = this.audioConnection.getEncryptionMode();
         final byte[] secretKey = this.audioConnection.getSecretKey();
         final Integer ssrc = this.audioConnection.getSsrc();
-        final InetSocketAddress udpTargetAddress = this.audioConnection.getUdpTargetAddress();
         final AudioSendHandler sendHandler = this.audioConnection.getSendHandler();
 
         //preconditions fulfilled?
         if (encryptionMode == null
                 || secretKey == null
                 || ssrc == null
-                || udpTargetAddress == null
                 || sendHandler == null
                 || !sendHandler.canProvide()) {
             if (this.audioConnection.isSpeaking() && changeTalking) {
@@ -134,9 +153,8 @@ public class PacketProvider implements IPacketProvider {
             log.trace("Sending silent frame, silent frames left {}", this.sendSilentFrames);
         }
 
-        final DatagramPacket nextPacket = nextAudioPacket
-                .asEncryptedUdpPacket(udpTargetAddress, secretKey,
-                        PacketUtil.getNonceData(encryptionMode, this.nonceSupplier));
+        final ByteBuffer nextPacket = this.packetBuffer = PacketUtil.encryptPacket(nextAudioPacket, this.packetBuffer,
+                encryptionMode, secretKey, this.nonceSupplier, this.nonceBuffer);
 
         if (!this.audioConnection.isSpeaking()) {
             this.audioConnection.updateSpeaking(true);
@@ -151,5 +169,12 @@ public class PacketProvider implements IPacketProvider {
         this.timestamp += AudioConnection.OPUS_FRAME_SIZE;
 
         return nextPacket;
+    }
+
+    private DatagramPacket asDatagramPacket(final ByteBuffer buffer, final InetSocketAddress targetAddress) {
+        final byte[] data = buffer.array();
+        final int offset = buffer.arrayOffset();
+        final int position = buffer.position();
+        return new DatagramPacket(data, offset, position - offset, targetAddress);
     }
 }
