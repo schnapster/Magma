@@ -1,6 +1,5 @@
 package space.npstr.magma.connections.hax;
 
-import io.undertow.connector.ByteBufferPool;
 import io.undertow.server.DefaultByteBufferPool;
 import io.undertow.websockets.client.WebSocketClient;
 import io.undertow.websockets.client.WebSocketClientNegotiation;
@@ -41,7 +40,6 @@ public class ClosingUndertowWebSocketClient extends UndertowWebSocketClient impl
 
     private static final int DEFAULT_POOL_BUFFER_SIZE = 16384; //recommended 16kb buffer.
     private final DataBufferFactory bufferFactory = new DefaultDataBufferFactory();
-    private final ByteBufferPool bufferPool;
 
     public ClosingUndertowWebSocketClient(final XnioWorker worker,
                                           final Consumer<WebSocketClient.ConnectionBuilder> builderConsumer) {
@@ -51,8 +49,7 @@ public class ClosingUndertowWebSocketClient extends UndertowWebSocketClient impl
     public ClosingUndertowWebSocketClient(final XnioWorker worker,
                                           final Consumer<WebSocketClient.ConnectionBuilder> builderConsumer,
                                           final int bufferPoolSize) {
-        super(worker, builderConsumer);
-        this.bufferPool = new DefaultByteBufferPool(false, bufferPoolSize);
+        super(worker, new DefaultByteBufferPool(false, bufferPoolSize), builderConsumer);
     }
 
     @Override
@@ -93,15 +90,9 @@ public class ClosingUndertowWebSocketClient extends UndertowWebSocketClient impl
     @Override
     protected WebSocketClient.ConnectionBuilder createConnectionBuilder(final URI url) {
         final WebSocketClient.ConnectionBuilder builder = io.undertow.websockets.client.WebSocketClient
-                .connectionBuilder(this.getXnioWorker(), this.bufferPool, url);
+                .connectionBuilder(this.getXnioWorker(), getByteBufferPool(), url);
         this.getConnectionBuilderConsumer().accept(builder);
         return builder;
-    }
-
-    @Override
-    public void setPoolBufferSize(final int poolBufferSize) {
-        throw new UnsupportedOperationException("The pool buffer size can only be set through the constructor," +
-                "because this implementation uses a shared pool that is only created once.");
     }
 
     // * * * * *
