@@ -1,5 +1,6 @@
 package space.npstr.magma.connections.hax;
 
+import io.undertow.connector.ByteBufferPool;
 import io.undertow.server.DefaultByteBufferPool;
 import io.undertow.websockets.client.WebSocketClient;
 import io.undertow.websockets.client.WebSocketClientNegotiation;
@@ -38,18 +39,12 @@ import java.util.function.Consumer;
  */
 public class ClosingUndertowWebSocketClient extends UndertowWebSocketClient implements ClosingWebSocketClient {
 
-    private static final int DEFAULT_POOL_BUFFER_SIZE = 16384; //recommended 16kb buffer.
     private final DataBufferFactory bufferFactory = new DefaultDataBufferFactory();
 
     public ClosingUndertowWebSocketClient(final XnioWorker worker,
+                                          final ByteBufferPool bufferPool,
                                           final Consumer<WebSocketClient.ConnectionBuilder> builderConsumer) {
-        this(worker, builderConsumer, DEFAULT_POOL_BUFFER_SIZE);
-    }
-
-    public ClosingUndertowWebSocketClient(final XnioWorker worker,
-                                          final Consumer<WebSocketClient.ConnectionBuilder> builderConsumer,
-                                          final int bufferPoolSize) {
-        super(worker, new DefaultByteBufferPool(false, bufferPoolSize), builderConsumer);
+        super(worker, bufferPool, builderConsumer);
     }
 
     @Override

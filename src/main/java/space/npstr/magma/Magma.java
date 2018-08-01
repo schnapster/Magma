@@ -16,7 +16,10 @@
 
 package space.npstr.magma;
 
+import io.undertow.connector.ByteBufferPool;
 import io.undertow.protocols.ssl.UndertowXnioSsl;
+import io.undertow.server.DefaultByteBufferPool;
+import io.undertow.websockets.client.WebSocketClient;
 import net.dv8tion.jda.core.audio.AudioSendHandler;
 import net.dv8tion.jda.core.audio.factory.IAudioSendFactory;
 import org.reactivestreams.Subscriber;
@@ -39,12 +42,20 @@ import space.npstr.magma.events.audio.lifecycle.VoiceServerUpdateLcEvent;
 
 import javax.annotation.Nullable;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.logging.Level;
 
 public class Magma implements MagmaApi {
 
     private static final Logger log = LoggerFactory.getLogger(Magma.class);
+
+    // 16kb as recommended in
+    // http://undertow.io/undertow-docs/undertow-docs-2.0.0/index.html#buffer-pool
+    // and
+    // http://undertow.io/undertow-docs/undertow-docs-2.0.0/index.html#the-undertow-buffer-pool
+    // for direct buffers
+    private static final int DEFAULT_POOL_BUFFER_SIZE = 16 * 1024;
 
     private final FluxSink<LifecycleEvent> lifecycleSink;
 
@@ -55,8 +66,10 @@ public class Magma implements MagmaApi {
         final ClosingWebSocketClient webSocketClient;
         try {
             final XnioWorker xnioWorker = Xnio.getInstance().createWorker(xnioOptions);
+            final ByteBufferPool bufferPool = new DefaultByteBufferPool(true, DEFAULT_POOL_BUFFER_SIZE);
             final XnioSsl xnioSsl = new UndertowXnioSsl(Xnio.getInstance(), OptionMap.EMPTY);
-            webSocketClient = new ClosingUndertowWebSocketClient(xnioWorker, builder -> builder.setSsl(xnioSsl));
+            final Consumer<WebSocketClient.ConnectionBuilder> builderConsumer = builder -> builder.setSsl(xnioSsl);
+            webSocketClient = new ClosingUndertowWebSocketClient(xnioWorker, bufferPool, builderConsumer);
         } catch (final Exception e) {
             throw new RuntimeException("Failed to set up websocket client", e);
         }
