@@ -215,8 +215,15 @@ logging:
 
 Expect breaking changes between minor versions while v1 has not been released.
 
+### v0.5.0
+- Port the remaining changes of JDA 3.7 (see [\#651](https://github.com/DV8FromTheWorld/JDA/pull/651)),
+notably the switch from `byte[]`s to `ByteBuffer`s in most places. This includes a backwards incompatible change to
+`IPacketProvider`, marking it as a non-threadsafe class.  
+**Known issues:** Applications using [japp](https://github.com/Shredder121/jda-async-packetprovider)
+1.2 or below have broken audio output.
+
 ### v0.4.5
-- Use direct buffers (off heap)
+- Use direct byte buffers (off heap) for Undertow
 
 ### v0.4.4
 - Send our SSRC along with OP 5 Speaking updates

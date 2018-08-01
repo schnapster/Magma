@@ -122,6 +122,10 @@ public class AudioConnection extends BaseSubscriber<ConnectionEvent> {
     // ################################################################################
 
 
+    public DatagramSocket getUdpSocket() {
+        return this.udpSocket;
+    }
+
     @Nullable
     public EncryptionMode getEncryptionMode() {
         return this.encryptionMode;
