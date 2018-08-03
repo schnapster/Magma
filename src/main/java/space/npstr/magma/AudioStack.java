@@ -49,7 +49,6 @@ public class AudioStack extends BaseSubscriber<LifecycleEvent> {
     private final Member member;
     private final IAudioSendFactory sendFactory;
     private final ClosingWebSocketClient webSocketClient;
-    private final AudioStackLifecyclePipeline lifecyclePipeline;
 
     private final FluxSink<LifecycleEvent> lifecycleSink;
 
@@ -60,12 +59,10 @@ public class AudioStack extends BaseSubscriber<LifecycleEvent> {
 
 
     public AudioStack(final Member member, final IAudioSendFactory sendFactory,
-                      final ClosingWebSocketClient webSocketClient,
-                      final AudioStackLifecyclePipeline lifecyclePipeline) {
+                      final ClosingWebSocketClient webSocketClient) {
         this.member = member;
         this.sendFactory = sendFactory;
         this.webSocketClient = webSocketClient;
-        this.lifecyclePipeline = lifecyclePipeline;
 
         final UnicastProcessor<LifecycleEvent> lifecycleProcessor = UnicastProcessor.create();
         this.lifecycleSink = lifecycleProcessor.sink();
