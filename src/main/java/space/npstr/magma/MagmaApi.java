@@ -20,6 +20,8 @@ import net.dv8tion.jda.core.audio.AudioSendHandler;
 import net.dv8tion.jda.core.audio.factory.IAudioSendFactory;
 import org.xnio.OptionMap;
 import org.xnio.XnioWorker;
+import reactor.core.publisher.Flux;
+import space.npstr.magma.events.api.MagmaEvent;
 
 import java.util.function.Function;
 
@@ -55,6 +57,11 @@ public interface MagmaApi {
      * Release all resources held.
      */
     void shutdown();
+
+    /**
+     * @return a Reactor stream that can be subscribed to for event handling
+     */
+    Flux<MagmaEvent> getEventStream();
 
     /**
      * Also see: https://discordapp.com/developers/docs/topics/voice-connections#retrieving-voice-server-information-example-voice-server-update-payload

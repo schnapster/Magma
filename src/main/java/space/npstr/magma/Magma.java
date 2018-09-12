@@ -29,11 +29,14 @@ import org.xnio.OptionMap;
 import org.xnio.Xnio;
 import org.xnio.XnioWorker;
 import org.xnio.ssl.XnioSsl;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.UnicastProcessor;
 import reactor.core.scheduler.Schedulers;
 import space.npstr.magma.connections.hax.ClosingUndertowWebSocketClient;
 import space.npstr.magma.connections.hax.ClosingWebSocketClient;
+import space.npstr.magma.events.api.MagmaEvent;
+import space.npstr.magma.events.api.WebSocketClosedEvent;
 import space.npstr.magma.events.audio.lifecycle.CloseWebSocketLcEvent;
 import space.npstr.magma.events.audio.lifecycle.LifecycleEvent;
 import space.npstr.magma.events.audio.lifecycle.Shutdown;
@@ -58,6 +61,9 @@ public class Magma implements MagmaApi {
     private static final int DEFAULT_POOL_BUFFER_SIZE = 16 * 1024;
 
     private final FluxSink<LifecycleEvent> lifecycleSink;
+    @Nullable
+    private FluxSink<MagmaEvent> apiEventSink = null;
+    private final Flux<MagmaEvent> apiEventFlux = Flux.create(sink -> apiEventSink = sink);
 
     /**
      * @see MagmaApi
@@ -74,7 +80,13 @@ public class Magma implements MagmaApi {
             throw new RuntimeException("Failed to set up websocket client", e);
         }
 
-        final Subscriber<LifecycleEvent> lifecyclePipeline = new AudioStackLifecyclePipeline(sendFactoryProvider, webSocketClient);
+        final Subscriber<LifecycleEvent> lifecyclePipeline = new AudioStackLifecyclePipeline(
+                sendFactoryProvider,
+                webSocketClient,
+                magmaEvent -> {
+                    if (apiEventSink != null) apiEventSink.next(magmaEvent);
+                }
+        );
 
         final UnicastProcessor<LifecycleEvent> processor = UnicastProcessor.create();
         this.lifecycleSink = processor.sink();
@@ -92,6 +104,11 @@ public class Magma implements MagmaApi {
     @Override
     public void shutdown() {
         this.lifecycleSink.next(Shutdown.INSTANCE);
+    }
+
+    @Override
+    public Flux<MagmaEvent> getEventStream() {
+        return apiEventFlux;
     }
 
     @Override
@@ -118,6 +135,7 @@ public class Magma implements MagmaApi {
     public void closeConnection(final Member member) {
         this.lifecycleSink.next(CloseWebSocketLcEvent.builder()
                 .member(member)
+                .apiEvent(new WebSocketClosedEvent(member, 1000, "Closed by client", false))
                 .build());
     }
 

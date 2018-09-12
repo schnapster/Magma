@@ -30,6 +30,7 @@ import reactor.core.scheduler.Schedulers;
 import space.npstr.magma.EncryptionMode;
 import space.npstr.magma.MdcKey;
 import space.npstr.magma.connections.hax.ClosingWebSocketClient;
+import space.npstr.magma.events.api.WebSocketClosedEvent;
 import space.npstr.magma.events.audio.lifecycle.CloseWebSocket;
 import space.npstr.magma.events.audio.lifecycle.CloseWebSocketLcEvent;
 import space.npstr.magma.events.audio.ws.CloseCode;
@@ -271,8 +272,10 @@ public class AudioWebSocket extends BaseSubscriber<InboundWsEvent> {
                     .build());
         } else {
             log.info("Closing");
+            var member = this.session.getVoiceServerUpdate().getMember();
             this.closeCallback.accept(CloseWebSocketLcEvent.builder()
                     .member(this.session.getVoiceServerUpdate().getMember())
+                    .apiEvent(new WebSocketClosedEvent(member, code, reason, true))
                     .build());
         }
     }
