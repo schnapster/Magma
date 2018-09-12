@@ -104,6 +104,7 @@ public class Magma implements MagmaApi {
     @Override
     public void shutdown() {
         this.lifecycleSink.next(Shutdown.INSTANCE);
+        if (apiEventSink != null) apiEventSink.complete();
     }
 
     @Override
