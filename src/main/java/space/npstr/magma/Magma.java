@@ -36,7 +36,6 @@ import reactor.core.scheduler.Schedulers;
 import space.npstr.magma.connections.hax.ClosingUndertowWebSocketClient;
 import space.npstr.magma.connections.hax.ClosingWebSocketClient;
 import space.npstr.magma.events.api.MagmaEvent;
-import space.npstr.magma.events.api.WebSocketClosed;
 import space.npstr.magma.events.api.WebSocketClosedApiEvent;
 import space.npstr.magma.events.audio.lifecycle.CloseWebSocketLcEvent;
 import space.npstr.magma.events.audio.lifecycle.LifecycleEvent;
@@ -105,7 +104,7 @@ public class Magma implements MagmaApi {
     @Override
     public void shutdown() {
         this.lifecycleSink.next(Shutdown.INSTANCE);
-        if (apiEventSink != null) apiEventSink.complete();
+        if (this.apiEventSink != null) this.apiEventSink.complete();
     }
 
     @Override
