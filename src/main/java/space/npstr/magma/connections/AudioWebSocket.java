@@ -30,7 +30,8 @@ import reactor.core.scheduler.Schedulers;
 import space.npstr.magma.EncryptionMode;
 import space.npstr.magma.MdcKey;
 import space.npstr.magma.connections.hax.ClosingWebSocketClient;
-import space.npstr.magma.events.api.WebSocketClosedEvent;
+import space.npstr.magma.events.api.WebSocketClosed;
+import space.npstr.magma.events.api.WebSocketClosedApiEvent;
 import space.npstr.magma.events.audio.lifecycle.CloseWebSocket;
 import space.npstr.magma.events.audio.lifecycle.CloseWebSocketLcEvent;
 import space.npstr.magma.events.audio.ws.CloseCode;
@@ -45,7 +46,6 @@ import space.npstr.magma.events.audio.ws.in.Ready;
 import space.npstr.magma.events.audio.ws.in.Resumed;
 import space.npstr.magma.events.audio.ws.in.SessionDescription;
 import space.npstr.magma.events.audio.ws.in.Unknown;
-import space.npstr.magma.events.audio.ws.in.WebSocketClosed;
 import space.npstr.magma.events.audio.ws.out.HeartbeatWsEvent;
 import space.npstr.magma.events.audio.ws.out.IdentifyWsEvent;
 import space.npstr.magma.events.audio.ws.out.OutboundWsEvent;
@@ -157,8 +157,8 @@ public class AudioWebSocket extends BaseSubscriber<InboundWsEvent> {
                 this.handleSessionDescription((SessionDescription) inboundEvent);
             } else if (inboundEvent instanceof HeartbeatAck) {
                 // noop
-            } else if (inboundEvent instanceof WebSocketClosed) {
-                this.handleWebSocketClosed((WebSocketClosed) inboundEvent);
+            } else if (inboundEvent instanceof space.npstr.magma.events.audio.ws.in.WebSocketClosed) {
+                this.handleWebSocketClosed((space.npstr.magma.events.audio.ws.in.WebSocketClosed) inboundEvent);
             } else if (inboundEvent instanceof ClientDisconnect) {
                 // noop
             } else if (inboundEvent instanceof Speaking) {
@@ -235,7 +235,7 @@ public class AudioWebSocket extends BaseSubscriber<InboundWsEvent> {
         this.audioConnection.setEncryptionMode(sessionDescription.getEncryptionMode());
     }
 
-    private void handleWebSocketClosed(final WebSocketClosed webSocketClosed) {
+    private void handleWebSocketClosed(final space.npstr.magma.events.audio.ws.in.WebSocketClosed webSocketClosed) {
         final int code = webSocketClosed.getCode();
         final String reason = webSocketClosed.getReason();
         log.info("Websocket to {} closed with code {} and reason {}",
@@ -275,7 +275,12 @@ public class AudioWebSocket extends BaseSubscriber<InboundWsEvent> {
             var member = this.session.getVoiceServerUpdate().getMember();
             this.closeCallback.accept(CloseWebSocketLcEvent.builder()
                     .member(this.session.getVoiceServerUpdate().getMember())
-                    .apiEvent(new WebSocketClosedEvent(member, code, reason, true))
+                    .apiEvent(WebSocketClosedApiEvent.builder()
+                            .member(member)
+                            .closeCode(code)
+                            .reason(reason)
+                            .isByRemote(true)
+                            .build())
                     .build());
         }
     }

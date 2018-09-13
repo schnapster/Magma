@@ -18,7 +18,7 @@ package space.npstr.magma.events.audio.lifecycle;
 
 import org.immutables.value.Value;
 import space.npstr.magma.Member;
-import space.npstr.magma.events.api.WebSocketClosedEvent;
+import space.npstr.magma.events.api.WebSocketClosed;
 import space.npstr.magma.immutables.ImmutableLcEvent;
 
 /**
@@ -31,6 +31,6 @@ public abstract class CloseWebSocket implements LifecycleEvent {
     @Override
     public abstract Member getMember();
 
-    public abstract WebSocketClosedEvent getApiEvent();
+    public abstract WebSocketClosed getApiEvent();
 
 }

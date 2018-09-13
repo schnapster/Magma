@@ -36,7 +36,8 @@ import reactor.core.scheduler.Schedulers;
 import space.npstr.magma.connections.hax.ClosingUndertowWebSocketClient;
 import space.npstr.magma.connections.hax.ClosingWebSocketClient;
 import space.npstr.magma.events.api.MagmaEvent;
-import space.npstr.magma.events.api.WebSocketClosedEvent;
+import space.npstr.magma.events.api.WebSocketClosed;
+import space.npstr.magma.events.api.WebSocketClosedApiEvent;
 import space.npstr.magma.events.audio.lifecycle.CloseWebSocketLcEvent;
 import space.npstr.magma.events.audio.lifecycle.LifecycleEvent;
 import space.npstr.magma.events.audio.lifecycle.Shutdown;
@@ -84,7 +85,7 @@ public class Magma implements MagmaApi {
                 sendFactoryProvider,
                 webSocketClient,
                 magmaEvent -> {
-                    if (apiEventSink != null) apiEventSink.next(magmaEvent);
+                    if (this.apiEventSink != null) this.apiEventSink.next(magmaEvent);
                 }
         );
 
@@ -109,7 +110,7 @@ public class Magma implements MagmaApi {
 
     @Override
     public Flux<MagmaEvent> getEventStream() {
-        return apiEventFlux;
+        return this.apiEventFlux;
     }
 
     @Override
@@ -136,7 +137,12 @@ public class Magma implements MagmaApi {
     public void closeConnection(final Member member) {
         this.lifecycleSink.next(CloseWebSocketLcEvent.builder()
                 .member(member)
-                .apiEvent(new WebSocketClosedEvent(member, 1000, "Closed by client", false))
+                .apiEvent(WebSocketClosedApiEvent.builder()
+                        .member(member)
+                        .closeCode(1000)
+                        .reason("Closed by client")
+                        .isByRemote(false)
+                        .build())
                 .build());
     }
 
