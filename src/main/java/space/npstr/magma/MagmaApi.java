@@ -30,6 +30,7 @@ import java.util.function.Function;
  * <p>
  * Public API. These methods may be called by users of Magma.
  */
+@SuppressWarnings("unused")
 public interface MagmaApi {
 
     /**

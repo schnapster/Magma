@@ -145,6 +145,25 @@ Typical usage of the methods offered by the [MagmaApi](https://github.com/napstr
 None of those calls are blocking, as they are translated into events to be processed as soon as possible.
 Currently, there is no feedback as to when and how these are processed.
 
+You can subscribe to a stream of [MagmaEvent](https://github.com/napstr/Magma/blob/master/src/main/java/space/npstr/magma/events/api/MagmaEvent.java)s
+through `MagmaApi#getEventStream`:
+
+```java
+    ...
+        magmaApi.getEventStream()
+                .subscribe(this::handleMagmaEvent);
+    ...
+
+    
+    private void handleMagmaEvent(MagmaEvent magmaEvent) {
+        if (magmaEvent instanceof space.npstr.magma.events.api.WebSocketClosed) {
+            WebSocketClosed wsClosedEvent = (WebSocketClosed) magmaEvent;
+            log.info("WS in guild {} closed with code {} and reason {}", wsClosedEvent.getMember().getGuildId(),
+                    wsClosedEvent.getCloseCode(), wsClosedEvent.getReason());
+        }
+    }
+```
+
 
 ## Numbers
 _(last updated for 0.2.1)_
@@ -214,6 +233,10 @@ logging:
 ## Changelog
 
 Expect breaking changes between minor versions while v1 has not been released.
+
+### v0.6.0
+- Introduce `MagmaApi#getEventStream` that allows user code to consume events from Magma, for example when the
+websocket is closed.
 
 ### v0.5.0
 - Port the remaining changes of JDA 3.7 (see [\#651](https://github.com/DV8FromTheWorld/JDA/pull/651)),
