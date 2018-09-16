@@ -14,23 +14,26 @@
  * limitations under the License.
  */
 
-package space.npstr.magma.events.audio.lifecycle;
+package space.npstr.magma.events.api;
 
 import org.immutables.value.Value;
 import space.npstr.magma.Member;
-import space.npstr.magma.events.api.WebSocketClosed;
-import space.npstr.magma.immutables.ImmutableLcEvent;
+import space.npstr.magma.immutables.ImmutableApiEvent;
 
 /**
- * Created by napster on 24.04.18.
+ * This event is fired when an audio web socket is closed. However, this event is not fired if we are trying to
+ * resume (i.e reconnect) automatically unless resuming causes a new socket to close.
  */
+@SuppressWarnings("unused")
 @Value.Immutable
-@ImmutableLcEvent
-public abstract class CloseWebSocket implements LifecycleEvent {
+@ImmutableApiEvent
+public abstract class WebSocketClosed implements MagmaEvent {
 
-    @Override
     public abstract Member getMember();
 
-    public abstract WebSocketClosed getApiEvent();
+    public abstract int getCloseCode();
 
+    public abstract String getReason();
+
+    public abstract boolean isByRemote();
 }

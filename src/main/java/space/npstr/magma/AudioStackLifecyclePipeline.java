@@ -23,6 +23,7 @@ import reactor.core.publisher.BaseSubscriber;
 import space.npstr.magma.connections.AudioConnection;
 import space.npstr.magma.connections.AudioWebSocket;
 import space.npstr.magma.connections.hax.ClosingWebSocketClient;
+import space.npstr.magma.events.api.MagmaEvent;
 import space.npstr.magma.events.audio.lifecycle.CloseWebSocket;
 import space.npstr.magma.events.audio.lifecycle.ConnectWebSocketLcEvent;
 import space.npstr.magma.events.audio.lifecycle.LifecycleEvent;
@@ -34,6 +35,7 @@ import space.npstr.magma.immutables.ImmutableSessionInfo;
 import javax.annotation.CheckReturnValue;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
@@ -71,11 +73,14 @@ public class AudioStackLifecyclePipeline extends BaseSubscriber<LifecycleEvent> 
 
     private final Function<Member, IAudioSendFactory> sendFactoryProvider;
     private final ClosingWebSocketClient webSocketClient;
+    private final Consumer<MagmaEvent> apiEventConsumer;
 
     public AudioStackLifecyclePipeline(final Function<Member, IAudioSendFactory> sendFactoryProvider,
-                                       final ClosingWebSocketClient webSocketClient) {
+                                       final ClosingWebSocketClient webSocketClient,
+                                       final Consumer<MagmaEvent> apiEventConsumer) {
         this.sendFactoryProvider = sendFactoryProvider;
         this.webSocketClient = webSocketClient;
+        this.apiEventConsumer = apiEventConsumer;
     }
 
     @Override
@@ -94,6 +99,7 @@ public class AudioStackLifecyclePipeline extends BaseSubscriber<LifecycleEvent> 
                     .next(event);
         } else if (event instanceof CloseWebSocket) {
             //pass it on
+            apiEventConsumer.accept(((CloseWebSocket) event).getApiEvent());
             this.getAudioStack(event)
                     .next(event);
         } else if (event instanceof Shutdown) {

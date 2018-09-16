@@ -14,23 +14,9 @@
  * limitations under the License.
  */
 
-package space.npstr.magma.events.audio.lifecycle;
-
-import org.immutables.value.Value;
-import space.npstr.magma.Member;
-import space.npstr.magma.events.api.WebSocketClosed;
-import space.npstr.magma.immutables.ImmutableLcEvent;
+package space.npstr.magma.events.api;
 
 /**
- * Created by napster on 24.04.18.
+ * Base interface of API events
  */
-@Value.Immutable
-@ImmutableLcEvent
-public abstract class CloseWebSocket implements LifecycleEvent {
-
-    @Override
-    public abstract Member getMember();
-
-    public abstract WebSocketClosed getApiEvent();
-
-}
+public interface MagmaEvent {}

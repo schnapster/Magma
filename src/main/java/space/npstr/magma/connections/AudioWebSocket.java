@@ -29,7 +29,9 @@ import reactor.core.publisher.UnicastProcessor;
 import reactor.core.scheduler.Schedulers;
 import space.npstr.magma.EncryptionMode;
 import space.npstr.magma.MdcKey;
+import space.npstr.magma.Member;
 import space.npstr.magma.connections.hax.ClosingWebSocketClient;
+import space.npstr.magma.events.api.WebSocketClosedApiEvent;
 import space.npstr.magma.events.audio.lifecycle.CloseWebSocket;
 import space.npstr.magma.events.audio.lifecycle.CloseWebSocketLcEvent;
 import space.npstr.magma.events.audio.ws.CloseCode;
@@ -271,8 +273,15 @@ public class AudioWebSocket extends BaseSubscriber<InboundWsEvent> {
                     .build());
         } else {
             log.info("Closing");
+            final Member member = this.session.getVoiceServerUpdate().getMember();
             this.closeCallback.accept(CloseWebSocketLcEvent.builder()
                     .member(this.session.getVoiceServerUpdate().getMember())
+                    .apiEvent(WebSocketClosedApiEvent.builder()
+                            .member(member)
+                            .closeCode(code)
+                            .reason(reason)
+                            .isByRemote(true)
+                            .build())
                     .build());
         }
     }
