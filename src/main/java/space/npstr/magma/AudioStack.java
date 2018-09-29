@@ -27,6 +27,7 @@ import reactor.core.publisher.UnicastProcessor;
 import reactor.core.scheduler.Schedulers;
 import space.npstr.magma.connections.AudioWebSocket;
 import space.npstr.magma.connections.hax.ClosingWebSocketClient;
+import space.npstr.magma.events.api.MagmaEvent;
 import space.npstr.magma.events.audio.lifecycle.CloseWebSocket;
 import space.npstr.magma.events.audio.lifecycle.ConnectWebSocket;
 import space.npstr.magma.events.audio.lifecycle.LifecycleEvent;
@@ -34,6 +35,7 @@ import space.npstr.magma.events.audio.lifecycle.Shutdown;
 import space.npstr.magma.events.audio.lifecycle.UpdateSendHandler;
 
 import javax.annotation.Nullable;
+import java.util.function.Consumer;
 
 /**
  * Created by napster on 23.04.18.
@@ -49,6 +51,7 @@ public class AudioStack extends BaseSubscriber<LifecycleEvent> {
     private final Member member;
     private final IAudioSendFactory sendFactory;
     private final ClosingWebSocketClient webSocketClient;
+    private final Consumer<MagmaEvent> apiEventConsumer;
 
     private final FluxSink<LifecycleEvent> lifecycleSink;
 
@@ -59,10 +62,11 @@ public class AudioStack extends BaseSubscriber<LifecycleEvent> {
 
 
     public AudioStack(final Member member, final IAudioSendFactory sendFactory,
-                      final ClosingWebSocketClient webSocketClient) {
+                      final ClosingWebSocketClient webSocketClient, Consumer<MagmaEvent> apiEventConsumer) {
         this.member = member;
         this.sendFactory = sendFactory;
         this.webSocketClient = webSocketClient;
+        this.apiEventConsumer = apiEventConsumer;
 
         final UnicastProcessor<LifecycleEvent> lifecycleProcessor = UnicastProcessor.create();
         this.lifecycleSink = lifecycleProcessor.sink();
@@ -93,7 +97,7 @@ public class AudioStack extends BaseSubscriber<LifecycleEvent> {
             } else if (event instanceof UpdateSendHandler) {
                 this.handleUpdateSendHandler((UpdateSendHandler) event);
             } else if (event instanceof CloseWebSocket) {
-                this.handleCloseWebSocket();
+                this.handleCloseWebSocket((CloseWebSocket) event);
             } else if (event instanceof Shutdown) {
                 this.handleShutdown();
             } else {
@@ -127,8 +131,9 @@ public class AudioStack extends BaseSubscriber<LifecycleEvent> {
         }
     }
 
-    private void handleCloseWebSocket() {
+    private void handleCloseWebSocket(CloseWebSocket event) {
         log.trace("Closing websocket");
+        apiEventConsumer.accept(event.getApiEvent());
         if (this.webSocket != null) {
             this.webSocket.close();
             this.webSocket = null;
