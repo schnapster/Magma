@@ -54,7 +54,7 @@ ext {
     spotbugsVersion             = '3.1.8'
     annotationsVersion          = '0.0.1'
 
-    immutablesVersion           = '2.6.3'
+    immutablesVersion           = '2.7.1'
 
     junitVersion                = '5.2.0'
     logbackVersion              = '1.2.3'
