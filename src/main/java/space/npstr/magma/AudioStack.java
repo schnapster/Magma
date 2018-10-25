@@ -86,6 +86,14 @@ public class AudioStack extends BaseSubscriber<LifecycleEvent> {
         this.lifecycleSink.next(event);
     }
 
+    public WebsocketConnectionState.Phase getConnectionPhase() {
+        final AudioWebSocket socket = this.webSocket;
+        if (socket != null) {
+            return socket.getConnectionPhase();
+        }
+        return WebsocketConnectionState.Phase.NO_CONNECTION;
+    }
+
     @Override
     protected void hookOnNext(final LifecycleEvent event) {
         try (

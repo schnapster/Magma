@@ -234,6 +234,9 @@ logging:
 
 Expect breaking changes between minor versions while v1 has not been released.
 
+### v0.8.0
+- Add a WebsocketConnectionState to report the state of the websocket connections managed by a MagmaApi
+
 ### v0.7.0
 - Bump dependencies, including Java 11.
 

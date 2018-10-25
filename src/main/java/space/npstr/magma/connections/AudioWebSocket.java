@@ -30,6 +30,7 @@ import reactor.core.scheduler.Schedulers;
 import space.npstr.magma.EncryptionMode;
 import space.npstr.magma.MdcKey;
 import space.npstr.magma.Member;
+import space.npstr.magma.WebsocketConnectionState;
 import space.npstr.magma.connections.hax.ClosingWebSocketClient;
 import space.npstr.magma.events.api.WebSocketClosedApiEvent;
 import space.npstr.magma.events.audio.lifecycle.CloseWebSocket;
@@ -91,6 +92,8 @@ public class AudioWebSocket extends BaseSubscriber<InboundWsEvent> {
     private Disposable heartbeatSubscription;
     private Disposable webSocketConnection;
 
+    private WebsocketConnectionState.Phase connectionPhase = WebsocketConnectionState.Phase.CONNECTING;
+
 
     public AudioWebSocket(final IAudioSendFactory sendFactory, final SessionInfo session,
                           final ClosingWebSocketClient webSocketClient, final Consumer<CloseWebSocket> closeCallback) {
@@ -136,6 +139,10 @@ public class AudioWebSocket extends BaseSubscriber<InboundWsEvent> {
         this.closeEverything();
     }
 
+    public WebsocketConnectionState.Phase getConnectionPhase() {
+        return this.connectionPhase;
+    }
+
     // ################################################################################
     // #                        Inbound event handlers
     // ################################################################################
@@ -165,7 +172,7 @@ public class AudioWebSocket extends BaseSubscriber<InboundWsEvent> {
             } else if (inboundEvent instanceof Speaking) {
                 // noop
             } else if (inboundEvent instanceof Resumed) {
-                // noop
+                this.handleResumed();
             } else if (inboundEvent instanceof Ignored) {
                 log.trace("Ignored OP {}, payload: {}", inboundEvent.getOpCode(), ((Ignored) inboundEvent).getPayload());
             } else if (inboundEvent instanceof Unknown) {
@@ -204,6 +211,7 @@ public class AudioWebSocket extends BaseSubscriber<InboundWsEvent> {
 
     private void handleReady(final Ready ready) {
         log.trace("Ready");
+        this.connectionPhase = WebsocketConnectionState.Phase.CONNECTED;
         final InetSocketAddress udpTargetAddress = new InetSocketAddress(ready.getIp(), ready.getPort());
         final List<EncryptionMode> receivedModes = ready.getEncryptionModes();
         final Optional<EncryptionMode> preferredModeOpt = EncryptionMode.getPreferredMode(receivedModes);
@@ -237,6 +245,7 @@ public class AudioWebSocket extends BaseSubscriber<InboundWsEvent> {
     }
 
     private void handleWebSocketClosed(final WebSocketClosed webSocketClosed) {
+        this.connectionPhase = WebsocketConnectionState.Phase.DISCONNECTED;
         final int code = webSocketClosed.getCode();
         final String reason = webSocketClosed.getReason();
         log.info("Websocket to {} closed with code {} and reason {}",
@@ -263,6 +272,7 @@ public class AudioWebSocket extends BaseSubscriber<InboundWsEvent> {
 
         if (resume) {
             log.info("Resuming");
+            this.connectionPhase = WebsocketConnectionState.Phase.RESUMING;
             this.webSocketConnection.dispose();
             this.webSocketHandler.prepareConnect();
             this.webSocketConnection = this.connect(this.webSocketClient, this.wssEndpoint, this.webSocketHandler);
@@ -284,6 +294,10 @@ public class AudioWebSocket extends BaseSubscriber<InboundWsEvent> {
                             .build())
                     .build());
         }
+    }
+
+    private void handleResumed() {
+        this.connectionPhase = WebsocketConnectionState.Phase.CONNECTED;
     }
 
     // ################################################################################
@@ -312,6 +326,7 @@ public class AudioWebSocket extends BaseSubscriber<InboundWsEvent> {
 
     private void closeEverything() {
         log.trace("Closing everything");
+        this.connectionPhase = WebsocketConnectionState.Phase.DISCONNECTED;
         this.webSocketHandler.close();
         this.webSocketConnection.dispose();
         if (this.heartbeatSubscription != null) {
