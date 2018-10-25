@@ -39,7 +39,7 @@ repositories {
 
 ext {
     //@formatter:off
-    gradleVersion              = '4.9'
+    gradleVersion               = '4.10.2'
     jacocoVersion               = '0.8.2' // the default one, 0.8.1, breaks on java 11+
 
     orgJsonVersion              = '20180130'
