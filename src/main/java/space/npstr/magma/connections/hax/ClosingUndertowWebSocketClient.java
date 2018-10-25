@@ -39,6 +39,8 @@ import java.util.function.Consumer;
  */
 public class ClosingUndertowWebSocketClient extends UndertowWebSocketClient implements ClosingWebSocketClient {
 
+    private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(ClosingUndertowWebSocketClient.class);
+
     private final DataBufferFactory bufferFactory = new DefaultDataBufferFactory();
 
     public ClosingUndertowWebSocketClient(final XnioWorker worker,
@@ -56,8 +58,11 @@ public class ClosingUndertowWebSocketClient extends UndertowWebSocketClient impl
         final MonoProcessor<Void> completion = MonoProcessor.create();
         return Mono.fromCallable(
                 () -> {
-                    WebSocketClient.ConnectionBuilder builder = this.createConnectionBuilder(url);
-                    List<String> protocols = this.beforeHandshake(url, headers, handler);
+                    if (logger.isDebugEnabled()) {
+                        logger.debug("Connecting to " + url);
+                    }
+                    List<String> protocols = handler.getSubProtocols();
+                    WebSocketClient.ConnectionBuilder builder = createConnectionBuilder(url);
                     DefaultNegotiation negotiation = new DefaultNegotiation(protocols, headers, builder);
                     builder.setClientNegotiation(negotiation);
                     return builder.connect().addNotifier(
@@ -69,33 +74,17 @@ public class ClosingUndertowWebSocketClient extends UndertowWebSocketClient impl
 
                                 @Override
                                 public void handleFailed(final IOException ex, final Object attachment) {
-                                    completion.onError(new IllegalStateException("Failed to connect", ex));
+                                    completion.onError(new IllegalStateException("Failed to connect to " + url, ex));
                                 }
                             }, null);
                 })
                 .then(completion);
     }
 
-    // * * * * *
-    // plug in a shared buffer pool
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected WebSocketClient.ConnectionBuilder createConnectionBuilder(final URI url) {
-        final WebSocketClient.ConnectionBuilder builder = io.undertow.websockets.client.WebSocketClient
-                .connectionBuilder(this.getXnioWorker(), getByteBufferPool(), url);
-        this.getConnectionBuilderConsumer().accept(builder);
-        return builder;
-    }
-
-    // * * * * *
-
     private void handleChannelPatched(final URI url, final WebSocketHandler handler, final MonoProcessor<Void> completion,
                                       final DefaultNegotiation negotiation, final WebSocketChannel channel) {
 
-        final HandshakeInfo info = this.afterHandshake(url, negotiation.getResponseHeaders());
+        final HandshakeInfo info = createHandshakeInfo(url, negotiation);
         final UndertowWebSocketSession session = new UndertowWebSocketSession(channel, info, this.bufferFactory, completion);
 
         // * * * * *
@@ -109,6 +98,12 @@ public class ClosingUndertowWebSocketClient extends UndertowWebSocketClient impl
         channel.resumeReceives();
 
         handler.handle(session).subscribe(session);
+    }
+
+    private HandshakeInfo createHandshakeInfo(final URI url, final DefaultNegotiation negotiation) {
+        final HttpHeaders responseHeaders = negotiation.getResponseHeaders();
+        final String protocol = responseHeaders.getFirst("Sec-WebSocket-Protocol");
+        return new HandshakeInfo(url, responseHeaders, Mono.empty(), protocol);
     }
 
     private static final class DefaultNegotiation extends WebSocketClientNegotiation {
