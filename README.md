@@ -234,6 +234,9 @@ logging:
 
 Expect breaking changes between minor versions while v1 has not been released.
 
+### v0.7.0
+- Bump dependencies, including Java 11.
+
 ### v0.6.0
 - Introduce `MagmaApi#getEventStream` that allows user code to consume events from Magma, for example when the
 websocket is closed.
