@@ -1,8 +1,9 @@
 buildscript {
     ext {
         grgitVersion = '2.3.0'
-        aptPluginVersion = '0.18'
+        aptPluginVersion = '0.19'
         sonarqubeVersion = '2.6.2'
+        versionsVersion = '0.20.0'
     }
     repositories {
         maven { url 'https://plugins.gradle.org/m2/' }
@@ -12,6 +13,7 @@ buildscript {
         classpath "org.ajoberstar:grgit:${grgitVersion}"
         classpath "net.ltgt.gradle:gradle-apt-plugin:${aptPluginVersion}"
         classpath "org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:${sonarqubeVersion}"
+        classpath "com.github.ben-manes:gradle-versions-plugin:${versionsVersion}"
     }
 }
 
@@ -23,13 +25,14 @@ apply plugin: 'org.ajoberstar.grgit'
 apply plugin: 'net.ltgt.apt-idea'
 apply plugin: 'jacoco'
 apply plugin: 'org.sonarqube'
+apply plugin: 'com.github.ben-manes.versions'
 
 
 group = "space.npstr.magma"
 version = "${versionFromTag()}"
 
-sourceCompatibility = 10
-targetCompatibility = 10
+sourceCompatibility = 11
+targetCompatibility = 11
 
 repositories {
     jcenter()
@@ -39,20 +42,21 @@ repositories {
 
 ext {
     //@formatter:off
-    gradleVersion              = '4.9'
+    gradleVersion               = '4.10.2'
+    jacocoVersion               = '0.8.2' // the default one, 0.8.1, breaks on java 11+
 
-    orgJsonVersion              = '20180130'
+    orgJsonVersion              = '20180813'
     slf4jVersion                = '1.7.25'
 
-    springVersion               = '5.0.8.RELEASE'
-    undertowVersion             = '2.0.11.Final'
+    springVersion               = '5.1.1.RELEASE'
+    undertowVersion             = '2.0.14.Final'
 
-    spotbugsVersion             = '3.1.6'
+    spotbugsVersion             = '3.1.8'
     annotationsVersion          = '0.0.1'
 
-    immutablesVersion           = '2.6.3'
+    immutablesVersion           = '2.7.1'
 
-    junitVersion                = '5.2.0'
+    junitVersion                = '5.3.1'
     logbackVersion              = '1.2.3'
 
     //@formatter:on
@@ -107,6 +111,8 @@ test {
         includes['space.npstr.magma.*']
     }
 }
+
+jacoco.toolVersion = jacocoVersion
 
 sonarqube {
     properties {

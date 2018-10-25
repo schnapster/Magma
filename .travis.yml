@@ -27,13 +27,13 @@ jobs:
     - jdk: oraclejdk-ea
   include:
     - stage: build & test
-      jdk: openjdk10
+      jdk: openjdk11
       script:
         - "java -Xmx32m -version"
         - "./gradlew build --info"
 
     - stage: build & test
-      jdk: oraclejdk10
+      jdk: oraclejdk11
       script:
         - "java -Xmx32m -version"
         - "./gradlew build --info"
@@ -42,16 +42,16 @@ jobs:
       jdk: openjdk-ea
       script:
         - "java -Xmx32m -version"
-        - "./gradlew build -x test --info" #tests skipped due to jacoco incompatibility, watch https://github.com/jacoco/jacoco/issues/663
+        - "./gradlew build --info"
 
     - stage: build & test
       jdk: oraclejdk-ea
       script:
         - "java -Xmx32m -version"
-        - "./gradlew build -x test --info" #tests skipped due to jacoco incompatibility, watch https://github.com/jacoco/jacoco/issues/663
+        - "./gradlew build --info"
 
     - stage: sonar
-      jdk: openjdk10
+      jdk: openjdk11
       before_script:
         #for full sonar cloud blame information
         - "git fetch --unshallow"
