@@ -22,7 +22,6 @@ import io.undertow.server.DefaultByteBufferPool;
 import io.undertow.websockets.client.WebSocketClient;
 import net.dv8tion.jda.core.audio.AudioSendHandler;
 import net.dv8tion.jda.core.audio.factory.IAudioSendFactory;
-import org.reactivestreams.Subscriber;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.OptionMap;
@@ -44,6 +43,7 @@ import space.npstr.magma.events.audio.lifecycle.UpdateSendHandlerLcEvent;
 import space.npstr.magma.events.audio.lifecycle.VoiceServerUpdateLcEvent;
 
 import javax.annotation.Nullable;
+import java.util.Collection;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -64,6 +64,7 @@ public class Magma implements MagmaApi {
     @Nullable
     private FluxSink<MagmaEvent> apiEventSink = null;
     private final Flux<MagmaEvent> apiEventFlux = Flux.create(sink -> apiEventSink = sink);
+    private final AudioStackLifecyclePipeline lifecyclePipeline;
 
     /**
      * @see MagmaApi
@@ -80,7 +81,7 @@ public class Magma implements MagmaApi {
             throw new RuntimeException("Failed to set up websocket client", e);
         }
 
-        final Subscriber<LifecycleEvent> lifecyclePipeline = new AudioStackLifecyclePipeline(
+        this.lifecyclePipeline = new AudioStackLifecyclePipeline(
                 sendFactoryProvider,
                 webSocketClient,
                 magmaEvent -> {
@@ -143,6 +144,11 @@ public class Magma implements MagmaApi {
                         .isByRemote(false)
                         .build())
                 .build());
+    }
+
+    @Override
+    public Collection<WebsocketConnectionState> getAudioConnectionStates() {
+        return this.lifecyclePipeline.getAudioConnectionStates();
     }
 
     // ################################################################################

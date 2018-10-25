@@ -33,10 +33,12 @@ import space.npstr.magma.events.audio.lifecycle.VoiceServerUpdate;
 import space.npstr.magma.immutables.ImmutableSessionInfo;
 
 import javax.annotation.CheckReturnValue;
-import java.util.HashMap;
+import java.util.Collection;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Created by napster on 22.04.18.
@@ -68,8 +70,7 @@ public class AudioStackLifecyclePipeline extends BaseSubscriber<LifecycleEvent> 
     private static final Logger log = LoggerFactory.getLogger(AudioStackLifecyclePipeline.class);
 
     // userId <-> guildId <-> audio stack
-    // concurrency is handled by modifying this through a single thread eventloop only
-    private final Map<String, Map<String, AudioStack>> audioStacks = new HashMap<>();
+    private final Map<String, Map<String, AudioStack>> audioStacks = new ConcurrentHashMap<>();
 
     private final Function<Member, IAudioSendFactory> sendFactoryProvider;
     private final ClosingWebSocketClient webSocketClient;
@@ -114,9 +115,30 @@ public class AudioStackLifecyclePipeline extends BaseSubscriber<LifecycleEvent> 
     }
 
     @CheckReturnValue
+    public Collection<WebsocketConnectionState> getAudioConnectionStates() {
+        return this.audioStacks.entrySet().stream()
+                .flatMap(outerEntry -> {
+                    final String userId = outerEntry.getKey();
+                    return outerEntry.getValue().entrySet().stream()
+                            .map(innerEntry -> {
+                                final String guildId = innerEntry.getKey();
+                                final AudioStack audioStack = innerEntry.getValue();
+                                return MagmaWebsocketConnectionState.builder()
+                                        .member(MagmaMember.builder()
+                                                .userId(userId)
+                                                .guildId(guildId)
+                                                .build())
+                                        .phase(audioStack.getConnectionPhase())
+                                        .build();
+                            });
+                })
+                .collect(Collectors.toList());
+    }
+
+    @CheckReturnValue
     private AudioStack getAudioStack(final LifecycleEvent lifecycleEvent) {
         return this.audioStacks
-                .computeIfAbsent(lifecycleEvent.getUserId(), __ -> new HashMap<>())
+                .computeIfAbsent(lifecycleEvent.getUserId(), __ -> new ConcurrentHashMap<>())
                 .computeIfAbsent(lifecycleEvent.getGuildId(), __ ->
                         new AudioStack(lifecycleEvent.getMember(),
                                 this.sendFactoryProvider.apply(lifecycleEvent.getMember()),
