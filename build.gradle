@@ -28,8 +28,8 @@ apply plugin: 'org.sonarqube'
 group = "space.npstr.magma"
 version = "${versionFromTag()}"
 
-sourceCompatibility = 10
-targetCompatibility = 10
+sourceCompatibility = 11
+targetCompatibility = 11
 
 repositories {
     jcenter()
@@ -40,6 +40,7 @@ repositories {
 ext {
     //@formatter:off
     gradleVersion              = '4.9'
+    jacocoVersion               = '0.8.2' // the default one, 0.8.1, breaks on java 11+
 
     orgJsonVersion              = '20180130'
     slf4jVersion                = '1.7.25'
@@ -107,6 +108,8 @@ test {
         includes['space.npstr.magma.*']
     }
 }
+
+jacoco.toolVersion = jacocoVersion
 
 sonarqube {
     properties {
