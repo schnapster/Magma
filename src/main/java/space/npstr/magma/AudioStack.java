@@ -121,8 +121,8 @@ public class AudioStack extends BaseSubscriber<LifecycleEvent> {
 
         if (this.webSocket != null) {
             if (connectWebSocket.getSessionInfo().equals(connectWebSocket.getSessionInfo())) {
-                log.info("Voice server update was provided, but is identical to the one already used." +
-                        " Refusing to reconnect...");
+                log.info("Discarding received connection request because it is identical to the already existing connection." +
+                        " If you really want to reconnect, send a disconnect request first.");
                 return;
             } else {
                 this.webSocket.close();

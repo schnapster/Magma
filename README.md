@@ -234,6 +234,9 @@ logging:
 
 Expect breaking changes between minor versions while v1 has not been released.
 
+### v0.8.1
+- Idempotent handling of connection requests [\#16](https://github.com/napstr/Magma/pull/16) (thanks @Frederikam)
+
 ### v0.8.0
 - Add a WebsocketConnectionState to report the state of the websocket connections managed by a MagmaApi
 
