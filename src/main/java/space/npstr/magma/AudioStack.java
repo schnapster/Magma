@@ -118,8 +118,15 @@ public class AudioStack extends BaseSubscriber<LifecycleEvent> {
 
     private void handleConnectWebSocket(final ConnectWebSocket connectWebSocket) {
         log.trace("Connecting");
+
         if (this.webSocket != null) {
-            this.webSocket.close();
+            if (connectWebSocket.getSessionInfo().equals(connectWebSocket.getSessionInfo())) {
+                log.info("Voice server update was provided, but is identical to the one already used." +
+                        " Refusing to reconnect...");
+                return;
+            } else {
+                this.webSocket.close();
+            }
         }
 
         this.webSocket = new AudioWebSocket(this.sendFactory, connectWebSocket.getSessionInfo(),
