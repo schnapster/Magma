@@ -120,7 +120,7 @@ public class AudioStack extends BaseSubscriber<LifecycleEvent> {
         log.trace("Connecting");
 
         if (this.webSocket != null) {
-            if (connectWebSocket.getSessionInfo().equals(connectWebSocket.getSessionInfo())) {
+            if (this.webSocket.getSession().equals(connectWebSocket.getSessionInfo())) {
                 log.info("Discarding received connection request because it is identical to the already existing connection." +
                         " If you really want to reconnect, send a disconnect request first.");
                 return;
