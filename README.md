@@ -234,6 +234,9 @@ logging:
 
 Expect breaking changes between minor versions while v1 has not been released.
 
+### v0.8.3
+- Fix bug with reconnecting in the same guild introduced in 0.8.2
+
 ### v0.8.2
 - Idempotent handling of connection requests [\#16](https://github.com/napstr/Magma/pull/16) (thanks @Frederikam)
 
