@@ -18,6 +18,7 @@ package space.npstr.magma.impl;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -33,7 +34,7 @@ public class EncryptionModeTest {
 
     @Test
     public void testPreference() {
-        final List<EncryptionMode> allModes = List.of(EncryptionMode.XSALSA20_POLY1305,
+        final List<EncryptionMode> allModes = Arrays.asList(EncryptionMode.XSALSA20_POLY1305,
                 EncryptionMode.XSALSA20_POLY1305_LITE,
                 EncryptionMode.XSALSA20_POLY1305_SUFFIX);
 
