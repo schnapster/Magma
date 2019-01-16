@@ -3,6 +3,7 @@ buildscript {
         grgitVersion = '3.1.1'
         sonarqubeVersion = '2.7'
         versionsVersion = '0.21.0'
+        bintrayVersion = '1.8.4'
     }
     repositories {
         maven { url 'https://plugins.gradle.org/m2/' }
@@ -12,6 +13,7 @@ buildscript {
         classpath "org.ajoberstar.grgit:grgit-gradle:${grgitVersion}"
         classpath "org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:${sonarqubeVersion}"
         classpath "com.github.ben-manes:gradle-versions-plugin:${versionsVersion}"
+        classpath "com.jfrog.bintray.gradle:gradle-bintray-plugin:${bintrayVersion}"
     }
 }
 
@@ -30,14 +32,14 @@ ext {
 
     junitVersion                = '5.4.2'
     logbackVersion              = '1.2.3'
-
     //@formatter:on
 }
 
 apply plugin: 'org.ajoberstar.grgit'
+apply plugin: 'com.jfrog.bintray'
 
 allprojects {
-    apply plugin: 'java'
+    apply plugin: 'java-library'
     apply plugin: 'maven-publish'
     apply plugin: 'jacoco'
     apply plugin: 'org.sonarqube'
@@ -45,18 +47,18 @@ allprojects {
 
     group = "space.npstr.magma"
     version = "${versionFromTag()}"
+    archivesBaseName = project.name
 
     sourceCompatibility = targetCompatibility = JavaVersion.VERSION_1_8
 
     repositories {
         jcenter()
-        mavenCentral()
         maven { url 'https://jitpack.io' }
     }
 
     compileJava {
-        dependsOn(clean)
         options.encoding = 'UTF-8'
+        options.incremental = true
         options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
     }
 
@@ -73,11 +75,15 @@ allprojects {
         }
     }
 
-    jar.mustRunAfter clean
     publishToMavenLocal.dependsOn jar
     task sourceJar(type: Jar) {
         from sourceSets.main.allJava
         archiveClassifier.set('sources')
+    }
+
+    task javadocJar(type: Jar, dependsOn: javadoc) {
+        classifier = 'javadoc'
+        from javadoc.destinationDir
     }
 
     // called by jitpack
@@ -92,10 +98,13 @@ allprojects {
         publications {
             mavenJava(MavenPublication) {
                 from components.java
-                artifact sourceJar
                 groupId project.group
-                artifactId project.name
+                artifactId archivesBaseName
                 version project.version
+
+                artifact sourceJar
+                artifact javadocJar
+
                 pom {
                     name = 'Magma'
                     description = 'A voice only API for Discord, focused on delivering music at scale.'
@@ -119,6 +128,34 @@ allprojects {
                 }
             }
         }
+    }
+
+    bintray {
+        user = this.properties["bintrayUsername"]
+        key = this.properties["bintrayApiKey"]
+        publications = ["mavenJava"]
+        pkg {
+            repo = "maven"
+            name = archivesBaseName
+            licenses = ["Apache-2.0"]
+            vcsUrl = "https://github.com/MinnDevelopment/Magma"
+            githubRepo = "MinnDevelopment/Magma"
+            publish = true
+            version {
+                name = project.version
+                vcsTag = project.version
+                released = new Date()
+                gpg.sign = true
+            }
+        }
+    }
+
+    bintrayUpload {
+        dependsOn clean
+        dependsOn build
+        dependsOn javadocJar
+        dependsOn sourceJar
+        build.mustRunAfter clean
     }
 
     dependencyUpdates.resolutionStrategy {
@@ -185,7 +222,6 @@ build {
 //returns either a git tag if there is one on this commit, or the commit hash, to be used as a version
 @SuppressWarnings("GrMethodMayBeStatic")
 String versionFromTag() {
-
     def headTag = grgit.tag.list().find {
         it.commit == grgit.head()
     }
