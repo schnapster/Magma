@@ -46,7 +46,7 @@ allprojects {
     group = "space.npstr.magma"
     version = "${versionFromTag()}"
 
-    sourceCompatibility = targetCompatibility = JavaVersion.VERSION_11
+    sourceCompatibility = targetCompatibility = JavaVersion.VERSION_1_8
 
     repositories {
         jcenter()
