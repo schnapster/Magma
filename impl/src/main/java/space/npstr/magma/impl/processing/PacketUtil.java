@@ -43,7 +43,7 @@ public class PacketUtil {
                 nonceLength = 0;
                 break;
             case XSALSA20_POLY1305_LITE:
-                PacketUtil.writeNonce(nonceSupplier.get(), nonceBuffer);
+                writeNonce(nonceSupplier.get(), nonceBuffer);
                 nonceLength = 4;
                 break;
             case XSALSA20_POLY1305_SUFFIX:
