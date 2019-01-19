@@ -24,6 +24,8 @@ ext {
 
     springVersion               = '5.1.6.RELEASE'
     undertowVersion             = '2.0.20.Final'
+    xnioVersion                 = '3.3.8.Final'
+    reactorVersion              = '3.2.8.RELEASE'
 
     spotbugsVersion             = '3.1.12'
     annotationsVersion          = '0.0.1'
@@ -94,6 +96,9 @@ allprojects {
             println 'Version: ' + version
         }
     }
+
+    defaultTasks 'build'
+
     publishing {
         publications {
             mavenJava(MavenPublication) {
@@ -177,8 +182,8 @@ allprojects {
         compileOnly "space.npstr:annotations:$annotationsVersion"
 
         // immutable objects, to pass values around
-        annotationProcessor "org.immutables:value:$immutablesVersion"
         compileOnly "org.immutables:value:$immutablesVersion:annotations"
+        annotationProcessor "org.immutables:value:$immutablesVersion"
 
         //testing
         testImplementation "org.junit.jupiter:junit-jupiter-api:$junitVersion"
@@ -201,6 +206,8 @@ project(':api') {
         // project reactor & reactive websocket client
         api "org.springframework:spring-webflux:$springVersion"
         api "io.undertow:undertow-core:$undertowVersion"
+        api "org.jboss.xnio:xnio-nio:$xnioVersion"
+        api "io.projectreactor:reactor-core:$reactorVersion"
     }
 }
 
