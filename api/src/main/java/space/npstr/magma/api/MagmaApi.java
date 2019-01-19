@@ -21,7 +21,7 @@ import net.dv8tion.jda.core.audio.AudioSendHandler;
 import reactor.core.publisher.Flux;
 import space.npstr.magma.api.event.MagmaEvent;
 
-import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -104,8 +104,8 @@ public interface MagmaApi {
 
 
     /**
-     * @return a collection of all {@link WebsocketConnectionState}s detailing the state of
-     * the audio connections managed by this {@link MagmaApi} instance
+     * @return a list of all {@link WebsocketConnectionState WebsocketConnectionStates} detailing the state of
+     * the {@link AudioStack AudioStacks} managed by this {@link MagmaApi} instance
      */
-    Collection<WebsocketConnectionState> getAudioConnectionStates();
+    List<WebsocketConnectionState> getAudioConnectionStates();
 }

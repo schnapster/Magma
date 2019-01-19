@@ -65,6 +65,8 @@ public class AudioStack extends BaseSubscriber<LifecycleEvent> {
     private AudioWebSocket webSocket;
     @Nullable
     private AudioSendHandler sendHandler;
+    @Nullable
+    private Set<SpeakingMode> speakingModes;
 
 
     public AudioStack(final Member member, final IAudioSendFactory sendFactory,
@@ -117,7 +119,7 @@ public class AudioStack extends BaseSubscriber<LifecycleEvent> {
             } else if (event instanceof UpdateSpeakingMode) {
                 this.handleUpdateSpeakingMode(((UpdateSpeakingMode) event).getSpeakingModes());
             } else {
-                log.warn("Audiostack has no handler for lifecycle event of class {}", event.getClass().getSimpleName());
+                log.warn("AudioStack has no handler for lifecycle event of class {}", event.getClass().getSimpleName());
             }
         }
 
@@ -141,6 +143,9 @@ public class AudioStack extends BaseSubscriber<LifecycleEvent> {
                 this.webSocketClient, this::next);
         if (this.sendHandler != null) {
             this.webSocket.getAudioConnection().updateSendHandler(this.sendHandler);
+        }
+        if (this.speakingModes != null) {
+            this.webSocket.getAudioConnection().setSpeakingModes(this.speakingModes);
         }
     }
 
@@ -171,9 +176,11 @@ public class AudioStack extends BaseSubscriber<LifecycleEvent> {
             this.webSocket = null;
         }
         this.sendHandler = null;
+        this.speakingModes = null;
     }
 
     private void handleUpdateSpeakingMode(@Nullable Set<SpeakingMode> mode) {
+        this.speakingModes = mode;
         if (this.webSocket != null) {
             this.webSocket.getAudioConnection()
                     .setSpeakingModes(mode);

@@ -49,7 +49,7 @@ import space.npstr.magma.impl.events.audio.lifecycle.UpdateSendHandlerLcEvent;
 import space.npstr.magma.impl.events.audio.lifecycle.UpdateSpeakingModeLcEvent;
 import space.npstr.magma.impl.events.audio.lifecycle.VoiceServerUpdateLcEvent;
 
-import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -162,7 +162,7 @@ public class Magma implements MagmaApi {
     }
 
     @Override
-    public Collection<WebsocketConnectionState> getAudioConnectionStates() {
+    public List<WebsocketConnectionState> getAudioConnectionStates() {
         return this.lifecyclePipeline.getAudioConnectionStates();
     }
 
