@@ -27,9 +27,9 @@ import java.util.Optional;
 
 public enum EncryptionMode {
 
-    XSALSA20_POLY1305_LITE(30),    // uses 4 byte nonces instead of 24 bytes
-    XSALSA20_POLY1305_SUFFIX(20),  // "official" implementation using random 24 byte nonces
-    XSALSA20_POLY1305(10);         // unofficial implementation using time stamps (?) as nonces (24 bytes total)
+    XSALSA20_POLY1305_LITE(30),    // uses 4 byte nonce instead of 24 bytes
+    XSALSA20_POLY1305_SUFFIX(20),  // "official" implementation using random 24 byte nonce
+    XSALSA20_POLY1305(10);         // unofficial implementation using time stamps (?) as nonce (24 bytes total)
 
     private static final Logger log = LoggerFactory.getLogger(EncryptionMode.class);
 
@@ -78,12 +78,12 @@ public enum EncryptionMode {
     /**
      * @return parse a JSONArray into a list of encryption modes
      */
-    public static Optional<EncryptionMode> getPreferredMode(final Collection<EncryptionMode> encryptions) {
-        if (encryptions.isEmpty()) {
+    public static Optional<EncryptionMode> getPreferredMode(final Collection<EncryptionMode> encryptionModes) {
+        if (encryptionModes.isEmpty()) {
             log.warn("Can not pick a preferred encryption mode from an empty collection");
             return Optional.empty();
         }
-        final List<EncryptionMode> sort = new ArrayList<>(encryptions);
+        final List<EncryptionMode> sort = new ArrayList<>(encryptionModes);
         sort.sort((e1, e2) -> e2.preference - e1.preference);
         return Optional.of(sort.get(0));
     }

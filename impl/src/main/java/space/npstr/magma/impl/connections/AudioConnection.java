@@ -344,7 +344,7 @@ public class AudioConnection extends BaseSubscriber<ConnectionEvent> {
                 externalAddress = this.discoverExternalUdpAddress(targetAddress, ssrc);
                 if (externalAddress == null) {
                     try {
-                        Thread.sleep(100); //dont flood in case of erors
+                        Thread.sleep(100); //dont flood in case of errors
                     } catch (final InterruptedException ignored) {
                         Thread.currentThread().interrupt();
                     }

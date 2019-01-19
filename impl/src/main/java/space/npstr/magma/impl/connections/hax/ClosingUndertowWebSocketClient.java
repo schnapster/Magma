@@ -31,7 +31,7 @@ import java.util.function.Consumer;
  * <p>
  * Plugs in our custom {@link ClosingUndertowWebSocketHandlerAdapter}.
  * <p>
- * Rest of the file is copypasta of the superclass(es) that is necessary to make that work.
+ * Rest of the file is copied from the superclass(es) that is necessary to make that work.
  */
 public class ClosingUndertowWebSocketClient extends UndertowWebSocketClient implements ClosingWebSocketClient {
 
