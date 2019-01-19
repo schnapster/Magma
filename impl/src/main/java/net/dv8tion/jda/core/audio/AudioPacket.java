@@ -17,10 +17,10 @@
 package net.dv8tion.jda.core.audio;
 
 import com.iwebpp.crypto.TweetNaclFast;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
 import java.nio.ByteBuffer;
 
 /**

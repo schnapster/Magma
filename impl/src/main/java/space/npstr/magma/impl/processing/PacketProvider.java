@@ -17,6 +17,7 @@
 package space.npstr.magma.impl.processing;
 
 import com.iwebpp.crypto.TweetNaclFast;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import net.dv8tion.jda.core.audio.AudioPacket;
 import net.dv8tion.jda.core.audio.AudioSendHandler;
 import net.dv8tion.jda.core.audio.factory.IPacketProvider;
@@ -26,7 +27,6 @@ import org.slf4j.LoggerFactory;
 import space.npstr.magma.impl.EncryptionMode;
 import space.npstr.magma.impl.connections.AudioConnection;
 
-import javax.annotation.Nullable;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetSocketAddress;

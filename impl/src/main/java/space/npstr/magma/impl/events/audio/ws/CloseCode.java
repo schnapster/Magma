@@ -20,16 +20,16 @@ import java.util.Optional;
 
 /**
  * Sources:
- * https://s.gus.host/flowchart.svg
- * https://discordapp.com/developers/docs/topics/opcodes-and-status-codes#voice-voice-close-event-codes
+ * <a href="https://s.gus.host/flowchart.svg">Flowchart</a>
+ * <a href="https://discordapp.com/developers/docs/topics/opcodes-and-status-codes#voice-voice-close-event-codes">Discord Documentation</a>
  */
 public enum CloseCode {
     //@formatter:off                   warn     resume
-    HEARTBEAT_TIMEOUT           (1000, true,    true),
+    HEARTBEAT_TIMEOUT           (1000, false,   true),
     CLOUDFLARE                  (1001, false,   true),
-    BROKEN                      (1006, true,    true),
+    ABNORMAL                    (1006, true,    true),
 
-    UNKNOWN_OP_CODE             (4001, true,    false),
+    UNKNOWN_OP_CODE             (4001, true,    true),
     NOT_AUTHENTICATED           (4003, true,    false),
     AUTHENTICATION_FAILED       (4004, true,    false),
     ALREADY_AUTHENTICATED       (4005, true,    false),

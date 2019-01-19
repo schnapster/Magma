@@ -16,6 +16,7 @@
 
 package space.npstr.magma.impl;
 
+import edu.umd.cs.findbugs.annotations.Nullable;
 import net.dv8tion.jda.core.audio.AudioSendHandler;
 import net.dv8tion.jda.core.audio.factory.IAudioSendFactory;
 import org.slf4j.Logger;
@@ -27,6 +28,7 @@ import reactor.core.publisher.UnicastProcessor;
 import reactor.core.scheduler.Schedulers;
 import space.npstr.magma.api.MdcKey;
 import space.npstr.magma.api.Member;
+import space.npstr.magma.api.SpeakingMode;
 import space.npstr.magma.api.WebsocketConnectionState;
 import space.npstr.magma.api.event.MagmaEvent;
 import space.npstr.magma.impl.connections.AudioWebSocket;
@@ -36,8 +38,9 @@ import space.npstr.magma.impl.events.audio.lifecycle.ConnectWebSocket;
 import space.npstr.magma.impl.events.audio.lifecycle.LifecycleEvent;
 import space.npstr.magma.impl.events.audio.lifecycle.Shutdown;
 import space.npstr.magma.impl.events.audio.lifecycle.UpdateSendHandler;
+import space.npstr.magma.impl.events.audio.lifecycle.UpdateSpeakingMode;
 
-import javax.annotation.Nullable;
+import java.util.Set;
 import java.util.function.Consumer;
 
 /**
@@ -111,6 +114,8 @@ public class AudioStack extends BaseSubscriber<LifecycleEvent> {
                 this.handleCloseWebSocket((CloseWebSocket) event);
             } else if (event instanceof Shutdown) {
                 this.handleShutdown();
+            } else if (event instanceof UpdateSpeakingMode) {
+                this.handleUpdateSpeakingMode(((UpdateSpeakingMode) event).getSpeakingModes());
             } else {
                 log.warn("Audiostack has no handler for lifecycle event of class {}", event.getClass().getSimpleName());
             }
@@ -166,5 +171,12 @@ public class AudioStack extends BaseSubscriber<LifecycleEvent> {
             this.webSocket = null;
         }
         this.sendHandler = null;
+    }
+
+    private void handleUpdateSpeakingMode(@Nullable Set<SpeakingMode> mode) {
+        if (this.webSocket != null) {
+            this.webSocket.getAudioConnection()
+                    .setSpeakingModes(mode);
+        }
     }
 }

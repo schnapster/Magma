@@ -16,6 +16,7 @@
 
 package space.npstr.magma.impl.connections;
 
+import edu.umd.cs.findbugs.annotations.Nullable;
 import org.reactivestreams.Subscriber;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,7 +32,6 @@ import reactor.core.scheduler.Schedulers;
 import space.npstr.magma.impl.events.audio.ws.in.InboundWsEvent;
 import space.npstr.magma.impl.events.audio.ws.out.OutboundWsEvent;
 
-import javax.annotation.Nullable;
 import java.util.Objects;
 import java.util.logging.Level;
 

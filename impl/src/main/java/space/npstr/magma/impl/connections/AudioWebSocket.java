@@ -16,6 +16,7 @@
 
 package space.npstr.magma.impl.connections;
 
+import edu.umd.cs.findbugs.annotations.Nullable;
 import net.dv8tion.jda.core.audio.factory.IAudioSendFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,7 +56,6 @@ import space.npstr.magma.impl.events.audio.ws.out.ResumeWsEvent;
 import space.npstr.magma.impl.events.audio.ws.out.SelectProtocolWsEvent;
 import space.npstr.magma.impl.immutables.SessionInfo;
 
-import javax.annotation.Nullable;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -123,10 +123,9 @@ public class AudioWebSocket extends BaseSubscriber<InboundWsEvent> {
         return this.audioConnection;
     }
 
-    public void setSpeaking(final boolean isSpeaking, final int ssrc) {
-        final int speakingMask = isSpeaking ? 1 : 0;
+    public void setSpeaking(final int speaking, final int ssrc) {
         sendWhenReady(SpeakingWsEvent.builder()
-                .speakingMask(speakingMask)
+                .speakingMask(speaking)
                 .ssrc(ssrc)
                 .build());
     }
@@ -163,14 +162,12 @@ public class AudioWebSocket extends BaseSubscriber<InboundWsEvent> {
                 this.handleReady((Ready) inboundEvent);
             } else if (inboundEvent instanceof SessionDescription) {
                 this.handleSessionDescription((SessionDescription) inboundEvent);
-            } else if (inboundEvent instanceof HeartbeatAck) {
+            } else if (inboundEvent instanceof HeartbeatAck
+                    || inboundEvent instanceof Speaking
+                    || inboundEvent instanceof ClientDisconnect) {
                 // noop
             } else if (inboundEvent instanceof WebSocketClosed) {
                 this.handleWebSocketClosed((WebSocketClosed) inboundEvent);
-            } else if (inboundEvent instanceof ClientDisconnect) {
-                // noop
-            } else if (inboundEvent instanceof Speaking) {
-                // noop
             } else if (inboundEvent instanceof Resumed) {
                 this.handleResumed();
             } else if (inboundEvent instanceof Ignored) {
@@ -257,7 +254,7 @@ public class AudioWebSocket extends BaseSubscriber<InboundWsEvent> {
             final CloseCode closeCode = closeCodeOpt.get();
             resume = closeCode.shouldResume();
             if (closeCode.shouldWarn()) {
-                if (closeCode == CloseCode.BROKEN) {
+                if (closeCode == CloseCode.ABNORMAL) {
                     log.warn("Connection closed due to internet issues?");
                 } else {
                     log.warn("Connection closed due to {} {}. This could indicate an issue with the magma library or "
