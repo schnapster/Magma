@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -32,6 +33,7 @@ public enum EncryptionMode {
     XSALSA20_POLY1305(10);         // unofficial implementation using time stamps (?) as nonce (24 bytes total)
 
     private static final Logger log = LoggerFactory.getLogger(EncryptionMode.class);
+    private static final Comparator<EncryptionMode> preferenceComparator = Comparator.comparingInt(EncryptionMode::getPreference).reversed();
 
     private final int preference;
     private final String key;
@@ -46,6 +48,14 @@ public enum EncryptionMode {
      */
     public String getKey() {
         return this.key;
+    }
+
+    /**
+     * @return the preference indicator
+     */
+    public int getPreference()
+    {
+        return preference;
     }
 
     /**
@@ -68,7 +78,7 @@ public enum EncryptionMode {
         final List<EncryptionMode> result = new ArrayList<>();
         for (final Object o : array) {
             try {
-                result.add(EncryptionMode.valueOf(((String) o).toUpperCase()));
+                parse((String) o).ifPresent(result::add);
             } catch (final IllegalArgumentException ignored) {
             }
         }
@@ -84,7 +94,7 @@ public enum EncryptionMode {
             return Optional.empty();
         }
         final List<EncryptionMode> sort = new ArrayList<>(encryptionModes);
-        sort.sort((e1, e2) -> e2.preference - e1.preference);
+        sort.sort(preferenceComparator);
         return Optional.of(sort.get(0));
     }
 }

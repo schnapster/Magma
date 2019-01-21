@@ -16,9 +16,9 @@
 
 package space.npstr.magma.impl;
 
+import org.json.JSONArray;
 import org.junit.jupiter.api.Test;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -34,9 +34,12 @@ public class EncryptionModeTest {
 
     @Test
     public void testPreference() {
-        final List<EncryptionMode> allModes = Arrays.asList(EncryptionMode.XSALSA20_POLY1305,
-                EncryptionMode.XSALSA20_POLY1305_LITE,
-                EncryptionMode.XSALSA20_POLY1305_SUFFIX);
+        JSONArray array = new JSONArray();
+        array.put("xsalsa20_poly1305_lite");
+        array.put("xsalsa20_poly1305");
+        array.put("xsalsa20_poly1305_suffix");
+        final List<EncryptionMode> allModes = EncryptionMode.fromJson(array);
+        assertEquals(allModes.size(), array.length(), "all known modes were parsed");
 
         final Optional<EncryptionMode> preferredMode = EncryptionMode.getPreferredMode(allModes);
         assertTrue(preferredMode.isPresent(), "return a preferred mode");
