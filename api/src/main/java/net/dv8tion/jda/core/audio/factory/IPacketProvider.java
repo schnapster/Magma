@@ -45,12 +45,12 @@ public interface IPacketProvider
     /**
      * Provides the current channel that this connection is transmitting to.
      *
-     * @return The {@link net.dv8tion.jda.core.entities.VoiceChannel VoiceChannel} that this connection is sending to.
+     * @return The id of the connected channel that this connection is sending to.
      */
     String getConnectedChannel();
 
     /**
-     * The UDP connection for this audio connection. The {@link net.dv8tion.jda.core.audio.factory.DefaultSendSystem DefaultSendSystem}
+     * The UDP connection for this audio connection. The Send System
      * uses this socket to send audio packets to discord, and this is also the socket used to receive audio packets from discord.
      * <br>If you are implementing your own system, it is recommended that you used this connection as it is part of JDA's internal
      * system that JDA monitors for errors and closures. It should be noted however that using this is not required to

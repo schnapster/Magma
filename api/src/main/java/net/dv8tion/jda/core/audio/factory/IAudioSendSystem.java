@@ -21,8 +21,6 @@ package net.dv8tion.jda.core.audio.factory;
  * <br>This interface is provided so that developers can provide their own implementation for different management
  * of thread pools, process usage, and even for forwarding to native binaries implemented in other languages like C
  * to avoid problems with JVM GC StopTheWorld events.
- * <br>JDA, by default, uses {@link net.dv8tion.jda.core.audio.factory.DefaultSendSystem DefaultSendSystem} for its
- * UDP audio packet sending loop.
  */
 public interface IAudioSendSystem
 {

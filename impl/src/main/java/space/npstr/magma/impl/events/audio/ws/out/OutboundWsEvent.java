@@ -30,7 +30,7 @@ public interface OutboundWsEvent extends WsEvent {
 
     /**
      * @return Data payload
-     * Should be an object that json understands and correctly parses -> strings get double quoted for example
+     * Should be an object that json understands and correctly parses {@literal ->} strings get double quoted for example
      */
     Object getData();
 

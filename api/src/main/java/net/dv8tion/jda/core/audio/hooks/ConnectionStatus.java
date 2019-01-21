@@ -19,7 +19,7 @@ package net.dv8tion.jda.core.audio.hooks;
 /**
  * Represents the connection status of an audio connection.
  *
- * NOTE: This class is only present in Magma due to {@link net.dv8tion.jda.core.audio.factory.IPacketProvider}s
+ * NOTE: This class is only present in Magma due to {@link net.dv8tion.jda.core.audio.factory.IPacketProvider IPacketProviders}
  * dependency on it
  */
 public enum ConnectionStatus
@@ -46,28 +46,10 @@ public enum ConnectionStatus
     /** The audio connection has been successfully setup and is ready for use. */
     CONNECTED,
     /**
-     * Indicates that the logged in account lost the {@link net.dv8tion.jda.core.Permission#VOICE_CONNECT Permission.VOICE_CONNECT}
-     * and cannot connect to the channel.
-     * <br><b>This is a non-reconnectable error.</b>
-     */
-    DISCONNECTED_LOST_PERMISSION,
-    /**
      * Indicates that the channel which the audio connection was connected to was deleted, thus the connection was severed.
      * <br><b>This is a non-reconnectable error.</b>
      * */
     DISCONNECTED_CHANNEL_DELETED,
-    /**
-     * Indicates that the logged in account was removed from the {@link net.dv8tion.jda.core.entities.Guild Guild}
-     * that this audio connection was connected to, thus the connection was severed.
-     * <br><b>This is a non-reconnectable error.</b>
-     */
-    DISCONNECTED_REMOVED_FROM_GUILD,
-    /**
-     * Indicates that the audio connection was closed due to the {@link net.dv8tion.jda.core.Region Region} of the
-     * audio connection being changed. JDA will automatically attempt to reconnect the audio connection regardless
-     * of the value of the {@link net.dv8tion.jda.core.managers.AudioManager#isAutoReconnect() AudioManager.isAutoReconnect()}.
-     */
-    AUDIO_REGION_CHANGE,
 
     //All will attempt to reconnect unless autoReconnect is disabled
     /**
@@ -89,11 +71,5 @@ public enum ConnectionStatus
      * <br>JDA automatically attempts to reconnect when this error occurs.
      */
     ERROR_UDP_UNABLE_TO_CONNECT,
-    ERROR_CANNOT_RESUME, DISCONNECTED_AUTHENTICATION_FAILURE, /**
-     * Occurs when it takes longer than
-     * {@link net.dv8tion.jda.core.managers.AudioManager#getConnectTimeout() AudioManager.getConnectTimeout()} to establish
-     * the Websocket connection and setup the UDP connection.
-     * <br>JDA automatically attempts to reconnect when this error occurs.
-     */
-    ERROR_CONNECTION_TIMEOUT
+    ERROR_CANNOT_RESUME, DISCONNECTED_AUTHENTICATION_FAILURE,
 }
