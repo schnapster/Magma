@@ -30,11 +30,8 @@ import java.util.function.Consumer;
 /**
  * Created by napster on 22.04.18.
  * <p>
- * Plugs in our custom {@link ClosingUndertowWebSocketHandlerAdapter}, as well as uses a shared bufferpool to avoid
- * leaks. Leaks happen due to the {@link DefaultByteBufferPool} using a threadlocal variable that holds a reference to
- * an instance of an inner class of the pool preventing it from being GCed. Since pools can be shared, we opt for the
- * easy solution of using a single pool in Magma.
- *
+ * Plugs in our custom {@link ClosingUndertowWebSocketHandlerAdapter}.
+ * <p>
  * Rest of the file is copypasta of the superclass(es) that is necessary to make that work.
  */
 public class ClosingUndertowWebSocketClient extends UndertowWebSocketClient implements ClosingWebSocketClient {
