@@ -42,7 +42,6 @@ repositories {
 
 ext {
     //@formatter:off
-    gradleVersion               = '4.10.2'
     jacocoVersion               = '0.8.2' // the default one, 0.8.1, breaks on java 11+
 
     orgJsonVersion              = '20180813'
@@ -91,13 +90,6 @@ compileJava {
     options.encoding = 'UTF-8'
     options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
 }
-
-wrapper {
-    gradleVersion = project.ext.gradleVersion
-    //noinspection UnnecessaryQualifiedReference
-    distributionType = Wrapper.DistributionType.ALL
-}
-
 
 build {
     doLast {
