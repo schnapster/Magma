@@ -38,6 +38,12 @@ jobs:
         - "./gradlew build --info"
 
     - stage: build & test
+      jdk: openjdk12
+      script:
+        - "java -Xmx32m -version"
+        - "./gradlew build --info"
+
+    - stage: build & test
       jdk: openjdk-ea
       script:
         - "java -Xmx32m -version"
