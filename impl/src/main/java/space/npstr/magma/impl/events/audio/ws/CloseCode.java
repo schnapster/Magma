@@ -37,7 +37,7 @@ public enum CloseCode {
     SESSION_TIMEOUT             (4009, true,    false),
     SERVER_NOT_FOUND            (4011, true,    false),
     UNKNOWN_PROTOCOL            (4012, true,    false),
-    DISCONNECTED                (4014, false,   true),
+    DISCONNECTED                (4014, false,   false),
     VOICE_SERVER_CRASHED        (4015, false,   true),
     UNKNOWN_ENCRYPTION_MODE     (4016, true,    false),
     //@formatter:on
