@@ -39,7 +39,7 @@ repositories {
 ext {
     //@formatter:off
     orgJsonVersion              = '20180813'
-    slf4jVersion                = '1.7.25'
+    slf4jVersion                = '1.7.26'
 
     springVersion               = '5.1.1.RELEASE'
     undertowVersion             = '2.0.14.Final'
