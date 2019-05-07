@@ -107,8 +107,8 @@ public interface InboundWsEvent extends WsEvent {
                         .build();
             default:
                 return UnknownWsEvent.builder()
-                        .payload(payload)
                         .opCode(opCode)
+                        .payload(payload)
                         .build();
         }
     }
