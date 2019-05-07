@@ -3,7 +3,7 @@ buildscript {
         grgitVersion = '2.3.0'
         aptPluginVersion = '0.19'
         sonarqubeVersion = '2.6.2'
-        versionsVersion = '0.20.0'
+        versionsVersion = '0.21.0'
     }
     repositories {
         maven { url 'https://plugins.gradle.org/m2/' }
@@ -167,6 +167,19 @@ idea {
             addAptDependencies = true
             addCompileOnlyDependencies = false
             mainDependenciesScope = 'PROVIDED'
+        }
+    }
+}
+
+dependencyUpdates.resolutionStrategy {
+    componentSelection { rules ->
+        rules.all { ComponentSelection selection ->
+            boolean rejected = ['alpha', 'beta', 'rc', 'cr', 'm', 'preview', 'b', 'ea'].any { qualifier ->
+                selection.candidate.version ==~ /(?i).*[.-]$qualifier[.\d-+]*/
+            }
+            if (rejected) {
+                selection.reject('Release candidate')
+            }
         }
     }
 }
