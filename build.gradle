@@ -44,7 +44,7 @@ ext {
     springVersion               = '5.1.6.RELEASE'
     undertowVersion             = '2.0.20.Final'
 
-    spotbugsVersion             = '3.1.8'
+    spotbugsVersion             = '3.1.12'
     annotationsVersion          = '0.0.1'
 
     immutablesVersion           = '2.7.1'
