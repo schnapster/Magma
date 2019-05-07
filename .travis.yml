@@ -23,7 +23,6 @@ jobs:
   fast_finish: true
   allow_failures:
     - jdk: openjdk-ea
-    - jdk: oraclejdk-ea
   include:
     - stage: build & test
       jdk: openjdk11
@@ -49,11 +48,6 @@ jobs:
         - "java -Xmx32m -version"
         - "./gradlew build --info"
 
-    - stage: build & test
-      jdk: oraclejdk-ea
-      script:
-        - "java -Xmx32m -version"
-        - "./gradlew build --info"
 
     - stage: sonar
       jdk: openjdk11
