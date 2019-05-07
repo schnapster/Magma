@@ -32,6 +32,7 @@ import space.npstr.magma.events.audio.ws.in.InboundWsEvent;
 import space.npstr.magma.events.audio.ws.out.OutboundWsEvent;
 
 import javax.annotation.Nullable;
+import java.util.Objects;
 import java.util.logging.Level;
 
 /**
@@ -41,10 +42,7 @@ public class AudioWebSocketSessionHandler extends BaseSubscriber<OutboundWsEvent
     private static final Logger log = LoggerFactory.getLogger(AudioWebSocketSessionHandler.class);
     private final Subscriber<InboundWsEvent> inbound;
 
-    @SuppressWarnings("NullableProblems") //is never actually null
-    private volatile Flux<OutboundWsEvent> intermediaryOutbound;
-    @SuppressWarnings("NullableProblems") //is never actually null
-    private volatile FluxSink<OutboundWsEvent> intermediaryOutboundSink;
+    private final IntermediaryPipeHolder pipes = new IntermediaryPipeHolder();
     @Nullable
     private WebSocketSession session;
 
@@ -78,8 +76,8 @@ public class AudioWebSocketSessionHandler extends BaseSubscriber<OutboundWsEvent
      */
     public void prepareConnect() {
         final UnicastProcessor<OutboundWsEvent> intermediaryProcessor = UnicastProcessor.create();
-        this.intermediaryOutboundSink = intermediaryProcessor.sink();
-        this.intermediaryOutbound = intermediaryProcessor;
+        this.pipes.setIntermediaryOutboundSink(intermediaryProcessor.sink());
+        this.pipes.setIntermediaryOutboundFlux(intermediaryProcessor);
     }
 
     @Override
@@ -108,7 +106,7 @@ public class AudioWebSocketSessionHandler extends BaseSubscriber<OutboundWsEvent
                 .subscribe(this.inbound);
 
         return session
-                .send(this.intermediaryOutbound
+                .send(this.pipes.getIntermediaryOutboundFlux()
                         .map(OutboundWsEvent::asMessage)
                         .log(log.getName() + ".<<<", Level.FINEST) //FINEST = TRACE
                         .map(session::textMessage)
@@ -118,6 +116,32 @@ public class AudioWebSocketSessionHandler extends BaseSubscriber<OutboundWsEvent
 
     @Override
     protected void hookOnNext(final OutboundWsEvent event) {
-        this.intermediaryOutboundSink.next(event);
+        this.pipes.getIntermediaryOutboundSink().next(event);
+    }
+
+    /**
+     * Helper class to take care of volatile & null checks
+     */
+    private static class IntermediaryPipeHolder {
+        @Nullable
+        private volatile Flux<OutboundWsEvent> intermediaryOutboundFlux;
+        @Nullable
+        private volatile FluxSink<OutboundWsEvent> intermediaryOutboundSink;
+
+        private Flux<OutboundWsEvent> getIntermediaryOutboundFlux() {
+            return Objects.requireNonNull(this.intermediaryOutboundFlux, "Using the intermediary outbound flux before it has been prepared");
+        }
+
+        private void setIntermediaryOutboundFlux(final Flux<OutboundWsEvent> intermediaryOutboundFlux) {
+            this.intermediaryOutboundFlux = intermediaryOutboundFlux;
+        }
+
+        private FluxSink<OutboundWsEvent> getIntermediaryOutboundSink() {
+            return Objects.requireNonNull(this.intermediaryOutboundSink, "Using the intermediary outbound sink before it has been prepared");
+        }
+
+        private void setIntermediaryOutboundSink(final FluxSink<OutboundWsEvent> intermediaryOutboundSink) {
+            this.intermediaryOutboundSink = intermediaryOutboundSink;
+        }
     }
 }
