@@ -116,7 +116,7 @@ task install {
 }
 task sourceJar(type: Jar) {
     from sourceSets.main.allJava
-    classifier 'sources'
+    archiveClassifier.set('sources')
 }
 
 publishing {
