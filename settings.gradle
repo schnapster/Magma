@@ -1,2 +1,1 @@
 rootProject.name = 'magma'
-enableFeaturePreview('STABLE_PUBLISHING')
