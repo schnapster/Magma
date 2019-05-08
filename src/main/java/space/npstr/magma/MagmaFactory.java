@@ -33,7 +33,7 @@ public class MagmaFactory {
     /**
      * Please see full factory documentation below. Missing parameters on this factory method are optional.
      */
-    static MagmaApi of(final Function<Member, IAudioSendFactory> sendFactoryProvider) {
+    public static MagmaApi of(final Function<Member, IAudioSendFactory> sendFactoryProvider) {
         return of(sendFactoryProvider, OptionMap.builder().getMap());
     }
 
@@ -46,7 +46,7 @@ public class MagmaFactory {
      * @param xnioOptions
      *         options to build the {@link XnioWorker} that will be used for the websocket connections
      */
-    static MagmaApi of(final Function<Member, IAudioSendFactory> sendFactoryProvider,
+    public static MagmaApi of(final Function<Member, IAudioSendFactory> sendFactoryProvider,
                        final OptionMap xnioOptions) {
         return new Magma(sendFactoryProvider, xnioOptions);
     }
