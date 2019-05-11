@@ -55,7 +55,7 @@ Replace `x.y.z` in the snippets below with the desired version. Latest: [![Relea
     }
 
     dependencies {
-        compile group: 'space.npstr', name: 'Magma', version: 'x.y.z'
+        compile group: 'space.npstr.magma', name: 'magma', version: 'x.y.z'
     }
 ```
 
@@ -69,8 +69,8 @@ Replace `x.y.z` in the snippets below with the desired version. Latest: [![Relea
     </repositories>
 
     <dependency>
-        <groupId>space.npstr</groupId>
-        <artifactId>Magma</artifactId>
+        <groupId>space.npstr.magma</groupId>
+        <artifactId>magma</artifactId>
         <version>x.z.y</version>
     </dependency>
 ```
@@ -87,8 +87,8 @@ that you want to open/close/change something about.
 
 Magma uses [immutables.org](http://immutables.org/) to ensure type and parameter safety,
 both internally and in the Api you are going to use.
-Concretely, the Api makes use of immutable [Member](https://github.com/napstr/Magma/blob/master/src/main/java/space/npstr/magma/Member.java)
-and [ServerUpdate](https://github.com/napstr/Magma/blob/master/src/main/java/space/npstr/magma/ServerUpdate.java) objects.
+Concretely, the Api makes use of immutable [Member](https://github.com/napstr/Magma/blob/master/api/src/main/java/space/npstr/magma/api/Member.java)
+and [ServerUpdate](https://github.com/napstr/Magma/blob/master/api/src/main/java/space/npstr/magma/api/ServerUpdate.java) objects.
 
 ```java
 
@@ -107,14 +107,14 @@ and [ServerUpdate](https://github.com/napstr/Magma/blob/master/src/main/java/spa
 
 #### Api
 
-Typical usage of the methods offered by the [MagmaApi](https://github.com/napstr/Magma/blob/master/src/main/java/space/npstr/magma/MagmaApi.java):
+Typical usage of the methods offered by the [MagmaApi](https://github.com/napstr/Magma/blob/master/api/src/main/java/space/npstr/magma/api/MagmaApi.java):
 
 ```java
 
     IAudioSendFactory audioSendFactory = <your implementation here>;
     AudioSendHandler sendHandler = <your implementation here>;
 
-    MagmaApi magmaApi = MagmaApi.of(__ -> audioSendFactory);
+    MagmaApi magmaApi = MagmaFactory.of(__ -> audioSendFactory);
     magmaApi.provideVoiceServerUpdate(member, serverUpdate);
     magmaApi.setSendHandler(member, sendHandler);
 
@@ -145,7 +145,7 @@ Typical usage of the methods offered by the [MagmaApi](https://github.com/napstr
 None of those calls are blocking, as they are translated into events to be processed as soon as possible.
 Currently, there is no feedback as to when and how these are processed.
 
-You can subscribe to a stream of [MagmaEvent](https://github.com/napstr/Magma/blob/master/src/main/java/space/npstr/magma/events/api/MagmaEvent.java)s
+You can subscribe to a stream of [MagmaEvent](https://github.com/napstr/Magma/blob/master/api/src/main/java/space/npstr/magma/api/event/MagmaEvent.java)s
 through `MagmaApi#getEventStream`:
 
 ```java
@@ -233,6 +233,26 @@ logging:
 ## Changelog
 
 Expect breaking changes between minor versions while v1 has not been released.
+
+### v0.9.0
+- Dependencies bumped
+- **Breaking**: Reorganized the project into `api` and `impl` modules, resulting in new Maven/Gradle coordinates and new packages of the Magma classes
+<details><summary>Click me</summary>
+
+    `space.npstr.magma.MagmaApi` -> `space.npstr.magma.api.MagmaApi`  
+    `space.npstr.magma.MdcKey` -> `space.npstr.magma.api.MdcKey`  
+    `space.npstr.magma.Member` -> `space.npstr.magma.api.Member`  
+    `space.npstr.magma.MagmaMember` -> `space.npstr.magma.api.MagmaMember`  
+    `space.npstr.magma.ServerUpdate` -> `space.npstr.magma.api.ServerUpdate`  
+    `space.npstr.magma.MagmaServerUpdate` -> `space.npstr.magma.api.MagmaServerUpdate`  
+    `space.npstr.magma.WebsocketConnectionState` -> `space.npstr.magma.api.WebsocketConnectionState`  
+    `space.npstr.magma.MagmaWebsocketConnectionState` -> `space.npstr.magma.api.MagmaWebsocketConnectionState`  
+    `space.npstr.magma.events.api.MagmaEvent` -> `space.npstr.magma.api.event.MagmaEvent`  
+    `space.npstr.magma.events.api.WebSocketClosed` -> `space.npstr.magma.api.event.WebSocketClosed`  
+    `space.npstr.magma.events.api.WebSocketClosedApiEvent` -> `space.npstr.magma.api.event.WebSocketClosedApiEvent`      
+    `MagmaApi.of` -> `MagmaFactory.of`
+
+  </details>
 
 ### v0.8.3
 - Fix bug with reconnecting in the same guild introduced in 0.8.2
