@@ -218,7 +218,7 @@ public class AudioWebSocket extends BaseSubscriber<InboundWsEvent> {
         if (!preferredModeOpt.isPresent()) {
             final String modes = receivedModes.isEmpty()
                     ? "empty list"
-                    : String.join(", ", receivedModes.stream().map(Enum::name).collect(Collectors.toList()));
+                    : receivedModes.stream().map(Enum::name).collect(Collectors.joining(", "));
             throw new RuntimeException("Failed to select encryption modes from " + modes); //todo how are exceptions handled?
         }
         final EncryptionMode preferredMode = preferredModeOpt.get();
