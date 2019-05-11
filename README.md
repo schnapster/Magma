@@ -236,7 +236,23 @@ Expect breaking changes between minor versions while v1 has not been released.
 
 ### v0.9.0
 - Dependencies bumped
-- **Breaking**: Reorganized into `api` and `impl` modules, resulting in new Maven/Gradle coordinates and new packages of the Magma classes
+- **Breaking**: Reorganized the project into `api` and `impl` modules, resulting in new Maven/Gradle coordinates and new packages of the Magma classes
+<details><summary>Click me</summary>
+
+    `space.npstr.magma.MagmaApi` -> `space.npstr.magma.api.MagmaApi`  
+    `space.npstr.magma.MdcKey` -> `space.npstr.magma.api.MdcKey`  
+    `space.npstr.magma.Member` -> `space.npstr.magma.api.Member`  
+    `space.npstr.magma.MagmaMember` -> `space.npstr.magma.api.MagmaMember`  
+    `space.npstr.magma.ServerUpdate` -> `space.npstr.magma.api.ServerUpdate`  
+    `space.npstr.magma.MagmaServerUpdate` -> `space.npstr.magma.api.MagmaServerUpdate`  
+    `space.npstr.magma.WebsocketConnectionState` -> `space.npstr.magma.api.WebsocketConnectionState`  
+    `space.npstr.magma.MagmaWebsocketConnectionState` -> `space.npstr.magma.api.MagmaWebsocketConnectionState`  
+    `space.npstr.magma.events.api.MagmaEvent` -> `space.npstr.magma.api.event.MagmaEvent`  
+    `space.npstr.magma.events.api.WebSocketClosed` -> `space.npstr.magma.api.event.WebSocketClosed`  
+    `space.npstr.magma.events.api.WebSocketClosedApiEvent` -> `space.npstr.magma.api.event.WebSocketClosedApiEvent`      
+    `MagmaApi.of` -> `MagmaFactory.of`
+
+  </details>
 
 ### v0.8.3
 - Fix bug with reconnecting in the same guild introduced in 0.8.2
