@@ -104,6 +104,7 @@ public class AudioPacket
             outputBuffer.put(nonce, 0, nonceLength);
         }
 
+        ((Buffer) outputBuffer).flip();
         return outputBuffer;
     }
 

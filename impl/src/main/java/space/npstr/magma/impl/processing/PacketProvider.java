@@ -181,7 +181,7 @@ public class PacketProvider implements IPacketProvider {
     private DatagramPacket asDatagramPacket(final ByteBuffer buffer, final InetSocketAddress targetAddress) {
         final byte[] data = buffer.array();
         final int offset = buffer.arrayOffset();
-        final int position = buffer.position();
-        return new DatagramPacket(data, offset, position - offset, targetAddress);
+        final int limit = buffer.remaining();
+        return new DatagramPacket(data, offset, limit, targetAddress);
     }
 }
