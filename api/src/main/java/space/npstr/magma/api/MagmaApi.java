@@ -17,7 +17,7 @@
 package space.npstr.magma.api;
 
 import edu.umd.cs.findbugs.annotations.Nullable;
-import net.dv8tion.jda.core.audio.AudioSendHandler;
+import net.dv8tion.jda.api.audio.AudioSendHandler;
 import reactor.core.publisher.Flux;
 import space.npstr.magma.api.event.MagmaEvent;
 

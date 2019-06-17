@@ -17,7 +17,7 @@
 package space.npstr.magma.impl.processing;
 
 import com.iwebpp.crypto.TweetNaclFast;
-import net.dv8tion.jda.core.audio.AudioPacket;
+import net.dv8tion.jda.api.audio.AudioPacket;
 import space.npstr.magma.impl.EncryptionMode;
 
 import java.nio.ByteBuffer;

@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-package net.dv8tion.jda.core.audio;
+package net.dv8tion.jda.api.audio;
 
 import com.iwebpp.crypto.TweetNaclFast;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 
 /**
@@ -53,10 +54,10 @@ public class AudioPacket
     private final char seq;
     private final int timestamp;
     private final int ssrc;
-    private final byte[] encodedAudio;
+    private final ByteBuffer encodedAudio;
     private final byte[] rawPacket;
 
-    public AudioPacket(final char seq, final int timestamp, final int ssrc, final byte[] encodedAudio)
+    public AudioPacket(final char seq, final int timestamp, final int ssrc, final ByteBuffer encodedAudio)
     {
         this.seq = seq;
         this.ssrc = ssrc;
@@ -74,11 +75,10 @@ public class AudioPacket
     }
 
     //this may reallocate the passed bytebuffer if it is too small
-    public ByteBuffer asEncryptedPacket(final ByteBuffer buffer, final byte[] secretKey, @Nullable final byte[] nonce,
-                                        final int nonceLength)
+    public ByteBuffer asEncryptedPacket(final ByteBuffer buffer, final byte[] secretKey, final byte[] nonce, @Nullable final int nonceLength)
     {
 
-        ByteBuffer theBuffer = buffer;
+        ByteBuffer outputBuffer = buffer;
         //Xsalsa20's Nonce is 24 bytes long, however RTP (and consequently Discord)'s nonce is a different length
         // so we need to create a 24 byte array, and copy the nonce into it.
         // we will leave the extra bytes as nulls. (Java sets non-populated bytes as 0).
@@ -86,32 +86,35 @@ public class AudioPacket
         if (nonce == null) {
             extendedNonce = getNoncePadded();
         }
+        final byte[] array = encodedAudio.array();
+        final int arrayOffset = encodedAudio.arrayOffset();
+        final int length = encodedAudio.remaining();
 
         //Create our SecretBox encoder with the secretKey provided by Discord.
         final TweetNaclFast.SecretBox boxer = new TweetNaclFast.SecretBox(secretKey);
-        final byte[] encryptedAudio = boxer.box(this.encodedAudio, extendedNonce);
-        theBuffer.clear();
+        final byte[] encryptedAudio = boxer.box(array, arrayOffset, length, extendedNonce);
+        outputBuffer.clear();
         final int capacity = RTP_HEADER_BYTE_LENGTH + encryptedAudio.length + nonceLength;
-        if (capacity > theBuffer.remaining()) {
+        if (capacity > outputBuffer.remaining()) {
             log.trace("Allocating byte buffer with capacity " + capacity);
-            theBuffer = ByteBuffer.allocate(capacity);
+            outputBuffer = ByteBuffer.allocate(capacity);
         }
-        populateBuffer(this.seq, this.timestamp, this.ssrc, encryptedAudio, theBuffer);
+        populateBuffer(this.seq, this.timestamp, this.ssrc, ByteBuffer.wrap(encryptedAudio), outputBuffer);
         if (nonce != null) {
-            theBuffer.put(nonce, 0, nonceLength);
+            outputBuffer.put(nonce, 0, nonceLength);
         }
 
-        return theBuffer;
+        return outputBuffer;
     }
 
-    private static byte[] generateRawPacket(final char seq, final int timestamp, final int ssrc, final byte[] data)
+    private static byte[] generateRawPacket(final char seq, final int timestamp, final int ssrc, final ByteBuffer data)
     {
-        final ByteBuffer buffer = ByteBuffer.allocate(RTP_HEADER_BYTE_LENGTH + data.length);
+        final ByteBuffer buffer = ByteBuffer.allocate(RTP_HEADER_BYTE_LENGTH + data.remaining());
         populateBuffer(seq, timestamp, ssrc, data, buffer);
         return buffer.array();
     }
 
-    private static void populateBuffer(final char seq, final int timestamp, final int ssrc, final byte[] data, final ByteBuffer buffer)
+    private static void populateBuffer(final char seq, final int timestamp, final int ssrc, final ByteBuffer data, final ByteBuffer buffer)
     {
         buffer.put(RTP_VERSION_PAD_EXTEND);
         buffer.put(RTP_PAYLOAD_TYPE);
@@ -119,5 +122,6 @@ public class AudioPacket
         buffer.putInt(timestamp);
         buffer.putInt(ssrc);
         buffer.put(data);
+        ((Buffer) data).flip();
     }
 }

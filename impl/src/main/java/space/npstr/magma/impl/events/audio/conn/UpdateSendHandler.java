@@ -16,7 +16,7 @@
 
 package space.npstr.magma.impl.events.audio.conn;
 
-import net.dv8tion.jda.core.audio.AudioSendHandler;
+import net.dv8tion.jda.api.audio.AudioSendHandler;
 
 import java.util.Optional;
 

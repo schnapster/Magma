@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package net.dv8tion.jda.core.audio.factory;
+package net.dv8tion.jda.api.audio.factory;
 
 /**
  * Interface that acts as a UDP audio packet sending loop.

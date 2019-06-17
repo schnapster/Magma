@@ -17,7 +17,7 @@
 package space.npstr.magma.impl;
 
 import edu.umd.cs.findbugs.annotations.CheckReturnValue;
-import net.dv8tion.jda.core.audio.factory.IAudioSendFactory;
+import net.dv8tion.jda.api.audio.factory.IAudioSendFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.BaseSubscriber;
@@ -54,8 +54,8 @@ import java.util.stream.Collectors;
  * <ul>
  *   <li>A websocket connection ( {@literal ->} {@link AudioWebSocket}</li>
  *   <li>A voice packet emitter ( {@literal ->} {@link AudioConnection}</li>
- *   <li>A send handler         ( {@literal ->} {@link net.dv8tion.jda.core.audio.AudioSendHandler}, provided by user code)</li>
- *   <li>A send system          ( {@literal ->} {@link net.dv8tion.jda.core.audio.factory.IAudioSendSystem}, provided by user code)</li>
+ *   <li>A send handler         ( {@literal ->} {@link net.dv8tion.jda.api.audio.AudioSendHandler}, provided by user code)</li>
+ *   <li>A send system          ( {@literal ->} {@link net.dv8tion.jda.api.audio.factory.IAudioSendSystem}, provided by user code)</li>
  * </ul>
  *
  * <h2>Lifecycle Events</h2>

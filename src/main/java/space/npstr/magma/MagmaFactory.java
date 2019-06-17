@@ -16,7 +16,7 @@
 
 package space.npstr.magma;
 
-import net.dv8tion.jda.core.audio.factory.IAudioSendFactory;
+import net.dv8tion.jda.api.audio.factory.IAudioSendFactory;
 import org.xnio.OptionMap;
 import org.xnio.XnioWorker;
 import space.npstr.magma.api.MagmaApi;

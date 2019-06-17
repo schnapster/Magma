@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-package net.dv8tion.jda.core.audio;
+package net.dv8tion.jda.api.audio;
 
 import javax.sound.sampled.AudioFormat;
+import java.nio.ByteBuffer;
 
 /**
  * Interface used to send audio to Discord through JDA.
@@ -47,12 +48,12 @@ public interface AudioSendHandler
      * all audio data from disk when this method is called will most likely cause issues due to IO blocking this thread.
      * <p>
      * The provided audio data needs to be in the format: 48KHz 16bit stereo signed BigEndian PCM.
-     * <br>Defined by: {@link net.dv8tion.jda.core.audio.AudioSendHandler#INPUT_FORMAT AudioSendHandler.INPUT_FORMAT}.
+     * <br>Defined by: {@link net.dv8tion.jda.api.audio.AudioSendHandler#INPUT_FORMAT AudioSendHandler.INPUT_FORMAT}.
      * <br>If {@link #isOpus()} is set to return true, then it should be in pre-encoded Opus format instead.
      *
      * @return Should return a byte[] containing 20 Milliseconds of audio.
      */
-    byte[] provide20MsAudio();
+    ByteBuffer provide20MsAudio();
 
     /**
      * If this method returns true JDA will treat the audio data provided by {@link #provide20MsAudio()} as a pre-encoded

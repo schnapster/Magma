@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-package net.dv8tion.jda.core.audio.factory;
+package net.dv8tion.jda.api.audio.factory;
 
 /**
- * Factory interface for the creation of new {@link net.dv8tion.jda.core.audio.factory.IAudioSendSystem IAudioSendSystem} objects.
+ * Factory interface for the creation of new {@link net.dv8tion.jda.api.audio.factory.IAudioSendSystem IAudioSendSystem} objects.
  */
 public interface IAudioSendFactory
 {
     /**
-     * Called by JDA's audio system when a new {@link net.dv8tion.jda.core.audio.factory.IAudioSendSystem IAudioSendSystem}
+     * Called by JDA's audio system when a new {@link net.dv8tion.jda.api.audio.factory.IAudioSendSystem IAudioSendSystem}
      * instance is needed to handle the sending of UDP audio packets to discord.
      *
      * @param  packetProvider
-     *         The connection provided to the new {@link net.dv8tion.jda.core.audio.factory.IAudioSendSystem IAudioSendSystem}
+     *         The connection provided to the new {@link net.dv8tion.jda.api.audio.factory.IAudioSendSystem IAudioSendSystem}
      *         object for proper setup and usage.
      *
      * @return The newly constructed IAudioSendSystem, ready for {@link IAudioSendSystem#start()} to be called.

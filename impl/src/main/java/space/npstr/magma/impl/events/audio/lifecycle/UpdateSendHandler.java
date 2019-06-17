@@ -16,7 +16,7 @@
 
 package space.npstr.magma.impl.events.audio.lifecycle;
 
-import net.dv8tion.jda.core.audio.AudioSendHandler;
+import net.dv8tion.jda.api.audio.AudioSendHandler;
 import org.immutables.value.Value;
 import space.npstr.magma.api.Member;
 import space.npstr.magma.impl.immutables.ImmutableLcEvent;
