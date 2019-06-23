@@ -21,6 +21,7 @@ import net.dv8tion.jda.api.audio.AudioSendHandler;
 import reactor.core.publisher.Flux;
 import space.npstr.magma.api.event.MagmaEvent;
 
+import java.net.DatagramSocket;
 import java.util.List;
 import java.util.Set;
 
@@ -31,6 +32,14 @@ import java.util.Set;
  */
 @SuppressWarnings("unused")
 public interface MagmaApi {
+
+    /**
+     * The UDP client used to NAT hole punch.
+     * <br>This is closed by {@link #shutdown()}.
+     *
+     * @return The DatagramSocket
+     */
+    DatagramSocket getDatagramSocket();
 
     /**
      * Release all resources held.

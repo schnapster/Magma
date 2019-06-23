@@ -40,6 +40,7 @@ import space.npstr.magma.impl.events.audio.lifecycle.Shutdown;
 import space.npstr.magma.impl.events.audio.lifecycle.UpdateSendHandler;
 import space.npstr.magma.impl.events.audio.lifecycle.UpdateSpeakingMode;
 
+import java.net.DatagramSocket;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -58,6 +59,7 @@ public class AudioStack extends BaseSubscriber<LifecycleEvent> {
     private final IAudioSendFactory sendFactory;
     private final ClosingWebSocketClient webSocketClient;
     private final Consumer<MagmaEvent> apiEventConsumer;
+    private final DatagramSocket udpSocket;
 
     private final FluxSink<LifecycleEvent> lifecycleSink;
 
@@ -70,7 +72,8 @@ public class AudioStack extends BaseSubscriber<LifecycleEvent> {
 
 
     public AudioStack(final Member member, final IAudioSendFactory sendFactory,
-                      final ClosingWebSocketClient webSocketClient, final Consumer<MagmaEvent> apiEventConsumer) {
+                      final ClosingWebSocketClient webSocketClient, Consumer<MagmaEvent> apiEventConsumer,
+                      final DatagramSocket udpSocket) {
         this.member = member;
         this.sendFactory = sendFactory;
         this.webSocketClient = webSocketClient;
@@ -81,6 +84,7 @@ public class AudioStack extends BaseSubscriber<LifecycleEvent> {
         lifecycleProcessor
                 .publishOn(Schedulers.parallel())
                 .subscribe(this);
+        this.udpSocket = udpSocket;
     }
 
 
@@ -140,7 +144,7 @@ public class AudioStack extends BaseSubscriber<LifecycleEvent> {
         }
 
         this.webSocket = new AudioWebSocket(this.sendFactory, connectWebSocket.getSessionInfo(),
-                this.webSocketClient, this::next);
+                this.webSocketClient, this::next, this.udpSocket);
         if (this.sendHandler != null) {
             this.webSocket.getAudioConnection().updateSendHandler(this.sendHandler);
         }

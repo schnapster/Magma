@@ -56,6 +56,7 @@ import space.npstr.magma.impl.events.audio.ws.out.ResumeWsEvent;
 import space.npstr.magma.impl.events.audio.ws.out.SelectProtocolWsEvent;
 import space.npstr.magma.impl.immutables.SessionInfo;
 
+import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -96,14 +97,15 @@ public class AudioWebSocket extends BaseSubscriber<InboundWsEvent> {
 
 
     public AudioWebSocket(final IAudioSendFactory sendFactory, final SessionInfo session,
-                          final ClosingWebSocketClient webSocketClient, final Consumer<CloseWebSocket> closeCallback) {
+                          final ClosingWebSocketClient webSocketClient, final Consumer<CloseWebSocket> closeCallback,
+                          final DatagramSocket udpSocket) {
         this.session = session;
         try {
             this.wssEndpoint = new URI(String.format("wss://%s/?v=4", session.getVoiceServerUpdate().getEndpoint()));
         } catch (final URISyntaxException e) {
             throw new RuntimeException("Endpoint " + session.getVoiceServerUpdate().getEndpoint() + " is not a valid URI", e);
         }
-        this.audioConnection = new AudioConnection(this, sendFactory);
+        this.audioConnection = new AudioConnection(this, sendFactory, udpSocket);
         this.closeCallback = closeCallback;
         this.webSocketClient = webSocketClient;
 

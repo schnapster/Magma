@@ -44,7 +44,6 @@ import space.npstr.magma.impl.processing.PacketProvider;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
-import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.util.EnumSet;
 import java.util.Optional;
@@ -100,13 +99,8 @@ public class AudioConnection extends BaseSubscriber<ConnectionEvent> {
     private final Supplier<Long> nonceSupplier;
     private boolean speaking = false;
 
-    public AudioConnection(final AudioWebSocket webSocket, final IAudioSendFactory sendFactory) {
-        try {
-            this.udpSocket = new DatagramSocket();
-        } catch (final SocketException e) {
-            throw new RuntimeException("Failed to create udpSocket", e);
-        }
-
+    public AudioConnection(final AudioWebSocket webSocket, final IAudioSendFactory sendFactory, final DatagramSocket udpSocket) {
+        this.udpSocket = udpSocket;
         this.webSocket = webSocket;
         this.sendFactory = sendFactory;
 
@@ -266,7 +260,6 @@ public class AudioConnection extends BaseSubscriber<ConnectionEvent> {
         this.setSpeaking(0);
         this.tearDownSendComponents();
 
-        this.udpSocket.close();
         this.encryptionMode = null;
         this.secretKey = null;
         this.ssrc = null;
