@@ -20,7 +20,7 @@ import com.iwebpp.crypto.TweetNaclFast;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
+import javax.annotation.Nonnull;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 
@@ -75,15 +75,14 @@ public class AudioPacket
     }
 
     //this may reallocate the passed bytebuffer if it is too small
-    public ByteBuffer asEncryptedPacket(final ByteBuffer buffer, final byte[] secretKey, final byte[] nonce, @Nullable final int nonceLength)
+    public ByteBuffer asEncryptedPacket(final ByteBuffer buffer, final byte[] secretKey, @Nonnull final byte[] nonce, final int nonceLength)
     {
-
         ByteBuffer outputBuffer = buffer;
         //Xsalsa20's Nonce is 24 bytes long, however RTP (and consequently Discord)'s nonce is a different length
         // so we need to create a 24 byte array, and copy the nonce into it.
         // we will leave the extra bytes as nulls. (Java sets non-populated bytes as 0).
         byte[] extendedNonce = nonce;
-        if (nonce == null) {
+        if (nonceLength == 0) {
             extendedNonce = getNoncePadded();
         }
         final byte[] array = encodedAudio.array();
@@ -100,7 +99,7 @@ public class AudioPacket
             outputBuffer = ByteBuffer.allocate(capacity);
         }
         populateBuffer(this.seq, this.timestamp, this.ssrc, ByteBuffer.wrap(encryptedAudio), outputBuffer);
-        if (nonce != null) {
+        if (nonceLength > 0) {
             outputBuffer.put(nonce, 0, nonceLength);
         }
 
