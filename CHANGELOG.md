@@ -2,6 +2,29 @@
 
 Expect breaking changes between minor versions while v1 has not been released.
 
+### v0.11.0
+
+- Picked up the commits from [Minn's Magma fork](https://github.com/MinnDevelopment/Magma):
+
+    - 0.10.4: Fix xsalsa20_poly1305 encryption (legacy support)
+    - 0.10.3: Convert to single DatagramSocket shared by all audio pipelines
+    - 0.10.2: Fix possible memory leak due to unclosed datagram sockets
+    - 0.10.1: Fix incorrect handling of ByteBuffer in asDatagramPacket
+    - 0.10.0: Restructure for JDA V4 compatibility
+    - 0.9.2: Fix handling of 4014 close code
+    - 0.9.1:
+        - Add speaking modes
+        - Change transitive dependencies to proper api/implementation scopes
+        - Fix several javadoc errors
+    - 0.9.0: Support Java 8 through 10
+
+
+### ~~v0.10.0~~
+
+This version has been skipped to avoid confusion with versions from [Minn's Magma fork](https://github.com/MinnDevelopment/Magma).  
+Minn's improvements and updates have been incorporated in the next minor version.
+
+
 ### v0.9.0
 - Dependencies bumped
 - **Breaking**: Reorganized the project into `api` and `impl` modules, resulting in new Maven/Gradle coordinates and new packages of the Magma classes
