@@ -19,20 +19,20 @@ buildscript {
 
 ext {
     //@formatter:off
-    orgJsonVersion              = '20180813'
-    slf4jVersion                = '1.7.26'
+    orgJsonVersion              = '20190722'
+    slf4jVersion                = '1.7.28'
 
-    springVersion               = '5.1.6.RELEASE'
-    undertowVersion             = '2.0.20.Final'
+    springVersion               = '5.1.9.RELEASE'
+    undertowVersion             = '2.0.25.Final'
     xnioVersion                 = '3.3.8.Final'
-    reactorVersion              = '3.2.8.RELEASE'
+    reactorVersion              = '3.2.11.RELEASE'
 
     spotbugsVersion             = '3.1.12'
     annotationsVersion          = '0.0.1'
 
     immutablesVersion           = '2.7.5'
 
-    junitVersion                = '5.4.2'
+    junitVersion                = '5.5.1'
     logbackVersion              = '1.2.3'
     //@formatter:on
 }
