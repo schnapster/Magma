@@ -105,7 +105,7 @@ public interface MagmaApi {
 
     /**
      * @return a list of all {@link WebsocketConnectionState WebsocketConnectionStates} detailing the state of
-     * the {@link AudioStack AudioStacks} managed by this {@link MagmaApi} instance
+     * the audio stacks managed by this {@link MagmaApi} instance
      */
     List<WebsocketConnectionState> getAudioConnectionStates();
 }
