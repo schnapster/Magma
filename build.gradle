@@ -81,10 +81,10 @@ allprojects {
         archiveClassifier.set('sources')
     }
 
-    task javadocJar(type: Jar, dependsOn: javadoc) {
-        classifier = 'javadoc'
-        from javadoc.destinationDir
-    }
+//    task javadocJar(type: Jar, dependsOn: javadoc) {
+//        classifier = 'javadoc'
+//        from javadoc.destinationDir
+//    }
 
     // called by jitpack
     task install {
@@ -103,7 +103,7 @@ allprojects {
                 version project.version
 
                 artifact sourceJar
-                artifact javadocJar
+                //artifact javadocJar
 
                 pom {
                     name = 'Magma'
@@ -153,7 +153,7 @@ allprojects {
     bintrayUpload {
         dependsOn clean
         dependsOn build
-        dependsOn javadocJar
+        //dependsOn javadocJar
         dependsOn sourceJar
         build.mustRunAfter clean
     }
