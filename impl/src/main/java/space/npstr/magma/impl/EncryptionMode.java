@@ -80,6 +80,7 @@ public enum EncryptionMode {
             try {
                 parse((String) o).ifPresent(result::add);
             } catch (final IllegalArgumentException ignored) {
+                //ignored
             }
         }
         return result;

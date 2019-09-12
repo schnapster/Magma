@@ -157,6 +157,7 @@ public class AudioStackLifecyclePipeline extends BaseSubscriber<LifecycleEvent> 
     }
 
     @CheckReturnValue
+    @SuppressWarnings("squid:S00117")
     private AudioStack getAudioStack(final LifecycleEvent lifecycleEvent) {
         return this.audioStacks
                 .computeIfAbsent(lifecycleEvent.getUserId(), __ -> new ConcurrentHashMap<>())

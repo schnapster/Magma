@@ -18,7 +18,6 @@ package space.npstr.magma.impl.events.audio.lifecycle;
 
 import net.dv8tion.jda.api.audio.AudioSendHandler;
 import org.immutables.value.Value;
-import space.npstr.magma.api.Member;
 import space.npstr.magma.impl.immutables.ImmutableLcEvent;
 
 import java.util.Optional;
@@ -29,9 +28,6 @@ import java.util.Optional;
 @Value.Immutable
 @ImmutableLcEvent
 public abstract class UpdateSendHandler implements LifecycleEvent {
-
-    @Override
-    public abstract Member getMember();
 
     public abstract Optional<AudioSendHandler> getAudioSendHandler();
 }
