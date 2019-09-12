@@ -82,6 +82,8 @@ public class Magma implements MagmaApi {
         final ClosingWebSocketClient webSocketClient;
         try {
             final XnioWorker xnioWorker = Xnio.getInstance().createWorker(xnioOptions);
+            @SuppressWarnings("squid:S2095")
+            //TODO cant close it here, find a place where we can do that in an ordered manner
             final ByteBufferPool bufferPool = new DefaultByteBufferPool(true, DEFAULT_POOL_BUFFER_SIZE);
             final XnioSsl xnioSsl = new UndertowXnioSsl(Xnio.getInstance(), OptionMap.EMPTY);
             final Consumer<WebSocketClient.ConnectionBuilder> builderConsumer = builder -> builder.setSsl(xnioSsl);

@@ -31,7 +31,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
-import java.util.function.Supplier;
+import java.util.function.LongSupplier;
 
 /**
  * Created by napster on 23.06.18.
@@ -44,7 +44,7 @@ public class PacketProvider implements IPacketProvider {
     private static final int EMPTY_FRAMES_COUNT = 5;
 
     private final AudioConnection audioConnection;
-    private final Supplier<Long> nonceSupplier;
+    private final LongSupplier nonceSupplier;
     private ByteBuffer packetBuffer = ByteBuffer.allocate(512); //packets usually take up about 400-500 bytes
     private final byte[] nonceBuffer = new byte[TweetNaclFast.SecretBox.nonceLength];
 
@@ -55,7 +55,7 @@ public class PacketProvider implements IPacketProvider {
     // https://discordapp.com/developers/docs/topics/voice-connections#voice-data-interpolation
     private int sendSilentFrames = EMPTY_FRAMES_COUNT;
 
-    public PacketProvider(final AudioConnection audioConnection, final Supplier<Long> nonceSupplier) {
+    public PacketProvider(final AudioConnection audioConnection, final LongSupplier nonceSupplier) {
         this.audioConnection = audioConnection;
         this.nonceSupplier = nonceSupplier;
     }
@@ -117,6 +117,7 @@ public class PacketProvider implements IPacketProvider {
     }
 
     @Nullable
+    @SuppressWarnings("squid:S3776")
     private ByteBuffer buildNextPacket(final boolean changeTalking) {
 
         final EncryptionMode encryptionMode = this.audioConnection.getEncryptionMode();

@@ -22,7 +22,7 @@ import space.npstr.magma.impl.EncryptionMode;
 
 import java.nio.ByteBuffer;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.function.Supplier;
+import java.util.function.LongSupplier;
 
 /**
  * Created by napster on 23.06.18.
@@ -35,7 +35,7 @@ public class PacketUtil {
     //this may reallocate the passed ByteBuffer if it is too small
     public static ByteBuffer encryptPacket(final AudioPacket audioPacket, final ByteBuffer packetBuffer,
                                            final EncryptionMode encryptionMode, final byte[] secretKey,
-                                           final Supplier<Long> nonceSupplier, final byte[] nonceBuffer) {
+                                           final LongSupplier nonceSupplier, final byte[] nonceBuffer) {
 
         final int nonceLength;
         switch (encryptionMode) {
@@ -43,7 +43,7 @@ public class PacketUtil {
                 nonceLength = 0;
                 break;
             case XSALSA20_POLY1305_LITE:
-                writeNonce(nonceSupplier.get(), nonceBuffer);
+                writeNonce(nonceSupplier.getAsLong(), nonceBuffer);
                 nonceLength = 4;
                 break;
             case XSALSA20_POLY1305_SUFFIX:

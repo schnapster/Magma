@@ -33,6 +33,7 @@ import space.npstr.magma.impl.events.audio.ws.in.InboundWsEvent;
 import space.npstr.magma.impl.events.audio.ws.out.OutboundWsEvent;
 
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 
 /**
@@ -81,6 +82,7 @@ public class AudioWebSocketSessionHandler extends BaseSubscriber<OutboundWsEvent
     }
 
     @Override
+    @SuppressWarnings("squid:CommentedOutCodeLine")
     public Mono<Void> handle(final WebSocketSession session) {
 
         // * * *
@@ -123,25 +125,23 @@ public class AudioWebSocketSessionHandler extends BaseSubscriber<OutboundWsEvent
      * Helper class to take care of volatile & null checks
      */
     private static class IntermediaryPipeHolder {
-        @Nullable
-        private volatile Flux<OutboundWsEvent> intermediaryOutboundFlux;
-        @Nullable
-        private volatile FluxSink<OutboundWsEvent> intermediaryOutboundSink;
+        private final AtomicReference<Flux<OutboundWsEvent>> intermediaryOutboundFlux = new AtomicReference<>();
+        private final AtomicReference<FluxSink<OutboundWsEvent>> intermediaryOutboundSink = new AtomicReference<>();
 
         private Flux<OutboundWsEvent> getIntermediaryOutboundFlux() {
-            return Objects.requireNonNull(this.intermediaryOutboundFlux, "Using the intermediary outbound flux before it has been prepared");
+            return Objects.requireNonNull(this.intermediaryOutboundFlux.get(), "Using the intermediary outbound flux before it has been prepared");
         }
 
         private void setIntermediaryOutboundFlux(final Flux<OutboundWsEvent> intermediaryOutboundFlux) {
-            this.intermediaryOutboundFlux = intermediaryOutboundFlux;
+            this.intermediaryOutboundFlux.set(intermediaryOutboundFlux);
         }
 
         private FluxSink<OutboundWsEvent> getIntermediaryOutboundSink() {
-            return Objects.requireNonNull(this.intermediaryOutboundSink, "Using the intermediary outbound sink before it has been prepared");
+            return Objects.requireNonNull(this.intermediaryOutboundSink.get(), "Using the intermediary outbound sink before it has been prepared");
         }
 
         private void setIntermediaryOutboundSink(final FluxSink<OutboundWsEvent> intermediaryOutboundSink) {
-            this.intermediaryOutboundSink = intermediaryOutboundSink;
+            this.intermediaryOutboundSink.set(intermediaryOutboundSink);
         }
     }
 }

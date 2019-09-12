@@ -49,6 +49,7 @@ import java.util.EnumSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.LongSupplier;
 import java.util.function.Supplier;
 
 /**
@@ -96,7 +97,7 @@ public class AudioConnection extends BaseSubscriber<ConnectionEvent> {
 
     // stateful information of an ongoing connection
     private final AtomicLong nonce = new AtomicLong(0);
-    private final Supplier<Long> nonceSupplier;
+    private final LongSupplier nonceSupplier;
     private boolean speaking = false;
 
     public AudioConnection(final AudioWebSocket webSocket, final IAudioSendFactory sendFactory, final DatagramSocket udpSocket) {
