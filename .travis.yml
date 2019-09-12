@@ -25,6 +25,18 @@ jobs:
     - jdk: openjdk-ea
   include:
     - stage: build & test
+      jdk: openjdk8
+      script:
+        - "java -Xmx32m -version"
+        - "./gradlew build --info"
+
+    - stage: build & test
+      jdk: oraclejdk8
+      script:
+        - "java -Xmx32m -version"
+        - "./gradlew build --info"
+
+    - stage: build & test
       jdk: openjdk11
       script:
         - "java -Xmx32m -version"
