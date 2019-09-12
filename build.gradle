@@ -1,8 +1,8 @@
 buildscript {
     ext {
         grgitVersion = '3.1.1'
-        sonarqubeVersion = '2.7'
-        versionsVersion = '0.21.0'
+        sonarqubeVersion = '2.7.1'
+        versionsVersion = '0.25.0'
         bintrayVersion = '1.8.4'
     }
     repositories {
@@ -23,16 +23,16 @@ ext {
     slf4jVersion                = '1.7.28'
 
     springVersion               = '5.1.9.RELEASE'
-    undertowVersion             = '2.0.25.Final'
+    undertowVersion             = '2.0.26.Final'
     xnioVersion                 = '3.3.8.Final'
-    reactorVersion              = '3.2.11.RELEASE'
+    reactorVersion              = '3.2.12.RELEASE'
 
     spotbugsVersion             = '3.1.12'
     annotationsVersion          = '0.0.1'
 
     immutablesVersion           = '2.7.5'
 
-    junitVersion                = '5.5.1'
+    junitVersion                = '5.5.2'
     logbackVersion              = '1.2.3'
     //@formatter:on
 }
