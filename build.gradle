@@ -15,6 +15,10 @@ buildscript {
         classpath "com.github.ben-manes:gradle-versions-plugin:${versionsVersion}"
         classpath "com.jfrog.bintray.gradle:gradle-bintray-plugin:${bintrayVersion}"
     }
+
+    configurations.classpath {
+        resolutionStrategy.activateDependencyLocking()
+    }
 }
 
 apply plugin: 'org.ajoberstar.grgit'
@@ -155,6 +159,7 @@ configure(subprojects.findAll { it.name != 'platform' }) {
     dependencies {
         api platform(project(':platform'))
         annotationProcessor platform(project(':platform'))
+        compileOnly platform(project(':platform'))
 
         // annotations
         compileOnly 'com.github.spotbugs:spotbugs-annotations'
@@ -175,6 +180,22 @@ allprojects {
     repositories {
         jcenter()
         maven { url 'https://jitpack.io' }
+    }
+
+    dependencyLocking {
+        lockAllConfigurations()
+    }
+
+    // ./gradlew resolveAndLockAll --write-locks
+    task resolveAndLockAll {
+        doFirst {
+            assert gradle.startParameter.writeDependencyLocks
+        }
+        doLast {
+            configurations
+                    .findAll { it.canBeResolved }
+                    .each { it.resolve() }
+        }
     }
 }
 
