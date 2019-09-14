@@ -1,9 +1,18 @@
 buildscript {
     ext {
-        grgitVersion = '3.+'
-        sonarqubeVersion = '2.+'
-        versionsVersion = '0.+'
-        bintrayVersion = '1.+'
+        //@formatter:off
+        grgitVersion                = '3.+'
+        sonarqubeVersion            = '2.+'
+        versionsVersion             = '0.+'
+        bintrayVersion              = '1.+'
+
+        orgJsonVersion              = '20190722'
+        springBootVersion           = '[2.1.8.RELEASE, 2.2['
+        xnioVersion                 = '[3.3.8.Final, 4.0['
+        spotbugsVersion             = '[3.1.12, 4.0['
+        annotationsVersion          = '0.0.1'
+        immutablesVersion           = '[2.7.5, 3.0['
+        //@formatter:on
     }
     repositories {
         gradlePluginPortal()
@@ -230,17 +239,6 @@ project(':impl') {
 
         implementation "org.json:json"
     }
-}
-
-ext {
-    //@formatter:off
-    orgJsonVersion              = '20190722'
-    springBootVersion           = '[2.1.8.RELEASE, 2.2['
-    xnioVersion                 = '[3.3.8.Final, 4.0['
-    spotbugsVersion             = '[3.1.12, 4.0['
-    annotationsVersion          = '0.0.1'
-    immutablesVersion           = '[2.7.5, 3.0['
-    //@formatter:on
 }
 
 project(':platform') {
