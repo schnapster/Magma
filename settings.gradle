@@ -2,3 +2,4 @@ rootProject.name = 'magma'
 
 include 'api'
 include 'impl'
+include 'platform'
