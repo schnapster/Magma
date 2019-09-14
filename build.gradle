@@ -221,7 +221,7 @@ project(':api') {
         // project reactor & reactive websocket client
         api 'org.springframework:spring-webflux'
         api 'io.undertow:undertow-core'
-        api 'org.jboss.xnio:xnio-nio'
+        api 'org.jboss.xnio:xnio-api'
         api 'io.projectreactor:reactor-core'
     }
 }
@@ -257,7 +257,7 @@ project(':platform') {
         constraints {
             api "com.github.spotbugs:spotbugs-annotations:$spotbugsVersion"
             api "org.immutables:value:$immutablesVersion"
-            api "org.jboss.xnio:xnio-nio:$xnioVersion"
+            api "org.jboss.xnio:xnio-api:$xnioVersion"
             api "org.json:json:$orgJsonVersion"
             api "space.npstr:annotations:$annotationsVersion"
 

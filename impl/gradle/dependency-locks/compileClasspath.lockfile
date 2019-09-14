@@ -8,7 +8,6 @@ io.undertow:undertow-core:2.0.26.Final
 org.immutables:value:2.7.5
 org.jboss.logging:jboss-logging:3.4.0.Final
 org.jboss.xnio:xnio-api:3.3.8.Final
-org.jboss.xnio:xnio-nio:3.3.8.Final
 org.json:json:20190722
 org.reactivestreams:reactive-streams:1.0.3
 org.slf4j:slf4j-api:1.7.28
