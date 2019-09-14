@@ -93,7 +93,9 @@ public class ClosingUndertowWebSocketClient extends UndertowWebSocketClient impl
         channel.getReceiveSetter().set(adapter);
         channel.resumeReceives();
 
-        handler.handle(session).subscribe(session);
+        handler.handle(session)
+                .checkpoint(url + " [ClosingUndertowWebSocketClient]")
+                .subscribe(session);
     }
 
     private HandshakeInfo createHandshakeInfo(final URI url, final DefaultNegotiation negotiation) {
