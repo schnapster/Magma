@@ -27,18 +27,25 @@ public class ClosingUndertowWebSocketHandlerAdapter extends UndertowWebSocketHan
     @Override
     protected void onFullCloseMessage(final WebSocketChannel channel, final BufferedBinaryMessage message) {
         final CloseMessage closeMessage = new CloseMessage(message.getData().getResource());
-        this.session.handleMessage(WebSocketMessage.Type.TEXT, this.closedTextMessage(
-                new JSONObject()
-                        .put("op", OpCode.WEBSOCKET_CLOSE)
-                        .put("d", new JSONObject()
-                                .put("code", closeMessage.getCode())
-                                .put("reason", closeMessage.getReason()))
-                        .toString()
-        ));
+        final String payload = toMagmaWebSocketEventPayload(closeMessage);
+        final WebSocketMessage closeTextMessage = toTextMessage(payload);
+        this.session.handleMessage(closeTextMessage.getType(), closeTextMessage);
         super.onFullCloseMessage(channel, message);
     }
 
-    private WebSocketMessage closedTextMessage(final String message) {
+    /**
+     * Create a payload that will be parsed in {@link space.npstr.magma.impl.events.audio.ws.in.InboundWsEvent#from}
+     */
+    private String toMagmaWebSocketEventPayload(CloseMessage closeMessage) {
+        return new JSONObject()
+                .put("op", OpCode.WEBSOCKET_CLOSE)
+                .put("d", new JSONObject()
+                        .put("code", closeMessage.getCode())
+                        .put("reason", closeMessage.getReason()))
+                .toString();
+    }
+
+    private WebSocketMessage toTextMessage(String message) {
         final byte[] bytes = (message).getBytes(StandardCharsets.UTF_8);
         return new WebSocketMessage(WebSocketMessage.Type.TEXT, this.session.bufferFactory().wrap(bytes));
     }
