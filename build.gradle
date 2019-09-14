@@ -6,7 +6,7 @@ buildscript {
         bintrayVersion = '1.8.4'
     }
     repositories {
-        maven { url 'https://plugins.gradle.org/m2/' }
+        gradlePluginPortal()
         mavenCentral()
     }
     dependencies {
