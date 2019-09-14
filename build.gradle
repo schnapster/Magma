@@ -149,17 +149,7 @@ configure(subprojects.findAll { it.name != 'platform' }) {
     }
 
     dependencyUpdates.resolutionStrategy {
-        failOnVersionConflict()
-        componentSelection { rules ->
-            rules.all { ComponentSelection selection ->
-                boolean rejected = ['alpha', 'beta', 'rc', 'preview', 'm1', 'm2', 'm3'].any {
-                    q -> selection.candidate.version.toLowerCase().contains(q)
-                }
-                if (rejected) {
-                    selection.reject('Release candidate')
-                }
-            }
-        }
+        componentSelection properReleasesOnly()
     }
 
     dependencies {
@@ -199,6 +189,11 @@ allprojects {
             assert gradle.startParameter.writeDependencyLocks
         }
         doLast {
+            configurations.all {
+                resolutionStrategy {
+                    componentSelection properReleasesOnly()
+                }
+            }
             configurations
                     .findAll { it.canBeResolved }
                     .each { it.resolve() }
@@ -272,6 +267,19 @@ build {
     }
 }
 
+
+static def properReleasesOnly() {
+    return { rules ->
+        rules.all { ComponentSelection selection ->
+            boolean rejected = ['alpha', 'beta', 'rc', 'preview', 'm1', 'm2', 'm3'].any {
+                q -> selection.candidate.version.toLowerCase().contains(q)
+            }
+            if (rejected) {
+                selection.reject('Release candidate')
+            }
+        }
+    }
+}
 
 //returns either a git tag if there is one on this commit, or the commit hash, to be used as a version
 @SuppressWarnings("GrMethodMayBeStatic")
