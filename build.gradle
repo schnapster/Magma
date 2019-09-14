@@ -89,6 +89,12 @@ configure(subprojects.findAll { it.name != 'platform' }) {
                 artifact sourceJar
                 artifact javadocJar
 
+                versionMapping {
+                    allVariants {
+                        fromResolutionResult()
+                    }
+                }
+
                 pom {
                     name = 'Magma'
                     description = 'A voice only API for Discord, focused on delivering music at scale.'
