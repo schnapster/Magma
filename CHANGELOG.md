@@ -2,6 +2,10 @@
 
 Expect breaking changes between minor versions while v1 has not been released.
 
+### v0.12.0
+- Align versions with Spring Boot's dependency management (may result in versions of transitive versions going up / down)
+- Internal: Dependency locking & version ranges
+
 ### v0.11.0
 
 - Picked up the commits from [Minn's Magma fork](https://github.com/MinnDevelopment/Magma):
