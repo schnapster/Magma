@@ -3,7 +3,7 @@
 Expect breaking changes between minor versions while v1 has not been released.
 
 ### v0.12.0
-- Align versions with Spring Boot's dependency management (may result in versions of transitive versions going up / down)
+- Align versions with Spring Boot's dependency management (may result in versions of transitive dependencies going up / down)
 - Internal: Dependency locking & version ranges
 
 ### v0.11.0
