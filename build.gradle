@@ -219,8 +219,8 @@ allprojects {
             repo = "maven"
             name = archivesBaseName
             licenses = ["Apache-2.0"]
-            vcsUrl = "https://github.com/MinnDevelopment/Magma"
-            githubRepo = "MinnDevelopment/Magma"
+            vcsUrl = "https://github.com/napstr/Magma"
+            githubRepo = "napstr/Magma"
             publish = true
             version {
                 name = project.version

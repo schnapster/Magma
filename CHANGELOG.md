@@ -2,6 +2,9 @@
 
 Expect breaking changes between minor versions while v1 has not been released.
 
+### v0.12.2
+- Fixed jitpack versioning troubles. Previous versions might not resolve correctly, use this one instead.
+
 ### v0.12.0
 - Align versions with Spring Boot's dependency management (may result in versions of transitive dependencies going up / down)
 - Internal: Dependency locking & version ranges
