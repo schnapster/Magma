@@ -171,9 +171,11 @@ allprojects {
                 if (components.hasProperty('javaPlatform')) {
                     from components.javaPlatform
                 }
-                groupId project.group
-                artifactId archivesBaseName
-                version project.version
+                afterEvaluate {
+                    groupId project.group
+                    artifactId archivesBaseName
+                    version project.version
+                }
 
                 artifact sourceJar
                 artifact javadocJar
