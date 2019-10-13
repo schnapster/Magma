@@ -1,3 +1,5 @@
+import org.sonarqube.gradle.SonarQubeTask
+
 buildscript {
     ext {
         //@formatter:off
@@ -32,6 +34,7 @@ buildscript {
 
 apply plugin: 'org.ajoberstar.grgit'
 apply plugin: 'com.jfrog.bintray'
+apply plugin: 'org.sonarqube'
 
 configure(allprojects.findAll { it.name != 'platform' }) {
     apply plugin: 'java-library'
@@ -106,7 +109,6 @@ project(':impl') {
 allprojects {
     apply plugin: 'maven-publish'
     apply plugin: 'jacoco'
-    apply plugin: 'org.sonarqube'
     apply plugin: 'com.github.ben-manes.versions'
 
     group = "space.npstr.magma"
@@ -137,6 +139,16 @@ allprojects {
     sonarqube {
         properties {
             property "sonar.inclusions", "**/src/main/java/space/npstr/magma/**/*.java"
+        }
+    }
+
+    tasks.withType(SonarQubeTask) {
+        dependsOn jacocoTestReport
+    }
+
+    jacocoTestReport {
+        reports {
+            xml.enabled true
         }
     }
 
