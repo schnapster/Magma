@@ -21,6 +21,7 @@ import net.dv8tion.jda.api.audio.factory.IAudioSendFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
+import org.springframework.http.HttpHeaders;
 import org.springframework.web.reactive.socket.WebSocketHandler;
 import reactor.core.Disposable;
 import reactor.core.publisher.BaseSubscriber;
@@ -304,7 +305,9 @@ public class AudioWebSocket extends BaseSubscriber<InboundWsEvent> {
     // ################################################################################
 
     private Disposable connect(final ClosingWebSocketClient client, final URI endpoint, final WebSocketHandler handler) {
-        return client.execute(endpoint, handler)
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.USER_AGENT, "DiscordBot Magma");
+        return client.execute(endpoint, headers, handler)
                 .log(log.getName() + ".WebSocketConnection", Level.FINEST) //FINEST = TRACE
                 .doOnError(t -> {
                     log.error("Exception in websocket connection, closing", t);
