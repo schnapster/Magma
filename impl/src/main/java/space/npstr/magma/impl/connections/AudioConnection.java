@@ -373,8 +373,10 @@ public class AudioConnection extends BaseSubscriber<ConnectionEvent> {
         try {
 
             //Create a byte array of length 70 containing our ssrc.
-            final ByteBuffer buffer = ByteBuffer.allocate(70);    //70 taken from https://github.com/Rapptz/discord.py/blob/async/discord/voice_client.py#L208
-            buffer.putInt(ssrc);                            //Put the ssrc that we were given into the packet to send back to discord.
+            final ByteBuffer buffer = ByteBuffer.allocate(70);
+            buffer.putShort((short) 1);  // 1 = send type
+            buffer.putShort((short) 70); // 70 bytes length
+            buffer.putInt(ssrc);         // Put the ssrc that we were given into the packet to send back to discord.
 
             //Construct our packet to be sent loaded with the byte buffer we store the ssrc in.
             final DatagramPacket discoveryPacket = new DatagramPacket(buffer.array(), buffer.array().length, remoteAddress);
