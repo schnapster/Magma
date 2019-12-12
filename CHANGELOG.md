@@ -2,6 +2,14 @@
 
 Expect breaking changes between minor versions while v1 has not been released.
 
+### v0.12.4
+- Switch to "modern" echo message format [#25](https://github.com/napstr/Magma/pull/25)
+- Adhere to Discord's user agent format [#26](https://github.com/napstr/Magma/pull/26)
+- Build on jitpack with java8 [#27](https://github.com/napstr/Magma/pull/27)
+
+### v0.12.3
+- Send a basic user agent header when connecting to Discord
+
 ### v0.12.2
 - Fixed jitpack versioning troubles. Previous versions might not resolve correctly, use this one instead.
 
