@@ -34,6 +34,7 @@ import space.npstr.magma.api.Member;
 import space.npstr.magma.api.WebsocketConnectionState;
 import space.npstr.magma.api.event.WebSocketClosedApiEvent;
 import space.npstr.magma.impl.EncryptionMode;
+import space.npstr.magma.impl.MagmaVersionProvider;
 import space.npstr.magma.impl.connections.hax.ClosingWebSocketClient;
 import space.npstr.magma.impl.events.audio.lifecycle.CloseWebSocket;
 import space.npstr.magma.impl.events.audio.lifecycle.CloseWebSocketLcEvent;
@@ -77,6 +78,10 @@ public class AudioWebSocket extends BaseSubscriber<InboundWsEvent> {
 
     private static final Logger log = LoggerFactory.getLogger(AudioWebSocket.class);
 
+    // see https://discordapp.com/developers/docs/reference#user-agent
+    private static final String USER_AGENT = String.format("DiscordBot (%s, %s)",
+            "https://magma.beer", new MagmaVersionProvider().getVersion());
+
     private final SessionInfo session;
     private final URI wssEndpoint;
     private final AudioConnection audioConnection;
@@ -95,7 +100,6 @@ public class AudioWebSocket extends BaseSubscriber<InboundWsEvent> {
     private Disposable webSocketConnection;
 
     private WebsocketConnectionState.Phase connectionPhase = WebsocketConnectionState.Phase.CONNECTING;
-
 
     public AudioWebSocket(final IAudioSendFactory sendFactory, final SessionInfo session,
                           final ClosingWebSocketClient webSocketClient, final Consumer<CloseWebSocket> closeCallback,
@@ -306,7 +310,7 @@ public class AudioWebSocket extends BaseSubscriber<InboundWsEvent> {
 
     private Disposable connect(final ClosingWebSocketClient client, final URI endpoint, final WebSocketHandler handler) {
         HttpHeaders headers = new HttpHeaders();
-        headers.add(HttpHeaders.USER_AGENT, "DiscordBot Magma");
+        headers.add(HttpHeaders.USER_AGENT, USER_AGENT);
         return client.execute(endpoint, headers, handler)
                 .log(log.getName() + ".WebSocketConnection", Level.FINEST) //FINEST = TRACE
                 .doOnError(t -> {
