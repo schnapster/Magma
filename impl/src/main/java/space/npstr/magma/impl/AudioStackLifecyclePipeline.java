@@ -17,6 +17,7 @@
 package space.npstr.magma.impl;
 
 import edu.umd.cs.findbugs.annotations.CheckReturnValue;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import net.dv8tion.jda.api.audio.factory.IAudioSendFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -106,7 +107,7 @@ public class AudioStackLifecyclePipeline extends BaseSubscriber<LifecycleEvent> 
     protected void hookOnNext(final LifecycleEvent event) {
         if (event instanceof VoiceServerUpdate) {
             final VoiceServerUpdate voiceServerUpdate = (VoiceServerUpdate) event;
-            this.getAudioStack(event)
+            this.getOrCreateAudioStack(event)
                     .next(ConnectWebSocketLcEvent.builder()
                             .sessionInfo(ImmutableSessionInfo.builder()
                                     .voiceServerUpdate(voiceServerUpdate)
@@ -114,13 +115,15 @@ public class AudioStackLifecyclePipeline extends BaseSubscriber<LifecycleEvent> 
                             .build()
                     );
         } else if (event instanceof UpdateSendHandler) {
-            this.getAudioStack(event)
+            this.getOrCreateAudioStack(event)
                     .next(event);
         } else if (event instanceof CloseWebSocket) {
             //pass it on
-            this.apiEventConsumer.accept(((CloseWebSocket) event).getApiEvent());
-            this.getAudioStack(event)
-                    .next(event);
+            AudioStack audioStack = this.removeAudioStack(event);
+            if (audioStack != null){
+                this.apiEventConsumer.accept(((CloseWebSocket) event).getApiEvent());
+                audioStack.next(event);
+            }
         } else if (event instanceof Shutdown) {
             this.dispose();
 
@@ -128,7 +131,7 @@ public class AudioStackLifecyclePipeline extends BaseSubscriber<LifecycleEvent> 
                     audioStack -> audioStack.next(event)
             );
         } else if (event instanceof UpdateSpeakingMode) {
-            this.getAudioStack(event)
+            this.getOrCreateAudioStack(event)
                     .next(event);
         } else {
             log.warn("Unhandled lifecycle event of class {}", event.getClass().getSimpleName());
@@ -158,14 +161,34 @@ public class AudioStackLifecyclePipeline extends BaseSubscriber<LifecycleEvent> 
 
     @CheckReturnValue
     @SuppressWarnings("squid:S00117")
-    private AudioStack getAudioStack(final LifecycleEvent lifecycleEvent) {
-        return this.audioStacks
-                .computeIfAbsent(lifecycleEvent.getUserId(), __ -> new ConcurrentHashMap<>())
-                .computeIfAbsent(lifecycleEvent.getGuildId(), __ ->
-                        new AudioStack(lifecycleEvent.getMember(),
-                                this.sendFactoryProvider.apply(lifecycleEvent.getMember()),
-                                this.webSocketClient,
-                                this.apiEventConsumer,
-                                this.udpSocket));
+    private AudioStack getOrCreateAudioStack(final LifecycleEvent lifecycleEvent) {
+        final AudioStack[] audioStackArray = {null};
+        this.audioStacks.compute(lifecycleEvent.getUserId(), (__, userAudioStack) -> {
+            Map<String, AudioStack> newUserAudioStack = userAudioStack;
+            if (newUserAudioStack == null) newUserAudioStack = new ConcurrentHashMap<>();
+            audioStackArray[0] = newUserAudioStack.computeIfAbsent(lifecycleEvent.getGuildId(), (___) ->
+                    new AudioStack(lifecycleEvent.getMember(),
+                            this.sendFactoryProvider.apply(lifecycleEvent.getMember()),
+                            this.webSocketClient,
+                            this.apiEventConsumer,
+                            this.udpSocket));
+            return newUserAudioStack;
+        });
+        return audioStackArray[0];
+    }
+
+    @CheckReturnValue
+    @Nullable
+    private AudioStack removeAudioStack(final LifecycleEvent lifecycleEvent) {
+        final AudioStack[] removedAudioStack = {null};
+        this.audioStacks.computeIfPresent(lifecycleEvent.getUserId(), (__, userAudioStacks) -> {
+            removedAudioStack[0] = userAudioStacks.remove(lifecycleEvent.getGuildId());
+            if (userAudioStacks.isEmpty()) {
+                return null;
+            } else {
+                return userAudioStacks;
+            }
+        });
+        return removedAudioStack[0];
     }
 }
