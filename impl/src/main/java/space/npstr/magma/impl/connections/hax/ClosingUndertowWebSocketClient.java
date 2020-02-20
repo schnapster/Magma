@@ -24,6 +24,7 @@ import java.net.URI;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 /**
@@ -47,10 +48,14 @@ public class ClosingUndertowWebSocketClient extends UndertowWebSocketClient impl
 
     @Override
     public Mono<Void> execute(final URI url, final HttpHeaders headers, final WebSocketHandler handler) {
-        return this.executeInternalPatched(url, headers, handler);
+        return this.execute(url, headers, handler, new AtomicReference<>());
     }
 
-    private Mono<Void> executeInternalPatched(final URI url, final HttpHeaders headers, final WebSocketHandler handler) {
+    public Mono<Void> execute(final URI url, final HttpHeaders headers, final WebSocketHandler handler, AtomicReference<WebSocketChannel> websocketChannelCatcher) {
+        return this.executeInternalPatched(url, headers, handler, websocketChannelCatcher);
+    }
+
+    private Mono<Void> executeInternalPatched(final URI url, final HttpHeaders headers, final WebSocketHandler handler, AtomicReference<WebSocketChannel> websocketChannelCatcher) {
         final MonoProcessor<Void> completion = MonoProcessor.create();
         return Mono.fromCallable(
                 () -> {
@@ -65,6 +70,7 @@ public class ClosingUndertowWebSocketClient extends UndertowWebSocketClient impl
                             new IoFuture.HandlingNotifier<WebSocketChannel, Object>() {
                                 @Override
                                 public void handleDone(final WebSocketChannel channel, final Object attachment) {
+                                    websocketChannelCatcher.set(channel);
                                     handleChannelPatched(url, handler, completion, negotiation, channel);
                                 }
 

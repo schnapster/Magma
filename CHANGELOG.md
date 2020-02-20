@@ -2,6 +2,9 @@
 
 Expect breaking changes between minor versions while v1 has not been released.
 
+### v0.12.5
+- Add some more logging for errors in the websocket connection
+
 ### v0.12.4
 - Switch to "modern" echo message format [#25](https://github.com/napstr/Magma/pull/25)
 - Adhere to Discord's user agent format [#26](https://github.com/napstr/Magma/pull/26)
