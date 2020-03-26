@@ -164,6 +164,18 @@ through `MagmaApi#getEventStream`:
     }
 ```
 
+## Who is using this?
+
+Check out these open-source projects for some more real world usage examples:
+- [Lavalink](https://github.com/Frederikam/Lavalink)
+- [Andesite](https://github.com/natanbc/andesite-node)
+
+## Alternatives
+
+Magma might for various reasons not fit your needs. Don't worry, there are alternatives for sending voice to Discord:
+- [Telecom](https://github.com/b1naryth1ef/telecom)
+- [koe](https://github.com/KyokoBot/koe)
+- [Most Discord libraries](https://discordapp.com/developers/docs/topics/community-resources#libraries)
 
 ## Numbers
 _(last updated for 0.2.1)_
