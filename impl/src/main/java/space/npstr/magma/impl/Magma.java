@@ -21,6 +21,13 @@ import io.undertow.connector.ByteBufferPool;
 import io.undertow.protocols.ssl.UndertowXnioSsl;
 import io.undertow.server.DefaultByteBufferPool;
 import io.undertow.websockets.client.WebSocketClient;
+import java.net.DatagramSocket;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.logging.Level;
 import net.dv8tion.jda.api.audio.AudioSendHandler;
 import net.dv8tion.jda.api.audio.factory.IAudioSendFactory;
 import org.slf4j.Logger;
@@ -49,14 +56,6 @@ import space.npstr.magma.impl.events.audio.lifecycle.UpdateSendHandlerLcEvent;
 import space.npstr.magma.impl.events.audio.lifecycle.UpdateSpeakingModeLcEvent;
 import space.npstr.magma.impl.events.audio.lifecycle.VoiceServerUpdateLcEvent;
 
-import java.net.DatagramSocket;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.logging.Level;
-
 public class Magma implements MagmaApi {
 
     private static final Logger log = LoggerFactory.getLogger(Magma.class);
@@ -78,14 +77,14 @@ public class Magma implements MagmaApi {
     /**
      * @see MagmaApi
      */
-    public Magma(final Function<Member, IAudioSendFactory> sendFactoryProvider, final OptionMap xnioOptions) {
+    public Magma(final Function<Member, IAudioSendFactory> sendFactoryProvider, final OptionMap xnioOptions, final OptionMap sslOptions) {
         final ClosingWebSocketClient webSocketClient;
         try {
             final XnioWorker xnioWorker = Xnio.getInstance().createWorker(xnioOptions);
             @SuppressWarnings("squid:S2095")
             //TODO cant close it here, find a place where we can do that in an ordered manner
             final ByteBufferPool bufferPool = new DefaultByteBufferPool(true, DEFAULT_POOL_BUFFER_SIZE);
-            final XnioSsl xnioSsl = new UndertowXnioSsl(Xnio.getInstance(), OptionMap.EMPTY);
+            final XnioSsl xnioSsl = new UndertowXnioSsl(Xnio.getInstance(), sslOptions);
             final Consumer<WebSocketClient.ConnectionBuilder> builderConsumer = builder -> builder.setSsl(xnioSsl);
             webSocketClient = new ClosingUndertowWebSocketClient(xnioWorker, bufferPool, builderConsumer);
             this.udpSocket = new DatagramSocket();

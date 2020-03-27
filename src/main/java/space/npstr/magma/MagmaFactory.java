@@ -16,14 +16,14 @@
 
 package space.npstr.magma;
 
+import java.util.function.Function;
 import net.dv8tion.jda.api.audio.factory.IAudioSendFactory;
 import org.xnio.OptionMap;
 import org.xnio.XnioWorker;
+import org.xnio.ssl.XnioSsl;
 import space.npstr.magma.api.MagmaApi;
 import space.npstr.magma.api.Member;
 import space.npstr.magma.impl.Magma;
-
-import java.util.function.Function;
 
 /**
  * Created by napster on 08.05.19.
@@ -34,21 +34,36 @@ public class MagmaFactory {
      * Please see full factory documentation below. Missing parameters on this factory method are optional.
      */
     public static MagmaApi of(final Function<Member, IAudioSendFactory> sendFactoryProvider) {
-        return of(sendFactoryProvider, OptionMap.builder().getMap());
+        return of(sendFactoryProvider, OptionMap.EMPTY);
     }
 
     /**
      * Create a new Magma instance. More than one of these is not necessary, even if you are managing several shards and
      * several bot accounts. A single instance of this scales automatically according to your needs and hardware.
      *
-     * @param sendFactoryProvider
-     *         a provider of {@link IAudioSendFactory}s. It will have members applied to it.
-     * @param xnioOptions
-     *         options to build the {@link XnioWorker} that will be used for the websocket connections
+     * @param sendFactoryProvider a provider of {@link IAudioSendFactory}s. It will have members applied to it.
+     * @param xnioOptions         options to build the {@link XnioWorker} that will be used for the websocket connections
      */
-    public static MagmaApi of(final Function<Member, IAudioSendFactory> sendFactoryProvider,
-                       final OptionMap xnioOptions) {
-        return new Magma(sendFactoryProvider, xnioOptions);
+    public static MagmaApi of(
+        final Function<Member, IAudioSendFactory> sendFactoryProvider,
+        final OptionMap xnioOptions
+    ) {
+        return of(sendFactoryProvider, xnioOptions, OptionMap.EMPTY);
+    }
+
+    /**
+     * Create a new Magma instance. More than one of these is not necessary, even if you are managing several shards and
+     * several bot accounts. A single instance of this scales automatically according to your needs and hardware.
+     *
+     * @param sendFactoryProvider a provider of {@link IAudioSendFactory}s. It will have members applied to it.
+     * @param xnioOptions         options to build the {@link XnioWorker} that will be used for the websocket connections
+     * @param sslOptions          options to build the {@link XnioSsl} that will be used for the websocket connections
+     */
+    public static MagmaApi of(
+        final Function<Member, IAudioSendFactory> sendFactoryProvider,
+        final OptionMap xnioOptions, final OptionMap sslOptions
+    ) {
+        return new Magma(sendFactoryProvider, xnioOptions, sslOptions);
     }
 
     private MagmaFactory() {}

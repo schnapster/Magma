@@ -2,6 +2,9 @@
 
 Expect breaking changes between minor versions while v1 has not been released.
 
+### v0.12.6
+- Allow configuring SSL options
+
 ### v0.12.5
 - Add some more logging for errors in the websocket connection
 
