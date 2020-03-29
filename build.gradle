@@ -314,6 +314,6 @@ String versionFromTag() {
     if (headTag) {
         headTag.getName()
     } else {
-        "${grgit.head().id}-SNAPSHOT"
+        "${grgit.head().id}"
     }
 }
