@@ -4,10 +4,7 @@
 com.github.spotbugs:spotbugs-annotations:4.0.1
 com.google.code.findbugs:jsr305:3.0.2
 io.projectreactor:reactor-core:3.3.4.RELEASE
-io.undertow:undertow-core:2.0.30.Final
 org.immutables:value:2.8.3
-org.jboss.logging:jboss-logging:3.4.1.Final
-org.jboss.xnio:xnio-api:3.3.8.Final
 org.reactivestreams:reactive-streams:1.0.3
 org.slf4j:slf4j-api:1.7.30
 org.springframework.boot:spring-boot-dependencies:2.2.6.RELEASE

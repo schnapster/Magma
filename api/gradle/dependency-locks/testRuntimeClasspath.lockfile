@@ -4,11 +4,7 @@
 ch.qos.logback:logback-classic:1.2.3
 ch.qos.logback:logback-core:1.2.3
 io.projectreactor:reactor-core:3.3.4.RELEASE
-io.undertow:undertow-core:2.0.30.Final
 org.apiguardian:apiguardian-api:1.1.0
-org.jboss.logging:jboss-logging:3.4.1.Final
-org.jboss.xnio:xnio-api:3.3.8.Final
-org.jboss.xnio:xnio-nio:3.3.8.Final
 org.junit.jupiter:junit-jupiter-api:5.5.2
 org.junit.jupiter:junit-jupiter-engine:5.5.2
 org.junit.platform:junit-platform-commons:1.5.2
