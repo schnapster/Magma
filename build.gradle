@@ -3,17 +3,17 @@ import org.sonarqube.gradle.SonarQubeTask
 buildscript {
     ext {
         //@formatter:off
-        grgitVersion                = '3.+'
+        grgitVersion                = '4.+'
         sonarqubeVersion            = '2.+'
         versionsVersion             = '0.+'
         bintrayVersion              = '1.+'
 
         orgJsonVersion              = '20190722'
-        springBootVersion           = '[2.1.8.RELEASE, 2.2['
+        springBootVersion           = '[2.2.6.RELEASE, 2.3['
         xnioVersion                 = '[3.3.8.Final, 4.0['
-        spotbugsVersion             = '[3.1.12, 4.0['
-        annotationsVersion          = '0.0.1'
-        immutablesVersion           = '[2.7.5, 3.0['
+        spotbugsVersion             = '[4.0.1, 5.0['
+        annotationsVersion          = '[0.0.2, 0.2['
+        immutablesVersion           = '[2.8.3, 3.0['
         jcabiVersion                = '[1.1, 2.0['
         //@formatter:on
     }

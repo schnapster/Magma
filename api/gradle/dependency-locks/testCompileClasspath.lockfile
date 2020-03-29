@@ -1,19 +1,19 @@
 # This is a Gradle generated file for dependency locking.
 # Manual edits can break the build and are not advised.
 # This file is expected to be part of source control.
-io.projectreactor:reactor-core:3.2.12.RELEASE
-io.undertow:undertow-core:2.0.26.Final
-org.apiguardian:apiguardian-api:1.0.0
-org.jboss.logging:jboss-logging:3.4.0.Final
+io.projectreactor:reactor-core:3.3.4.RELEASE
+io.undertow:undertow-core:2.0.30.Final
+org.apiguardian:apiguardian-api:1.1.0
+org.jboss.logging:jboss-logging:3.4.1.Final
 org.jboss.xnio:xnio-api:3.3.8.Final
-org.junit.jupiter:junit-jupiter-api:5.3.2
-org.junit.platform:junit-platform-commons:1.3.2
-org.opentest4j:opentest4j:1.1.1
+org.junit.jupiter:junit-jupiter-api:5.5.2
+org.junit.platform:junit-platform-commons:1.5.2
+org.opentest4j:opentest4j:1.2.0
 org.reactivestreams:reactive-streams:1.0.3
-org.slf4j:slf4j-api:1.7.28
-org.springframework.boot:spring-boot-dependencies:2.1.8.RELEASE
-org.springframework:spring-beans:5.1.9.RELEASE
-org.springframework:spring-core:5.1.9.RELEASE
-org.springframework:spring-jcl:5.1.9.RELEASE
-org.springframework:spring-web:5.1.9.RELEASE
-org.springframework:spring-webflux:5.1.9.RELEASE
+org.slf4j:slf4j-api:1.7.30
+org.springframework.boot:spring-boot-dependencies:2.2.6.RELEASE
+org.springframework:spring-beans:5.2.5.RELEASE
+org.springframework:spring-core:5.2.5.RELEASE
+org.springframework:spring-jcl:5.2.5.RELEASE
+org.springframework:spring-web:5.2.5.RELEASE
+org.springframework:spring-webflux:5.2.5.RELEASE
