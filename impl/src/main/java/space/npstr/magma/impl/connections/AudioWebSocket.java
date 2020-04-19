@@ -17,7 +17,6 @@
 package space.npstr.magma.impl.connections;
 
 import edu.umd.cs.findbugs.annotations.Nullable;
-import io.undertow.websockets.core.WebSocketChannel;
 import net.dv8tion.jda.api.audio.factory.IAudioSendFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,7 +65,6 @@ import java.net.URISyntaxException;
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -313,19 +311,10 @@ public class AudioWebSocket extends BaseSubscriber<InboundWsEvent> {
     private Disposable connect(final ClosingWebSocketClient client, final URI endpoint, final WebSocketHandler handler) {
         HttpHeaders headers = new HttpHeaders();
         headers.add(HttpHeaders.USER_AGENT, USER_AGENT);
-        AtomicReference<WebSocketChannel> websocketChannelCatcher = new AtomicReference<>();
         return client.execute(endpoint, headers, handler)
                 .log(log.getName() + ".WebSocketConnection", Level.FINEST) //FINEST = TRACE
                 .doOnError(t -> {
-                    WebSocketChannel channel = websocketChannelCatcher.get();
-                    String channelState = "Websocket Channel is null";
-                    if (channel != null) {
-                        channelState = String.format("Websocket State is: closeCode=%s, closeReason=%s, "
-                                        + "closeInitiatedByRemotePeer=%s, closeFrameReceived=%s, closeFrameSent=%s",
-                                channel.getCloseCode(), channel.getCloseReason(), channel.isCloseInitiatedByRemotePeer(),
-                                channel.isCloseFrameReceived(), channel.isCloseFrameSent());
-                    }
-                    log.error("Exception in websocket connection, closing. Channel state is {}", channelState, t);
+                    log.error("Exception in websocket connection, closing", t);
                     this.closeEverything();
                 })
                 .publishOn(Schedulers.parallel())

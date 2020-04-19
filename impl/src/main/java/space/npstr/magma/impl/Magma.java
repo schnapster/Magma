@@ -17,25 +17,17 @@
 package space.npstr.magma.impl;
 
 import edu.umd.cs.findbugs.annotations.Nullable;
-import io.undertow.connector.ByteBufferPool;
-import io.undertow.protocols.ssl.UndertowXnioSsl;
-import io.undertow.server.DefaultByteBufferPool;
-import io.undertow.websockets.client.WebSocketClient;
 import java.net.DatagramSocket;
+import java.net.SocketException;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.logging.Level;
 import net.dv8tion.jda.api.audio.AudioSendHandler;
 import net.dv8tion.jda.api.audio.factory.IAudioSendFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xnio.OptionMap;
-import org.xnio.Xnio;
-import org.xnio.XnioWorker;
-import org.xnio.ssl.XnioSsl;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.UnicastProcessor;
@@ -47,7 +39,7 @@ import space.npstr.magma.api.SpeakingMode;
 import space.npstr.magma.api.WebsocketConnectionState;
 import space.npstr.magma.api.event.MagmaEvent;
 import space.npstr.magma.api.event.WebSocketClosedApiEvent;
-import space.npstr.magma.impl.connections.hax.ClosingUndertowWebSocketClient;
+import space.npstr.magma.impl.connections.hax.ClosingReactorNettyWebSocketClient;
 import space.npstr.magma.impl.connections.hax.ClosingWebSocketClient;
 import space.npstr.magma.impl.events.audio.lifecycle.CloseWebSocketLcEvent;
 import space.npstr.magma.impl.events.audio.lifecycle.LifecycleEvent;
@@ -60,13 +52,6 @@ public class Magma implements MagmaApi {
 
     private static final Logger log = LoggerFactory.getLogger(Magma.class);
 
-    // 16kb as recommended in
-    // http://undertow.io/undertow-docs/undertow-docs-2.0.0/index.html#buffer-pool
-    // and
-    // http://undertow.io/undertow-docs/undertow-docs-2.0.0/index.html#the-undertow-buffer-pool
-    // for direct buffers
-    private static final int DEFAULT_POOL_BUFFER_SIZE = 16 * 1024;
-
     private final FluxSink<LifecycleEvent> lifecycleSink;
     @Nullable
     private FluxSink<MagmaEvent> apiEventSink = null;
@@ -77,19 +62,12 @@ public class Magma implements MagmaApi {
     /**
      * @see MagmaApi
      */
-    public Magma(final Function<Member, IAudioSendFactory> sendFactoryProvider, final OptionMap xnioOptions, final OptionMap sslOptions) {
-        final ClosingWebSocketClient webSocketClient;
+    public Magma(final Function<Member, IAudioSendFactory> sendFactoryProvider) {
+        final ClosingWebSocketClient webSocketClient = new ClosingReactorNettyWebSocketClient();
         try {
-            final XnioWorker xnioWorker = Xnio.getInstance().createWorker(xnioOptions);
-            @SuppressWarnings("squid:S2095")
-            //TODO cant close it here, find a place where we can do that in an ordered manner
-            final ByteBufferPool bufferPool = new DefaultByteBufferPool(true, DEFAULT_POOL_BUFFER_SIZE);
-            final XnioSsl xnioSsl = new UndertowXnioSsl(Xnio.getInstance(), sslOptions);
-            final Consumer<WebSocketClient.ConnectionBuilder> builderConsumer = builder -> builder.setSsl(xnioSsl);
-            webSocketClient = new ClosingUndertowWebSocketClient(xnioWorker, bufferPool, builderConsumer);
             this.udpSocket = new DatagramSocket();
-        } catch (final Exception e) {
-            throw new RuntimeException("Failed to set up websocket client", e);
+        } catch (final SocketException e) {
+            throw new RuntimeException("Failed to set up datagram socket", e);
         }
 
         this.lifecyclePipeline = new AudioStackLifecyclePipeline(

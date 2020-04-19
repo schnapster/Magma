@@ -3,17 +3,16 @@ import org.sonarqube.gradle.SonarQubeTask
 buildscript {
     ext {
         //@formatter:off
-        grgitVersion                = '3.+'
+        grgitVersion                = '4.+'
         sonarqubeVersion            = '2.+'
         versionsVersion             = '0.+'
         bintrayVersion              = '1.+'
 
         orgJsonVersion              = '20190722'
-        springBootVersion           = '[2.1.8.RELEASE, 2.2['
-        xnioVersion                 = '[3.3.8.Final, 4.0['
-        spotbugsVersion             = '[3.1.12, 4.0['
-        annotationsVersion          = '0.0.1'
-        immutablesVersion           = '[2.7.5, 3.0['
+        springBootVersion           = '[2.2.6.RELEASE, 2.3['
+        spotbugsVersion             = '[4.0.1, 5.0['
+        annotationsVersion          = '[0.0.2, 0.2['
+        immutablesVersion           = '[2.8.3, 3.0['
         jcabiVersion                = '[1.1, 2.0['
         //@formatter:on
     }
@@ -70,7 +69,6 @@ project(':platform') {
         constraints {
             api "com.github.spotbugs:spotbugs-annotations:$spotbugsVersion"
             api "org.immutables:value:$immutablesVersion"
-            api "org.jboss.xnio:xnio-api:$xnioVersion"
             api "org.json:json:$orgJsonVersion"
             api "space.npstr:annotations:$annotationsVersion"
             api "com.jcabi:jcabi-manifests:$jcabiVersion"
@@ -91,8 +89,6 @@ project(':api') {
 
         // project reactor & reactive websocket client
         api 'org.springframework:spring-webflux'
-        api 'io.undertow:undertow-core'
-        api 'org.jboss.xnio:xnio-api'
         api 'io.projectreactor:reactor-core'
     }
 }
@@ -105,6 +101,7 @@ project(':impl') {
 
         implementation "org.json:json"
         implementation "com.jcabi:jcabi-manifests"
+        implementation 'io.projectreactor.netty:reactor-netty'
     }
 }
 
@@ -317,6 +314,6 @@ String versionFromTag() {
     if (headTag) {
         headTag.getName()
     } else {
-        "${grgit.head().id}-SNAPSHOT"
+        "${grgit.head().id}"
     }
 }

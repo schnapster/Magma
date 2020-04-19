@@ -17,6 +17,8 @@
 package space.npstr.magma.impl.connections;
 
 import edu.umd.cs.findbugs.annotations.Nullable;
+import io.netty.handler.codec.http.websocketx.WebSocketCloseStatus;
+import org.json.JSONObject;
 import org.reactivestreams.Subscriber;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,6 +31,8 @@ import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.UnicastProcessor;
 import reactor.core.scheduler.Schedulers;
+import space.npstr.magma.impl.connections.hax.ClosingReactorNettyWebSocketSession;
+import space.npstr.magma.impl.events.audio.ws.OpCode;
 import space.npstr.magma.impl.events.audio.ws.in.InboundWsEvent;
 import space.npstr.magma.impl.events.audio.ws.out.OutboundWsEvent;
 
@@ -99,8 +103,15 @@ public class AudioWebSocketSessionHandler extends BaseSubscriber<OutboundWsEvent
 
         this.session = session;
         log.trace("Handshake: {}", session.getHandshakeInfo());
-        session.receive()
-                .map(WebSocketMessage::getPayloadAsText)
+
+        Flux<String> messages = session.receive()
+                .map(WebSocketMessage::getPayloadAsText);
+
+        ClosingReactorNettyWebSocketSession reactorNettyWebSocketSession = (ClosingReactorNettyWebSocketSession) session;
+        Mono<String> closeMessage = reactorNettyWebSocketSession.getDelegate().getInbound().receiveCloseStatus()
+                .map(this::toMagmaWebSocketEventPayload);
+
+        Flux.mergeDelayError(1, messages, closeMessage)
                 .log(log.getName() + ".>>>", Level.FINEST) //FINEST = TRACE
                 .map(InboundWsEvent::from)
                 .doOnTerminate(() -> log.trace("Receiving terminated"))
@@ -122,9 +133,22 @@ public class AudioWebSocketSessionHandler extends BaseSubscriber<OutboundWsEvent
     }
 
     /**
+     * Transform a websocket close status into a payload that will be parsed in {@link space.npstr.magma.impl.events.audio.ws.in.InboundWsEvent#from}
+     */
+    private String toMagmaWebSocketEventPayload(WebSocketCloseStatus closeStatus) {
+        return new JSONObject()
+                .put("op", OpCode.WEBSOCKET_CLOSE)
+                .put("d", new JSONObject()
+                        .put("code", closeStatus.code())
+                        .put("reason", closeStatus.reasonText()))
+                .toString();
+    }
+
+    /**
      * Helper class to take care of volatile & null checks
      */
     private static class IntermediaryPipeHolder {
+
         private final AtomicReference<Flux<OutboundWsEvent>> intermediaryOutboundFlux = new AtomicReference<>();
         private final AtomicReference<FluxSink<OutboundWsEvent>> intermediaryOutboundSink = new AtomicReference<>();
 
