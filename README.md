@@ -1,3 +1,12 @@
+# Archived
+
+This library has been superseded by [koe](https://github.com/KyokoBot/koe), please check it out for your Discord audio needs.
+koe has multiple advantages over Magma:
+- not built around inherited convoluted existing APIs
+- less complicated, therefore easier to maintain and contribute to
+
+My main take-away from this library is to stay far away from reactive libraries and paradigms as possible. The added complexity is not worth the downsides, especially when alternatives are possible to achieve similar performance goals.
+
 # Magma
 
 [![Release](https://img.shields.io/github/tag/napstr/Magma.svg)](https://jitpack.io/#space.npstr/Magma)
